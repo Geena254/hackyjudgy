@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubmissionsRouteImport } from './routes/submissions'
 import { Route as JudgesRouteImport } from './routes/judges'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SubmissionsRoute = SubmissionsRouteImport.update({
@@ -29,6 +30,11 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/events': typeof EventsRoute
   '/judges': typeof JudgesRoute
   '/submissions': typeof SubmissionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/events': typeof EventsRoute
   '/judges': typeof JudgesRoute
   '/submissions': typeof SubmissionsRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/events': typeof EventsRoute
   '/judges': typeof JudgesRoute
   '/submissions': typeof SubmissionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/events' | '/judges' | '/submissions'
+  fullPaths: '/' | '/analytics' | '/events' | '/judges' | '/submissions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/events' | '/judges' | '/submissions'
-  id: '__root__' | '/' | '/events' | '/judges' | '/submissions'
+  to: '/' | '/analytics' | '/events' | '/judges' | '/submissions'
+  id: '__root__' | '/' | '/analytics' | '/events' | '/judges' | '/submissions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   EventsRoute: typeof EventsRoute
   JudgesRoute: typeof JudgesRoute
   SubmissionsRoute: typeof SubmissionsRoute
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
   EventsRoute: EventsRoute,
   JudgesRoute: JudgesRoute,
   SubmissionsRoute: SubmissionsRoute,
