@@ -129,7 +129,7 @@ function Dashboard() {
           <Metric label="Submissions" value="24" sub="/ 30" progress={80} tone="teal" />
           <Metric label="Judges Active" value="8" sub="/ 10" progress={80} tone="magenta" />
           <Metric label="Scoring Progress" value="45%" progress={45} tone="teal" />
-          <Metric label="Days Left" value="3" warn />
+          <Metric label="Days Left" value="3" tone="magenta" warn />
         </div>
 
         {/* Quick actions */}
