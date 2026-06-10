@@ -245,13 +245,33 @@ function RubricBlock({
   onNext: () => void;
   position: string;
 }) {
+  const scoreValues = Object.values(scores);
+  const filled = scoreValues.filter((v) => typeof v === "number") as number[];
+  const avg =
+    filled.length > 0 ? filled.reduce((a, b) => a + b, 0) / filled.length : 0;
+  const complete = filled.length === rubricCriteria.length;
+
   return (
     <Card className="p-6" key={submission.id}>
-      <div className="mb-4">
-        <h3 className="text-lg font-bold" style={{ color: "var(--teal)" }}>
-          Innovation & Impact
-        </h3>
-        <p className="text-sm text-muted-foreground">Score each criterion on a 1–5 scale.</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-bold" style={{ color: "var(--teal)" }}>
+            Innovation & Impact
+          </h3>
+          <p className="text-sm text-muted-foreground">Score each criterion on a 1–5 scale.</p>
+        </div>
+        <div className="rounded-md border border-border px-3 py-2 text-right">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">
+            Live average
+          </div>
+          <div className="text-lg font-bold" style={{ color: complete ? "var(--teal)" : "var(--foreground)" }}>
+            {filled.length > 0 ? avg.toFixed(2) : "—"}
+            <span className="text-xs font-normal text-muted-foreground"> /5</span>
+          </div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: complete ? "var(--teal)" : "var(--magenta)" }}>
+            {filled.length}/{rubricCriteria.length} scored
+          </div>
+        </div>
       </div>
 
       <ul className="space-y-4">
@@ -304,9 +324,14 @@ function RubricBlock({
       </ul>
 
       <div className="mt-6">
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          Feedback (visible to submitter)
-        </label>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="block text-sm font-medium text-foreground">
+            Feedback (visible to submitter)
+          </label>
+          <span className="text-xs" style={{ color: "var(--teal)" }}>
+            Auto-saved
+          </span>
+        </div>
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
