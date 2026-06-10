@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubmissionsRouteImport } from './routes/submissions'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as JudgesRouteImport } from './routes/judges'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SubmissionsRoute = SubmissionsRouteImport.update({
   id: '/submissions',
   path: '/submissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JudgesRoute = JudgesRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/events': typeof EventsRoute
   '/judges': typeof JudgesRoute
+  '/settings': typeof SettingsRoute
   '/submissions': typeof SubmissionsRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/events': typeof EventsRoute
   '/judges': typeof JudgesRoute
+  '/settings': typeof SettingsRoute
   '/submissions': typeof SubmissionsRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,28 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/events': typeof EventsRoute
   '/judges': typeof JudgesRoute
+  '/settings': typeof SettingsRoute
   '/submissions': typeof SubmissionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/events' | '/judges' | '/submissions'
+  fullPaths:
+    | '/'
+    | '/analytics'
+    | '/events'
+    | '/judges'
+    | '/settings'
+    | '/submissions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/events' | '/judges' | '/submissions'
-  id: '__root__' | '/' | '/analytics' | '/events' | '/judges' | '/submissions'
+  to: '/' | '/analytics' | '/events' | '/judges' | '/settings' | '/submissions'
+  id:
+    | '__root__'
+    | '/'
+    | '/analytics'
+    | '/events'
+    | '/judges'
+    | '/settings'
+    | '/submissions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +98,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   EventsRoute: typeof EventsRoute
   JudgesRoute: typeof JudgesRoute
+  SettingsRoute: typeof SettingsRoute
   SubmissionsRoute: typeof SubmissionsRoute
 }
 
@@ -86,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/submissions'
       fullPath: '/submissions'
       preLoaderRoute: typeof SubmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/judges': {
@@ -124,6 +154,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   EventsRoute: EventsRoute,
   JudgesRoute: JudgesRoute,
+  SettingsRoute: SettingsRoute,
   SubmissionsRoute: SubmissionsRoute,
 }
 export const routeTree = rootRouteImport
