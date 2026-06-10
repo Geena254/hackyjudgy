@@ -379,7 +379,7 @@ function NewRoundForm({
   };
 
   return (
-    <Card className="p-5" style={{ borderColor: "var(--teal)" } as React.CSSProperties}>
+    <Card className="p-5 border-[color:var(--teal)]">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold text-foreground">New round</h3>
         <button
