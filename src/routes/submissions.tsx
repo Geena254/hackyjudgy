@@ -324,9 +324,14 @@ function RubricBlock({
       </ul>
 
       <div className="mt-6">
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          Feedback (visible to submitter)
-        </label>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="block text-sm font-medium text-foreground">
+            Feedback (visible to submitter)
+          </label>
+          <span className="text-xs" style={{ color: "var(--teal)" }}>
+            Auto-saved
+          </span>
+        </div>
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
