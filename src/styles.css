@@ -53,15 +53,15 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0 0);
 
-  /* Teal #00A69E */
-  --teal: oklch(0.66 0.115 192);
+  /* Primary blue #1D4ED8 */
+  --teal: oklch(0.49 0.21 264);
   --teal-foreground: oklch(1 0 0);
-  --teal-soft: oklch(0.96 0.03 192);
+  --teal-soft: oklch(0.96 0.025 264);
 
-  /* Magenta #C41E69 */
-  --magenta: oklch(0.55 0.21 5);
+  /* Graphite / black accent #111111 */
+  --magenta: oklch(0.22 0 0);
   --magenta-foreground: oklch(1 0 0);
-  --magenta-soft: oklch(0.96 0.03 5);
+  --magenta-soft: oklch(0.955 0 0);
 
   --primary: var(--teal);
   --primary-foreground: oklch(1 0 0);
