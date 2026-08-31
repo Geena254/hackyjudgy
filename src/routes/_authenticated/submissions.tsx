@@ -13,7 +13,7 @@ import {
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { submissions, categories, rubricCriteria, type Submission } from "@/lib/eval-data";
 
-export const Route = createFileRoute("/submissions")({
+export const Route = createFileRoute("/_authenticated/submissions")({
   head: () => ({
     meta: [
       { title: "Judge Scoring — EvalDesk" },

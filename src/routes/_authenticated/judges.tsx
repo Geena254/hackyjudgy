@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, Card } from "@/components/app-shell";
 
-export const Route = createFileRoute("/judges")({
+export const Route = createFileRoute("/_authenticated/judges")({
   head: () => ({ meta: [{ title: "Judges — EvalDesk" }] }),
   component: () => (
     <AppShell>

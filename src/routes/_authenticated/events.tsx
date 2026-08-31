@@ -15,7 +15,7 @@ import {
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { rounds as seedRounds, type RoundCfg } from "@/lib/eval-data";
 
-export const Route = createFileRoute("/events")({
+export const Route = createFileRoute("/_authenticated/events")({
   head: () => ({
     meta: [
       { title: "Event Setup — EvalDesk" },
