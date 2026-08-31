@@ -1,9 +1,13 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth, displayName, initials } from "@/hooks/use-auth";
+import { BrandLink, SiteFooter } from "@/components/brand";
 
 const nav = [
-  { to: "/", label: "Dashboard" },
+  { to: "/dashboard", label: "Dashboard" },
   { to: "/events", label: "Events" },
   { to: "/submissions", label: "Submissions" },
   { to: "/judges", label: "Judges" },
@@ -11,43 +15,31 @@ const nav = [
   { to: "/settings", label: "Settings" },
 ] as const;
 
-function Logo() {
-  return (
-    <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="EvalDesk home">
-      <span className="flex items-center">
-        <span
-          aria-hidden
-          className="inline-block h-7 w-7 rounded-md"
-          style={{ background: "var(--teal)" }}
-        />
-        <span
-          aria-hidden
-          className="-ml-2 inline-block h-7 w-7 rounded-md"
-          style={{ background: "var(--magenta)" }}
-        />
-      </span>
-      <span className="text-lg font-bold tracking-tight text-foreground">
-        Eval<span style={{ color: "var(--magenta)" }}>Desk</span>
-      </span>
-    </Link>
-  );
-}
-
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const name = displayName(user);
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="flex min-h-screen flex-col bg-surface">
       <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-8 min-w-0">
-            <Logo />
-            <nav className="hidden lg:flex items-center gap-1">
+          <div className="flex min-w-0 items-center gap-8">
+            <BrandLink />
+            <nav className="hidden items-center gap-1 lg:flex">
               {nav.map((n) => {
-                const active =
-                  n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+                const active = pathname.startsWith(n.to);
                 return (
                   <Link
                     key={n.to}
@@ -74,31 +66,44 @@ export function AppShell({ children }: { children: ReactNode }) {
               >
                 <span
                   className="grid h-7 w-7 place-items-center rounded-full text-xs font-semibold text-white"
-                  style={{ background: "var(--magenta)" }}
+                  style={{ background: "var(--teal)" }}
                 >
-                  AM
+                  {initials(name)}
                 </span>
-                <span className="hidden md:inline text-foreground">Alex Morgan</span>
+                <span className="hidden max-w-[12rem] truncate text-foreground md:inline">
+                  {name}
+                </span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" strokeWidth={2} />
               </button>
               {menu && (
                 <div
-                  className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-popover py-1 shadow-md"
+                  className="absolute right-0 mt-2 w-56 rounded-md border border-border bg-popover py-1 shadow-md"
                   onMouseLeave={() => setMenu(false)}
                 >
-                  {["Profile", "Preferences", "Help", "Sign out"].map((i) => (
-                    <button
-                      key={i}
-                      className="block w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
-                    >
-                      {i}
-                    </button>
-                  ))}
+                  <div className="border-b border-border px-3 py-2">
+                    <div className="truncate text-sm font-medium text-foreground">{name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {isAdmin ? "Event admin" : "Judge"}
+                    </div>
+                  </div>
+                  <Link
+                    to="/settings"
+                    onClick={() => setMenu(false)}
+                    className="block w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
+                  >
+                    Settings
+                  </Link>
+                  <button
+                    onClick={signOut}
+                    className="block w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
+                  >
+                    Sign out
+                  </button>
                 </div>
               )}
             </div>
             <button
-              className="lg:hidden rounded-md border border-border p-2"
+              className="rounded-md border border-border p-2 lg:hidden"
               onClick={() => setOpen((v) => !v)}
               aria-label="Toggle menu"
             >
@@ -107,11 +112,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         {open && (
-          <div className="lg:hidden border-t border-border bg-background">
+          <div className="border-t border-border bg-background lg:hidden">
             <nav className="flex flex-col p-2">
               {nav.map((n) => {
-                const active =
-                  n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+                const active = pathname.startsWith(n.to);
                 return (
                   <Link
                     key={n.to}
@@ -119,9 +123,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     onClick={() => setOpen(false)}
                     className={
                       "rounded-md px-3 py-2.5 text-sm font-medium " +
-                      (active
-                        ? "bg-teal-soft"
-                        : "text-muted-foreground hover:bg-muted")
+                      (active ? "bg-teal-soft" : "text-muted-foreground hover:bg-muted")
                     }
                     style={active ? { color: "var(--teal)" } : undefined}
                   >
@@ -129,13 +131,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </Link>
                 );
               })}
+              <button
+                onClick={signOut}
+                className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-muted-foreground hover:bg-muted"
+              >
+                Sign out
+              </button>
             </nav>
           </div>
         )}
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {children}
       </main>
+      <SiteFooter />
     </div>
   );
 }
