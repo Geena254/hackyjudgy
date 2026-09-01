@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      criteria: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          max_score: number
+          name: string
+          round_id: string
+          sort_order: number
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_score?: number
+          name: string
+          round_id: string
+          sort_order?: number
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_score?: number
+          name?: string
+          round_id?: string
+          sort_order?: number
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "criteria_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_on: string | null
+          id: string
+          name: string
+          starts_on: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_on?: string | null
+          id?: string
+          name: string
+          starts_on?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_on?: string | null
+          id?: string
+          name?: string
+          starts_on?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       judge_invitations: {
         Row: {
           accepted_at: string | null
@@ -67,6 +147,205 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          completed: boolean
+          created_at: string
+          feedback: string | null
+          id: string
+          judge_id: string
+          private_notes: string | null
+          submission_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          judge_id: string
+          private_notes?: string | null
+          submission_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          judge_id?: string
+          private_notes?: string | null
+          submission_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rounds: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          event_id: string
+          id: string
+          name: string
+          phase: string
+          sort_order: number
+          submission_method: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          event_id: string
+          id?: string
+          name: string
+          phase?: string
+          sort_order?: number
+          submission_method?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          event_id?: string
+          id?: string
+          name?: string
+          phase?: string
+          sort_order?: number
+          submission_method?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rounds_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scores: {
+        Row: {
+          created_at: string
+          criterion_id: string
+          id: string
+          judge_id: string
+          submission_id: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          criterion_id: string
+          id?: string
+          judge_id: string
+          submission_id: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          criterion_id?: string
+          id?: string
+          judge_id?: string
+          submission_id?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scores_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scores_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submissions: {
+        Row: {
+          category: string | null
+          created_at: string
+          deck_url: string | null
+          demo_url: string | null
+          description: string | null
+          event_id: string
+          id: string
+          repo_url: string | null
+          round_id: string | null
+          status: string
+          submitter_email: string | null
+          submitter_name: string | null
+          team_name: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          deck_url?: string | null
+          demo_url?: string | null
+          description?: string | null
+          event_id: string
+          id?: string
+          repo_url?: string | null
+          round_id?: string | null
+          status?: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+          team_name?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          deck_url?: string | null
+          demo_url?: string | null
+          description?: string | null
+          event_id?: string
+          id?: string
+          repo_url?: string | null
+          round_id?: string | null
+          status?: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+          team_name?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
