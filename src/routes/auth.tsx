@@ -113,7 +113,7 @@ function AuthPage() {
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
           <Link to="/" aria-label="EvalDesk home">
-            <PlpLogo className="h-8" />
+            <PlpLogo className="h-10" />
           </Link>
         </div>
       </header>
