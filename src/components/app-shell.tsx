@@ -6,12 +6,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, displayName, initials } from "@/hooks/use-auth";
 import { BrandLink, SiteFooter } from "@/components/brand";
 
-const nav = [
+const adminNav = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/events", label: "Events" },
   { to: "/submissions", label: "Submissions" },
   { to: "/judges", label: "Judges" },
   { to: "/analytics", label: "Analytics" },
+  { to: "/settings", label: "Settings" },
+] as const;
+
+const judgeNav = [
+  { to: "/judge", label: "My Dashboard" },
+  { to: "/scoring", label: "Scoring Queue" },
   { to: "/settings", label: "Settings" },
 ] as const;
 
@@ -23,6 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const name = displayName(user);
+  const nav = isAdmin ? adminNav : judgeNav;
 
   async function signOut() {
     await queryClient.cancelQueries();

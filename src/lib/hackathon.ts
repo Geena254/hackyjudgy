@@ -341,3 +341,239 @@ export function formatDate(value: string | null | undefined) {
     timeZone: "UTC",
   });
 }
+
+/* ----------------------------- admin mutations ---------------------------- */
+
+export function useSaveEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: Partial<EventRow> & { id?: string; name: string }) => {
+      const payload = {
+        name: input.name,
+        description: input.description ?? null,
+        starts_on: input.starts_on || null,
+        ends_on: input.ends_on || null,
+        status: input.status ?? "draft",
+      };
+      if (input.id) {
+        const { error } = await supabase.from("events").update(payload).eq("id", input.id);
+        if (error) throw error;
+        return input.id;
+      }
+      const { data, error } = await supabase
+        .from("events")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return (data as { id: string }).id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["events"] }),
+  });
+}
+
+export function useDeleteEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("events").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["events"] }),
+  });
+}
+
+export function useSaveRound() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id?: string;
+      event_id: string;
+      name: string;
+      phase: Phase;
+      deadline?: string | null;
+      submission_method?: string | null;
+      sort_order?: number;
+    }) => {
+      const payload = {
+        event_id: input.event_id,
+        name: input.name,
+        phase: input.phase,
+        deadline: input.deadline || null,
+        submission_method: input.submission_method || null,
+        sort_order: input.sort_order ?? 0,
+      };
+      if (input.id) {
+        const { error } = await supabase.from("rounds").update(payload).eq("id", input.id);
+        if (error) throw error;
+        return input.id;
+      }
+      const { data, error } = await supabase.from("rounds").insert(payload).select("id").single();
+      if (error) throw error;
+      return (data as { id: string }).id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["rounds"] }),
+  });
+}
+
+export function useDeleteRound() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("rounds").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rounds"] });
+      qc.invalidateQueries({ queryKey: ["criteria"] });
+    },
+  });
+}
+
+export function useSaveCriterion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id?: string;
+      round_id: string;
+      name: string;
+      description?: string | null;
+      weight: number;
+      max_score: number;
+      sort_order?: number;
+    }) => {
+      const payload = {
+        round_id: input.round_id,
+        name: input.name,
+        description: input.description ?? null,
+        weight: input.weight,
+        max_score: input.max_score,
+        sort_order: input.sort_order ?? 0,
+      };
+      if (input.id) {
+        const { error } = await supabase.from("criteria").update(payload).eq("id", input.id);
+        if (error) throw error;
+        return input.id;
+      }
+      const { data, error } = await supabase
+        .from("criteria")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return (data as { id: string }).id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["criteria"] }),
+  });
+}
+
+export function useDeleteCriterion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("criteria").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["criteria"] }),
+  });
+}
+
+export function useSaveSubmission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: Partial<SubmissionRow> & { event_id: string; title: string }) => {
+      const payload = {
+        event_id: input.event_id,
+        round_id: input.round_id || null,
+        title: input.title,
+        team_name: input.team_name || null,
+        category: input.category || null,
+        description: input.description || null,
+        submitter_name: input.submitter_name || null,
+        submitter_email: input.submitter_email || null,
+        repo_url: input.repo_url || null,
+        demo_url: input.demo_url || null,
+        deck_url: input.deck_url || null,
+        status: input.status ?? "submitted",
+      };
+      if (input.id) {
+        const { error } = await supabase.from("submissions").update(payload).eq("id", input.id);
+        if (error) throw error;
+        return input.id;
+      }
+      const { data, error } = await supabase
+        .from("submissions")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return (data as { id: string }).id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["submissions"] }),
+  });
+}
+
+export function useDeleteSubmission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("submissions").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["submissions"] }),
+  });
+}
+
+/* ------------------------------ public reads ------------------------------ */
+
+/** The currently active (published) event — readable without signing in. */
+export function useActiveEvent() {
+  return useQuery({
+    queryKey: ["active-event"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return ((data ?? [])[0] ?? null) as EventRow | null;
+    },
+  });
+}
+
+/** Insert a participant's own submission into the active event. */
+export function useSubmitProject() {
+  return useMutation({
+    mutationFn: async (input: {
+      event_id: string;
+      round_id?: string | null;
+      title: string;
+      team_name?: string;
+      category?: string;
+      description?: string;
+      submitter_name?: string;
+      submitter_email?: string;
+      repo_url?: string;
+      demo_url?: string;
+      deck_url?: string;
+    }) => {
+      const { error } = await supabase.from("submissions").insert({
+        event_id: input.event_id,
+        round_id: input.round_id || null,
+        title: input.title,
+        team_name: input.team_name || null,
+        category: input.category || null,
+        description: input.description || null,
+        submitter_name: input.submitter_name || null,
+        submitter_email: input.submitter_email || null,
+        repo_url: input.repo_url || null,
+        demo_url: input.demo_url || null,
+        deck_url: input.deck_url || null,
+        status: "submitted",
+      });
+      if (error) throw error;
+    },
+  });
+}
