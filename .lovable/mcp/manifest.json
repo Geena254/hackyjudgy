@@ -12,7 +12,7 @@
   "mcp": {
     "server": {
       "name": "evaldesk-insights",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "title": "EvalDesk Insights"
     },
     "tools": [
@@ -167,6 +167,36 @@
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "export_submission_results",
+        "title": "Export submission results",
+        "description": "Export one submission's final results as structured JSON: weighted final score, rank within its event, per-criterion averages and judge feedback. Admins see every judge's data; judges see their own.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "submission_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The submission whose results to export."
+            },
+            "include_criteria_breakdown": {
+              "description": "Include the per-criterion averages (default true).",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "submission_id"
+          ]
         },
         "outputSchema": null
       }
