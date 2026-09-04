@@ -97,7 +97,8 @@ function Consent() {
           <Button disabled={busy} onClick={() => decide(true)}>
             Approve
           </Button>
-          <Button variant="secondary" disabled={busy} onClick={() => decide(false)}>
+          <Button variant="outline" disabled={busy} onClick={() => decide(false)}>
+
             Deny
           </Button>
         </div>
