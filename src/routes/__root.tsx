@@ -84,6 +84,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Run hackathon judging end to end: rounds, rubrics, blind judging and live scoring." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "google-site-verification", content: "fCpbgyXk8qP6n0VcvPPTC6GSeL6umgGmBWAABzhAVws" },
+
       
     ],
     links: [
