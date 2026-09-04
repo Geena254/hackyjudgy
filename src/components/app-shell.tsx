@@ -25,11 +25,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, ready } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const name = displayName(user);
-  const nav = isAdmin ? adminNav : judgeNav;
+  const nav = !ready ? [] : isAdmin ? adminNav : judgeNav;
 
   async function signOut() {
     await queryClient.cancelQueries();
