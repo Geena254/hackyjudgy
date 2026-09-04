@@ -7,6 +7,14 @@ import { Card, Button } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+    const raw = s.next;
+    const safe =
+      typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined;
+    return safe ? { next: safe } : {};
+  },
+
+
   head: () => ({
     meta: [
       { title: "Sign in — EvalDesk by Power Learn Project" },
@@ -47,6 +55,7 @@ function Field({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,11 +64,18 @@ function AuthPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  const goNext = () => {
+    if (next) window.location.href = next;
+    else navigate({ to: "/dashboard" });
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (!data.session) return;
+      if (next) window.location.href = next;
+      else navigate({ to: "/dashboard" });
     });
-  }, [navigate]);
+  }, [navigate, next]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,13 +88,13 @@ function AuthPage() {
           email: email.trim(),
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}${next ?? "/dashboard"}`,
             data: { full_name: name.trim() },
           },
         });
         if (error) throw error;
         const { data } = await supabase.auth.getSession();
-        if (data.session) navigate({ to: "/dashboard" });
+        if (data.session) goNext();
         else setMsg("Check your inbox to confirm your email, then sign in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -86,7 +102,7 @@ function AuthPage() {
           password,
         });
         if (error) throw error;
-        navigate({ to: "/dashboard" });
+        goNext();
       }
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : "Something went wrong.");
@@ -98,15 +114,16 @@ function AuthPage() {
   async function google() {
     setErr(null);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}${next ?? ""}`,
     });
     if (result.error) {
       setErr("Google sign-in failed. Please try again.");
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    goNext();
   }
+
 
   return (
     <div className="flex min-h-screen flex-col bg-surface">
