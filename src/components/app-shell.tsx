@@ -12,7 +12,9 @@ const adminNav = [
   { to: "/submissions", label: "Submissions" },
   { to: "/judges", label: "Judges" },
   { to: "/analytics", label: "Analytics" },
+  { to: "/integrations", label: "Integrations" },
   { to: "/settings", label: "Settings" },
+
 ] as const;
 
 const judgeNav = [

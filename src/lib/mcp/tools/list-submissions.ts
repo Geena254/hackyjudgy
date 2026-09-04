@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser, unauthenticated } from "../supabase";
+import { authorize } from "../guard";
+import { databaseError, toolSuccess } from "../errors";
 
 export default defineTool({
   name: "list_submissions",
@@ -17,19 +18,25 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ event_id, status }, ctx) => {
-    if (!ctx.isAuthenticated()) return unauthenticated();
-    const supabase = supabaseForUser(ctx);
-    let query = supabase
+    const gate = await authorize(ctx, "list_submissions");
+    if (!gate.ok) return gate.result;
+
+    let query = gate.supabase
       .from("submissions")
-      .select("id, title, team_name, category, description, status, repo_url, demo_url, deck_url, round_id")
+      .select(
+        "id, title, team_name, category, description, status, repo_url, demo_url, deck_url, round_id",
+      )
       .eq("event_id", event_id)
       .order("created_at", { ascending: false });
     if (status) query = query.eq("status", status);
+
     const { data, error } = await query;
-    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    return {
-      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
-      structuredContent: { submissions: data ?? [] },
-    };
+    if (error) {
+      await gate.finish({ ok: false, code: "DATABASE_ERROR" });
+      return databaseError(error, "read the submissions for this event");
+    }
+
+    await gate.finish({ ok: true });
+    return toolSuccess({ event_id, count: data?.length ?? 0, submissions: data ?? [] });
   },
 });

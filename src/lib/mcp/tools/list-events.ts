@@ -1,5 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { supabaseForUser, unauthenticated } from "../supabase";
+import { authorize } from "../guard";
+import { databaseError, toolSuccess } from "../errors";
 
 export default defineTool({
   name: "list_events",
@@ -9,16 +10,19 @@ export default defineTool({
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
-    if (!ctx.isAuthenticated()) return unauthenticated();
-    const supabase = supabaseForUser(ctx);
-    const { data, error } = await supabase
+    const gate = await authorize(ctx, "list_events");
+    if (!gate.ok) return gate.result;
+
+    const { data, error } = await gate.supabase
       .from("events")
       .select("id, name, description, status, starts_on, ends_on")
       .order("created_at", { ascending: false });
-    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    return {
-      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
-      structuredContent: { events: data ?? [] },
-    };
+    if (error) {
+      await gate.finish({ ok: false, code: "DATABASE_ERROR" });
+      return databaseError(error, "read the events");
+    }
+
+    await gate.finish({ ok: true });
+    return toolSuccess({ events: data ?? [] });
   },
 });
