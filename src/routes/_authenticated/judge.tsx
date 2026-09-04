@@ -90,6 +90,7 @@ function JudgeHome() {
         </div>
         <Link
           to="/scoring"
+          search={{ id: undefined }}
           className="inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-white"
           style={{ background: "var(--teal)" }}
         >

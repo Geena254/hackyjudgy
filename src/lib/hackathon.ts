@@ -272,7 +272,13 @@ export function useSaveReview(judgeId: string | undefined) {
       completed?: boolean;
     }) => {
       if (!judgeId) throw new Error("Not signed in");
-      const payload: Record<string, unknown> = {
+      const payload: {
+        submission_id: string;
+        judge_id: string;
+        feedback?: string;
+        private_notes?: string;
+        completed?: boolean;
+      } = {
         submission_id: input.submissionId,
         judge_id: judgeId,
       };
