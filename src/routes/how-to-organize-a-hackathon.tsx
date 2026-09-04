@@ -233,14 +233,7 @@ function GuidePage() {
         </article>
       </main>
 
-      <footer className="border-t border-border bg-surface">
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-4 py-10 sm:px-6">
-          <PowerCommunityMark className="h-8" />
-          <p className="text-xs text-muted-foreground">
-            EvalDesk — judging and scoring for Power Learn Project hackathons.
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
