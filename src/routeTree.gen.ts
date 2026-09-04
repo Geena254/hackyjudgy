@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubmitRouteImport } from './routes/submit'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as HowToOrganizeAHackathonRouteImport } from './routes/how-to-organize-a-hackathon'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,11 @@ const SubmitRoute = SubmitRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowToOrganizeAHackathonRoute = HowToOrganizeAHackathonRouteImport.update({
+  id: '/how-to-organize-a-hackathon',
+  path: '/how-to-organize-a-hackathon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -98,6 +104,7 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit': typeof SubmitRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit': typeof SubmitRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit': typeof SubmitRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/how-to-organize-a-hackathon'
     | '/sitemap.xml'
     | '/submit'
     | '/analytics'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/how-to-organize-a-hackathon'
     | '/sitemap.xml'
     | '/submit'
     | '/analytics'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/how-to-organize-a-hackathon'
     | '/sitemap.xml'
     | '/submit'
     | '/_authenticated/analytics'
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  HowToOrganizeAHackathonRoute: typeof HowToOrganizeAHackathonRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SubmitRoute: typeof SubmitRoute
 }
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-to-organize-a-hackathon': {
+      id: '/how-to-organize-a-hackathon'
+      path: '/how-to-organize-a-hackathon'
+      fullPath: '/how-to-organize-a-hackathon'
+      preLoaderRoute: typeof HowToOrganizeAHackathonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -333,6 +353,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  HowToOrganizeAHackathonRoute: HowToOrganizeAHackathonRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SubmitRoute: SubmitRoute,
 }
