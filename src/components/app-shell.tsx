@@ -18,6 +18,7 @@ const adminNav = [
 const judgeNav = [
   { to: "/judge", label: "My Dashboard" },
   { to: "/scoring", label: "Scoring Queue" },
+  { to: "/results", label: "Results" },
   { to: "/settings", label: "Settings" },
 ] as const;
 

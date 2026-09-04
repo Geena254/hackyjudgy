@@ -11,12 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubmitRouteImport } from './routes/submit'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as HowToOrganizeAHackathonRouteImport } from './routes/how-to-organize-a-hackathon'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSubmissionsRouteImport } from './routes/_authenticated/submissions'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedScoringRouteImport } from './routes/_authenticated/scoring'
+import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated/results'
 import { Route as AuthenticatedJudgesRouteImport } from './routes/_authenticated/judges'
 import { Route as AuthenticatedJudgeRouteImport } from './routes/_authenticated/judge'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
@@ -31,6 +33,11 @@ const SubmitRoute = SubmitRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowToOrganizeAHackathonRoute = HowToOrganizeAHackathonRouteImport.update({
+  id: '/how-to-organize-a-hackathon',
+  path: '/how-to-organize-a-hackathon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -63,6 +70,11 @@ const AuthenticatedScoringRoute = AuthenticatedScoringRouteImport.update({
   path: '/scoring',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedJudgesRoute = AuthenticatedJudgesRouteImport.update({
   id: '/judges',
   path: '/judges',
@@ -92,6 +104,7 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit': typeof SubmitRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -99,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof AuthenticatedEventsRoute
   '/judge': typeof AuthenticatedJudgeRoute
   '/judges': typeof AuthenticatedJudgesRoute
+  '/results': typeof AuthenticatedResultsRoute
   '/scoring': typeof AuthenticatedScoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
@@ -106,6 +120,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit': typeof SubmitRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
@@ -113,6 +128,7 @@ export interface FileRoutesByTo {
   '/events': typeof AuthenticatedEventsRoute
   '/judge': typeof AuthenticatedJudgeRoute
   '/judges': typeof AuthenticatedJudgesRoute
+  '/results': typeof AuthenticatedResultsRoute
   '/scoring': typeof AuthenticatedScoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
@@ -122,6 +138,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/submit': typeof SubmitRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
@@ -129,6 +146,7 @@ export interface FileRoutesById {
   '/_authenticated/events': typeof AuthenticatedEventsRoute
   '/_authenticated/judge': typeof AuthenticatedJudgeRoute
   '/_authenticated/judges': typeof AuthenticatedJudgesRoute
+  '/_authenticated/results': typeof AuthenticatedResultsRoute
   '/_authenticated/scoring': typeof AuthenticatedScoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/submissions': typeof AuthenticatedSubmissionsRoute
@@ -138,6 +156,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/how-to-organize-a-hackathon'
     | '/sitemap.xml'
     | '/submit'
     | '/analytics'
@@ -145,6 +164,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/judge'
     | '/judges'
+    | '/results'
     | '/scoring'
     | '/settings'
     | '/submissions'
@@ -152,6 +172,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/how-to-organize-a-hackathon'
     | '/sitemap.xml'
     | '/submit'
     | '/analytics'
@@ -159,6 +180,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/judge'
     | '/judges'
+    | '/results'
     | '/scoring'
     | '/settings'
     | '/submissions'
@@ -167,6 +189,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/how-to-organize-a-hackathon'
     | '/sitemap.xml'
     | '/submit'
     | '/_authenticated/analytics'
@@ -174,6 +197,7 @@ export interface FileRouteTypes {
     | '/_authenticated/events'
     | '/_authenticated/judge'
     | '/_authenticated/judges'
+    | '/_authenticated/results'
     | '/_authenticated/scoring'
     | '/_authenticated/settings'
     | '/_authenticated/submissions'
@@ -183,6 +207,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  HowToOrganizeAHackathonRoute: typeof HowToOrganizeAHackathonRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SubmitRoute: typeof SubmitRoute
 }
@@ -201,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-to-organize-a-hackathon': {
+      id: '/how-to-organize-a-hackathon'
+      path: '/how-to-organize-a-hackathon'
+      fullPath: '/how-to-organize-a-hackathon'
+      preLoaderRoute: typeof HowToOrganizeAHackathonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -243,6 +275,13 @@ declare module '@tanstack/react-router' {
       path: '/scoring'
       fullPath: '/scoring'
       preLoaderRoute: typeof AuthenticatedScoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/results': {
+      id: '/_authenticated/results'
+      path: '/results'
+      fullPath: '/results'
+      preLoaderRoute: typeof AuthenticatedResultsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/judges': {
@@ -289,6 +328,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRoute
   AuthenticatedJudgeRoute: typeof AuthenticatedJudgeRoute
   AuthenticatedJudgesRoute: typeof AuthenticatedJudgesRoute
+  AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
   AuthenticatedScoringRoute: typeof AuthenticatedScoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSubmissionsRoute: typeof AuthenticatedSubmissionsRoute
@@ -300,6 +340,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEventsRoute: AuthenticatedEventsRoute,
   AuthenticatedJudgeRoute: AuthenticatedJudgeRoute,
   AuthenticatedJudgesRoute: AuthenticatedJudgesRoute,
+  AuthenticatedResultsRoute: AuthenticatedResultsRoute,
   AuthenticatedScoringRoute: AuthenticatedScoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSubmissionsRoute: AuthenticatedSubmissionsRoute,
@@ -312,6 +353,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  HowToOrganizeAHackathonRoute: HowToOrganizeAHackathonRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SubmitRoute: SubmitRoute,
 }
