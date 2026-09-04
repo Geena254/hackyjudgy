@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser, unauthenticated } from "../supabase";
+import { authorize } from "../guard";
+import { databaseError, notFoundError, toolSuccess } from "../errors";
 
 export default defineTool({
   name: "score_submission",
@@ -19,42 +20,70 @@ export default defineTool({
       .min(1)
       .describe("One entry per rubric criterion, using that criterion's scale."),
     feedback: z.string().trim().max(4000).optional().describe("Feedback shared with organisers."),
-    private_notes: z.string().trim().max(4000).optional().describe("Notes visible only to this judge."),
+    private_notes: z
+      .string()
+      .trim()
+      .max(4000)
+      .optional()
+      .describe("Notes visible only to this judge."),
     completed: z.boolean().optional().describe("Mark this review as finished."),
   },
-  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   handler: async ({ submission_id, scores, feedback, private_notes, completed }, ctx) => {
-    if (!ctx.isAuthenticated()) return unauthenticated();
-    const judgeId = ctx.getUserId();
-    if (!judgeId) return unauthenticated();
-    const supabase = supabaseForUser(ctx);
+    const gate = await authorize(ctx, "score_submission");
+    if (!gate.ok) return gate.result;
 
-    const { error: scoreError } = await supabase.from("scores").upsert(
+    const { data: submission, error: submissionError } = await gate.supabase
+      .from("submissions")
+      .select("id, title")
+      .eq("id", submission_id)
+      .maybeSingle();
+    if (submissionError) {
+      await gate.finish({ ok: false, code: "DATABASE_ERROR" });
+      return databaseError(submissionError, "look up this submission");
+    }
+    if (!submission) {
+      await gate.finish({ ok: false, code: "NOT_FOUND" });
+      return notFoundError("That submission");
+    }
+
+    const { error: scoreError } = await gate.supabase.from("scores").upsert(
       scores.map((s) => ({
         submission_id,
         criterion_id: s.criterion_id,
-        judge_id: judgeId,
+        judge_id: gate.userId,
         value: s.value,
       })),
       { onConflict: "submission_id,criterion_id,judge_id" },
     );
-    if (scoreError) return { content: [{ type: "text", text: scoreError.message }], isError: true };
+    if (scoreError) {
+      await gate.finish({ ok: false, code: "DATABASE_ERROR" });
+      return databaseError(scoreError, "save your scores");
+    }
 
     if (feedback !== undefined || private_notes !== undefined || completed !== undefined) {
-      const review: Record<string, unknown> = { submission_id, judge_id: judgeId };
+      const review: Record<string, unknown> = { submission_id, judge_id: gate.userId };
       if (feedback !== undefined) review.feedback = feedback;
       if (private_notes !== undefined) review.private_notes = private_notes;
       if (completed !== undefined) review.completed = completed;
-      const { error: reviewError } = await supabase
+      const { error: reviewError } = await gate.supabase
         .from("reviews")
-        .upsert(review, { onConflict: "submission_id,judge_id" });
-      if (reviewError)
-        return { content: [{ type: "text", text: reviewError.message }], isError: true };
+        .upsert(review as never, { onConflict: "submission_id,judge_id" });
+      if (reviewError) {
+        await gate.finish({ ok: false, code: "DATABASE_ERROR" });
+        return databaseError(reviewError, "save your feedback");
+      }
     }
 
-    return {
-      content: [{ type: "text", text: `Saved ${scores.length} score(s) for submission ${submission_id}.` }],
-      structuredContent: { submission_id, saved: scores.length },
-    };
+    await gate.finish({ ok: true });
+    return toolSuccess(
+      { submission_id, submission_title: submission.title, saved: scores.length },
+      `Saved ${scores.length} score(s) for "${submission.title}".`,
+    );
   },
 });

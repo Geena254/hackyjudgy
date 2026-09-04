@@ -1,40 +1,46 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser, unauthenticated } from "../supabase";
+import { authorize } from "../guard";
+import { databaseError, notFoundError, toolSuccess } from "../errors";
 
 export default defineTool({
   name: "get_rubric",
   title: "Get event rubric",
-  description:
-    "Get the rounds of an event with their judging criteria, weights and maximum scores.",
+  description: "Get the rounds of an event with their judging criteria, weights and maximum scores.",
   inputSchema: { event_id: z.string().uuid().describe("The event to read the rubric for.") },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ event_id }, ctx) => {
-    if (!ctx.isAuthenticated()) return unauthenticated();
-    const supabase = supabaseForUser(ctx);
-    const { data: rounds, error: roundsError } = await supabase
+    const gate = await authorize(ctx, "get_rubric");
+    if (!gate.ok) return gate.result;
+
+    const { data: rounds, error: roundsError } = await gate.supabase
       .from("rounds")
       .select("id, name, phase, deadline, submission_method, sort_order")
       .eq("event_id", event_id)
       .order("sort_order");
-    if (roundsError)
-      return { content: [{ type: "text", text: roundsError.message }], isError: true };
-    const roundIds = (rounds ?? []).map((r) => r.id);
-    let criteria: Record<string, unknown>[] = [];
-    if (roundIds.length > 0) {
-      const { data, error } = await supabase
-        .from("criteria")
-        .select("id, round_id, name, description, weight, max_score, sort_order")
-        .in("round_id", roundIds)
-        .order("sort_order");
-      if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-      criteria = (data ?? []) as Record<string, unknown>[];
+    if (roundsError) {
+      await gate.finish({ ok: false, code: "DATABASE_ERROR" });
+      return databaseError(roundsError, "read the event rounds");
     }
-    const payload = { rounds: (rounds ?? []) as Record<string, unknown>[], criteria };
+    if (!rounds || rounds.length === 0) {
+      await gate.finish({ ok: false, code: "NOT_FOUND" });
+      return notFoundError("A rubric for this event");
+    }
 
-    return {
-      content: [{ type: "text", text: JSON.stringify(payload) }],
-    };
+    const { data: criteria, error: criteriaError } = await gate.supabase
+      .from("criteria")
+      .select("id, round_id, name, description, weight, max_score, sort_order")
+      .in(
+        "round_id",
+        rounds.map((r) => r.id),
+      )
+      .order("sort_order");
+    if (criteriaError) {
+      await gate.finish({ ok: false, code: "DATABASE_ERROR" });
+      return databaseError(criteriaError, "read the rubric criteria");
+    }
 
+    await gate.finish({ ok: true });
+    return toolSuccess({ event_id, rounds, criteria: criteria ?? [] });
   },
 });
