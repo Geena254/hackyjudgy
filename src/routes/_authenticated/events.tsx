@@ -1,598 +1,632 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  UploadCloud,
-  Settings as SettingsIcon,
-  Users,
   ClipboardList,
   FileText,
+  Plus,
+  Settings as SettingsIcon,
   Trash2,
-  X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
-import { rounds as seedRounds, type RoundCfg } from "@/lib/eval-data";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  useEvents,
+  useRounds,
+  useCriteria,
+  useSaveEvent,
+  useDeleteEvent,
+  useSaveRound,
+  useDeleteRound,
+  useSaveCriterion,
+  useDeleteCriterion,
+  PHASES,
+  formatDate,
+  type EventRow,
+  type Phase,
+  type RoundRow,
+} from "@/lib/hackathon";
 
 export const Route = createFileRoute("/_authenticated/events")({
   head: () => ({
     meta: [
-      { title: "Event Setup — EvalDesk" },
-      { name: "description", content: "Configure event details, rounds, judges, and rubric." },
+      { title: "Hackathon Setup — EvalDesk" },
+      {
+        name: "description",
+        content:
+          "Create hackathons, publish them for entries, and configure rounds with their own weighted rubric criteria.",
+      },
+      { property: "og:title", content: "Hackathon Setup — EvalDesk" },
+      { property: "og:description", content: "Set up events, rounds and rubrics." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: EventSetup,
 });
 
-type Tab = "details" | "rounds" | "judges" | "rubric";
+type Tab = "details" | "rounds" | "rubric";
 
-const tabs: { id: Tab; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }[] = [
-  { id: "details", label: "Event Details", icon: FileText },
+const tabs: { id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "details", label: "Hackathon details", icon: FileText },
   { id: "rounds", label: "Rounds", icon: ClipboardList },
-  { id: "judges", label: "Judges", icon: Users },
   { id: "rubric", label: "Rubric", icon: SettingsIcon },
 ];
 
-const PHASES: RoundCfg["phase"][] = ["Submissions", "Judging", "Results"];
+const statusTone = (s: string) => (s === "active" ? "teal" : s === "closed" ? "gray" : "magenta");
 
-interface RoundConfig extends RoundCfg {
-  criteria: { id: string; name: string; weight: number }[];
+function Text({
+  label,
+  ...rest
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
+      <input
+        {...rest}
+        className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
+      />
+    </label>
+  );
 }
 
-const seedConfig: RoundConfig[] = seedRounds.map((r) => ({
-  ...r,
-  criteria: [
-    { id: `${r.id}-c1`, name: "Originality", weight: 25 },
-    { id: `${r.id}-c2`, name: "Feasibility", weight: 25 },
-    { id: `${r.id}-c3`, name: "User Experience", weight: 25 },
-    { id: `${r.id}-c4`, name: "Impact & Scale", weight: 25 },
-  ],
-}));
-
 function EventSetup() {
-  const [tab, setTab] = useState<Tab>("rounds");
+  const { isAdmin, loading } = useAuth();
+  const [tab, setTab] = useState<Tab>("details");
+  const { data: events = [] } = useEvents();
+  const [eventId, setEventId] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (!eventId && events.length > 0) setEventId(events[0]!.id);
+  }, [events, eventId]);
+
+  const event = events.find((e) => e.id === eventId);
+
+  if (!loading && !isAdmin) {
+    return (
+      <AppShell>
+        <Card className="p-8 text-sm text-muted-foreground">
+          Only event organisers can configure hackathons.
+        </Card>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
-      <div className="mb-6">
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Event setup
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Organiser
+          </div>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Hackathon setup</h1>
         </div>
-        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">TechHack 2026</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={eventId ?? ""}
+            onChange={(e) => setEventId(e.target.value || undefined)}
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          >
+            {events.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+              </option>
+            ))}
+            {events.length === 0 && <option value="">No hackathons yet</option>}
+          </select>
+          <Button variant="outline" tone="teal" onClick={() => setEventId(undefined)}>
+            <Plus className="h-4 w-4" /> New hackathon
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <Card className="h-fit p-2">
-          <nav className="flex flex-row gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+          <nav className="flex flex-row gap-1 lg:flex-col">
             {tabs.map((t) => {
               const active = tab === t.id;
-              const Icon = t.icon;
               return (
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={
-                    "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors " +
-                    (active ? "bg-teal-soft" : "text-muted-foreground hover:bg-muted hover:text-foreground")
+                  className="flex flex-1 items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium"
+                  style={
+                    active
+                      ? { background: "var(--teal-soft)", color: "var(--teal)" }
+                      : { color: "var(--muted-foreground)" }
                   }
-                  style={active ? { color: "var(--teal)" } : undefined}
                 >
-                  <Icon className="h-4 w-4" strokeWidth={2} />
-                  {t.label}
+                  <t.icon className="h-4 w-4" />
+                  <span className="truncate">{t.label}</span>
                 </button>
               );
             })}
           </nav>
         </Card>
 
-        <div className="min-w-0">
-          {tab === "details" && <DetailsTab />}
-          {tab === "rounds" && <RoundsTab />}
-          {tab === "judges" && <JudgesTab />}
-          {tab === "rubric" && <RubricTab />}
+        <div className="min-w-0 space-y-6">
+          {tab === "details" && (
+            <DetailsTab event={event} onCreated={(id) => setEventId(id)} />
+          )}
+          {tab !== "details" && !event && (
+            <Card className="p-8 text-sm text-muted-foreground">
+              Create a hackathon first, then add its rounds and rubric.
+            </Card>
+          )}
+          {tab === "rounds" && event && <RoundsTab event={event} />}
+          {tab === "rubric" && event && <RubricTab event={event} />}
         </div>
       </div>
     </AppShell>
   );
 }
 
-function DetailsTab() {
-  const [name, setName] = useState("TechHack 2026");
-  const [desc, setDesc] = useState(
-    "A 72-hour hackathon for students and early-career builders, judged across innovation, feasibility, UX, and impact.",
-  );
-  const [teal, setTeal] = useState("#00A69E");
-  const [magenta, setMagenta] = useState("#C41E69");
+function DetailsTab({
+  event,
+  onCreated,
+}: {
+  event: EventRow | undefined;
+  onCreated: (id: string) => void;
+}) {
+  const save = useSaveEvent();
+  const remove = useDeleteEvent();
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    starts_on: "",
+    ends_on: "",
+    status: "draft" as EventRow["status"],
+  });
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setForm({
+      name: event?.name ?? "",
+      description: event?.description ?? "",
+      starts_on: event?.starts_on ?? "",
+      ends_on: event?.ends_on ?? "",
+      status: event?.status ?? "draft",
+    });
+  }, [event?.id, event?.name, event?.description, event?.starts_on, event?.ends_on, event?.status]);
+
+  async function submit(status?: EventRow["status"]) {
+    const next = { ...form, status: status ?? form.status };
+    setForm(next);
+    const id = await save.mutateAsync({ id: event?.id, ...next });
+    if (!event) onCreated(id);
+    setNotice(status === "active" ? "Hackathon published — it now accepts entries." : "Saved.");
+  }
 
   return (
     <Card className="p-6">
-      <h2 className="text-lg font-semibold text-foreground">Event details</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Define the basics — name, description, branding.
-      </p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold text-foreground">
+          {event ? "Edit hackathon" : "New hackathon"}
+        </h2>
+        {event && <Pill tone={statusTone(event.status)}>{event.status}</Pill>}
+      </div>
 
-      <div className="mt-6 space-y-5">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Event name</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--teal)] focus:ring-2 focus:ring-[color:var(--teal)]/20"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Description</label>
+      <div className="space-y-4">
+        <Text
+          label="Hackathon name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          placeholder="e.g. PLP Climate Hack 2026"
+        />
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-foreground">Description</span>
           <textarea
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            rows={4}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--teal)] focus:ring-2 focus:ring-[color:var(--teal)]/20"
+            rows={5}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Theme, who can enter, prizes and what participants must submit."
+            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
+          />
+        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Text
+            label="Starts on"
+            type="date"
+            value={form.starts_on}
+            onChange={(e) => setForm({ ...form, starts_on: e.target.value })}
+          />
+          <Text
+            label="Ends on"
+            type="date"
+            value={form.ends_on}
+            onChange={(e) => setForm({ ...form, ends_on: e.target.value })}
           />
         </div>
+        <label className="block sm:max-w-xs">
+          <span className="mb-1.5 block text-sm font-medium text-foreground">Status</span>
+          <select
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value as EventRow["status"] })}
+            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm"
+          >
+            <option value="draft">Draft (hidden)</option>
+            <option value="active">Published (open for entries)</option>
+            <option value="closed">Closed</option>
+          </select>
+        </label>
+      </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Logo upload</label>
-          <div className="flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-surface px-4 py-8 text-center">
-            <span className="flex items-center">
-              <span className="inline-block h-8 w-8 rounded-md" style={{ background: teal }} />
-              <span
-                className="-ml-2 inline-block h-8 w-8 rounded-md"
-                style={{ background: magenta }}
-              />
-            </span>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <UploadCloud className="h-4 w-4" strokeWidth={2} />
-              Drop SVG or PNG, or
-              <button className="font-semibold" style={{ color: "var(--teal)" }}>
-                browse
-              </button>
-            </div>
-          </div>
-        </div>
+      {notice && (
+        <p className="mt-4 text-sm" style={{ color: "var(--teal)" }}>
+          {notice}
+        </p>
+      )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">
-              Primary teal
-            </label>
-            <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
-              <input
-                type="color"
-                value={teal}
-                onChange={(e) => setTeal(e.target.value)}
-                className="h-8 w-10 cursor-pointer rounded border border-border bg-transparent"
-              />
-              <span className="text-sm font-mono text-foreground">{teal.toUpperCase()}</span>
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">
-              Primary magenta
-            </label>
-            <div className="flex items-center gap-3 rounded-md border border-border px-3 py-2">
-              <input
-                type="color"
-                value={magenta}
-                onChange={(e) => setMagenta(e.target.value)}
-                className="h-8 w-10 cursor-pointer rounded border border-border bg-transparent"
-              />
-              <span className="text-sm font-mono text-foreground">{magenta.toUpperCase()}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end pt-2">
-          <Button variant="primary" tone="teal">Save changes</Button>
-        </div>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Button
+          variant="primary"
+          tone="teal"
+          disabled={!form.name || save.isPending}
+          onClick={() => submit()}
+        >
+          {event ? "Save changes" : "Create hackathon"}
+        </Button>
+        {event && event.status !== "active" && (
+          <Button variant="outline" tone="teal" onClick={() => submit("active")}>
+            Publish
+          </Button>
+        )}
+        {event && (
+          <Button
+            variant="ghost"
+            tone="magenta"
+            onClick={() => {
+              if (confirm(`Delete "${event.name}" and all its rounds and entries?`))
+                remove.mutate(event.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4" /> Delete
+          </Button>
+        )}
       </div>
     </Card>
   );
 }
 
-function RoundsTab() {
-  const [rounds, setRounds] = useState<RoundConfig[]>(seedConfig);
-  const [expanded, setExpanded] = useState<string | null>("r2");
-  const [creating, setCreating] = useState(false);
+function RoundsTab({ event }: { event: EventRow }) {
+  const { data: rounds = [] } = useRounds(event.id);
+  const saveRound = useSaveRound();
+  const removeRound = useDeleteRound();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [phase, setPhase] = useState<Phase>("submissions");
+  const [deadline, setDeadline] = useState("");
+  const [method, setMethod] = useState("");
 
-  const addRound = (r: RoundConfig) => {
-    setRounds((prev) => [...prev, r]);
-    setExpanded(r.id);
-    setCreating(false);
-  };
-
-  const updateRound = (id: string, patch: Partial<RoundConfig>) =>
-    setRounds((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-
-  const removeRound = (id: string) =>
-    setRounds((prev) => prev.filter((r) => r.id !== id));
+  async function add() {
+    if (!name) return;
+    await saveRound.mutateAsync({
+      event_id: event.id,
+      name,
+      phase,
+      deadline,
+      submission_method: method,
+      sort_order: rounds.length,
+    });
+    setName("");
+    setDeadline("");
+    setMethod("");
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Rounds</h2>
-          <p className="text-sm text-muted-foreground">
-            {rounds.length} round{rounds.length === 1 ? "" : "s"} configured
-          </p>
+    <>
+      <Card className="p-6">
+        <h2 className="text-lg font-bold text-foreground">Add a round</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Text
+            label="Round name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Round 1 — Screening"
+          />
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-foreground">Phase</span>
+            <select
+              value={phase}
+              onChange={(e) => setPhase(e.target.value as Phase)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm"
+            >
+              {PHASES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Text
+            label="Deadline"
+            type="date"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+          />
+          <Text
+            label="Submission method"
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            placeholder="e.g. Repo link + 3-min demo video"
+          />
         </div>
-        <Button variant="primary" tone="teal" onClick={() => setCreating(true)}>
-          <Plus className="h-4 w-4" strokeWidth={2} /> Add Round
-        </Button>
-      </div>
+        <div className="mt-4">
+          <Button variant="primary" tone="teal" onClick={add} disabled={!name || saveRound.isPending}>
+            <Plus className="h-4 w-4" /> Add round
+          </Button>
+        </div>
+      </Card>
 
-      {creating && (
-        <NewRoundForm
-          existingCount={rounds.length}
-          onCancel={() => setCreating(false)}
-          onCreate={addRound}
-        />
-      )}
-
-      {rounds.map((r) => {
-        const open = expanded === r.id;
-        return (
-          <Card key={r.id} className="p-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-base font-bold" style={{ color: "var(--teal)" }}>
-                    {r.name}
-                  </h3>
-                  <Pill tone="teal" variant="outline">{r.phase}</Pill>
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">{r.deadline}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  <Pill tone="magenta">{r.method}</Pill>
-                  <Pill tone="gray" variant="outline">
-                    {r.criteria.length} criteria
-                  </Pill>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => removeRound(r.id)}
-                  className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-[color:var(--magenta)]"
-                  aria-label="Delete round"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setExpanded(open ? null : r.id)}
-                  className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground hover:bg-muted"
-                  aria-label={open ? "Collapse" : "Expand"}
-                >
-                  {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </button>
+      {rounds.map((r) => (
+        <Card key={r.id} className="p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-foreground">{r.name}</h3>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <Pill tone={r.phase === "judging" ? "teal" : "gray"}>{r.phase}</Pill>
+                <span>Deadline {formatDate(r.deadline)}</span>
+                {r.submission_method && <span>· {r.submission_method}</span>}
               </div>
             </div>
-
-            {open && (
-              <div className="mt-5 space-y-5 border-t border-border pt-5">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-foreground">
-                      Round name
-                    </label>
-                    <input
-                      value={r.name}
-                      onChange={(e) => updateRound(r.id, { name: e.target.value })}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--teal)]"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-foreground">
-                      Phase
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {PHASES.map((p) => {
-                        const active = r.phase === p;
-                        return (
-                          <button
-                            key={p}
-                            onClick={() => updateRound(r.id, { phase: p })}
-                            className="rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors"
-                            style={
-                              active
-                                ? { background: "var(--teal)", borderColor: "var(--teal)", color: "#fff" }
-                                : { borderColor: "var(--border)", color: "var(--foreground)" }
-                            }
-                          >
-                            {p}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-foreground">
-                      Deadline
-                    </label>
-                    <input
-                      value={r.deadline}
-                      onChange={(e) => updateRound(r.id, { deadline: e.target.value })}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--teal)]"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-foreground">
-                      Submission method
-                    </label>
-                    <input
-                      value={r.method}
-                      onChange={(e) => updateRound(r.id, { method: e.target.value })}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--teal)]"
-                    />
-                  </div>
-                </div>
-
-                <CriteriaEditor
-                  criteria={r.criteria}
-                  onChange={(criteria) => updateRound(r.id, { criteria })}
-                />
-              </div>
-            )}
-          </Card>
-        );
-      })}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                tone="teal"
+                onClick={() => setOpenId(openId === r.id ? null : r.id)}
+              >
+                {openId === r.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                tone="magenta"
+                onClick={() => {
+                  if (confirm(`Delete "${r.name}" and its rubric?`)) removeRound.mutate(r.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          {openId === r.id && <RoundEditor round={r} />}
+        </Card>
+      ))}
 
       {rounds.length === 0 && (
-        <Card className="p-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            No rounds yet. Click <strong className="text-foreground">Add Round</strong> to create one.
-          </p>
+        <Card className="p-8 text-sm text-muted-foreground">
+          No rounds yet — add your first round above.
         </Card>
       )}
+    </>
+  );
+}
+
+function RoundEditor({ round }: { round: RoundRow }) {
+  const save = useSaveRound();
+  const [form, setForm] = useState({
+    name: round.name,
+    phase: round.phase,
+    deadline: round.deadline ?? "",
+    submission_method: round.submission_method ?? "",
+  });
+  const [saved, setSaved] = useState(false);
+
+  return (
+    <div className="mt-5 border-t border-border pt-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Text
+          label="Round name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-foreground">Phase</span>
+          <select
+            value={form.phase}
+            onChange={(e) => setForm({ ...form, phase: e.target.value as Phase })}
+            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm"
+          >
+            {PHASES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Text
+          label="Deadline"
+          type="date"
+          value={form.deadline}
+          onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+        />
+        <Text
+          label="Submission method"
+          value={form.submission_method}
+          onChange={(e) => setForm({ ...form, submission_method: e.target.value })}
+        />
+      </div>
+      <div className="mt-4 flex items-center gap-3">
+        <Button
+          variant="outline"
+          tone="teal"
+          onClick={async () => {
+            await save.mutateAsync({ id: round.id, event_id: round.event_id, ...form });
+            setSaved(true);
+          }}
+        >
+          Save round
+        </Button>
+        {saved && (
+          <span className="text-xs" style={{ color: "var(--teal)" }}>
+            Saved
+          </span>
+        )}
+      </div>
+      <CriteriaEditor roundId={round.id} />
     </div>
   );
 }
 
-function NewRoundForm({
-  existingCount,
-  onCancel,
-  onCreate,
-}: {
-  existingCount: number;
-  onCancel: () => void;
-  onCreate: (r: RoundConfig) => void;
-}) {
-  const [name, setName] = useState(`Round ${existingCount + 1}`);
-  const [phase, setPhase] = useState<RoundCfg["phase"]>("Judging");
-  const [deadline, setDeadline] = useState("Closes June 30, 2026");
-  const [method, setMethod] = useState("Google Forms");
+function CriteriaEditor({ roundId }: { roundId: string }) {
+  const { data: criteria = [] } = useCriteria([roundId]);
+  const save = useSaveCriterion();
+  const remove = useDeleteCriterion();
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [weight, setWeight] = useState(25);
+  const [maxScore, setMaxScore] = useState(5);
 
-  const submit = () => {
-    if (!name.trim()) return;
-    const id = `r${Date.now()}`;
-    onCreate({
-      id,
-      name: name.trim(),
-      phase,
-      deadline,
-      method,
-      criteria: [
-        { id: `${id}-c1`, name: "Originality", weight: 50 },
-        { id: `${id}-c2`, name: "Impact", weight: 50 },
-      ],
-    });
-  };
+  const total = useMemo(() => criteria.reduce((sum, c) => sum + c.weight, 0), [criteria]);
 
   return (
-    <Card className="p-5 border-[color:var(--teal)]">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-foreground">New round</h3>
-        <button
-          onClick={onCancel}
-          className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-muted"
-          aria-label="Cancel"
+    <div className="mt-6 rounded-md border border-border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-bold text-foreground">Rubric criteria for this round</h4>
+        <span
+          className="text-xs font-semibold"
+          style={{ color: total === 100 ? "var(--teal)" : "var(--magenta)" }}
         >
-          <X className="h-4 w-4" />
-        </button>
+          Total weight {total}%
+        </span>
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Round name</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            autoFocus
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--teal)]"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Phase</label>
-          <div className="flex flex-wrap gap-2">
-            {PHASES.map((p) => {
-              const active = phase === p;
-              return (
-                <button
-                  key={p}
-                  onClick={() => setPhase(p)}
-                  className="rounded-md border px-3 py-1.5 text-xs font-semibold"
-                  style={
-                    active
-                      ? { background: "var(--teal)", borderColor: "var(--teal)", color: "#fff" }
-                      : { borderColor: "var(--border)", color: "var(--foreground)" }
-                  }
-                >
-                  {p}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Deadline</label>
-          <input
-            value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--teal)]"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">
-            Submission method
-          </label>
-          <input
-            value={method}
-            onChange={(e) => setMethod(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[color:var(--teal)]"
-          />
-        </div>
-      </div>
-      <div className="mt-5 flex justify-end gap-2">
-        <Button variant="outline" tone="magenta" onClick={onCancel}>Cancel</Button>
-        <Button variant="primary" tone="teal" onClick={submit}>Create round</Button>
-      </div>
-    </Card>
-  );
-}
 
-function CriteriaEditor({
-  criteria,
-  onChange,
-}: {
-  criteria: { id: string; name: string; weight: number }[];
-  onChange: (next: { id: string; name: string; weight: number }[]) => void;
-}) {
-  const total = criteria.reduce((s, c) => s + (Number(c.weight) || 0), 0);
-  const balanced = total === 100;
-
-  const update = (id: string, patch: Partial<{ name: string; weight: number }>) =>
-    onChange(criteria.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-
-  const remove = (id: string) => onChange(criteria.filter((c) => c.id !== id));
-
-  const add = () =>
-    onChange([
-      ...criteria,
-      { id: `c${Date.now()}`, name: "New criterion", weight: 0 },
-    ]);
-
-  return (
-    <div>
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h4 className="text-sm font-semibold text-foreground">Rubric criteria</h4>
-          <p className="text-xs text-muted-foreground">
-            Each criterion is scored 1–5.{" "}
-            <span style={{ color: balanced ? "var(--teal)" : "var(--magenta)" }}>
-              Weights total {total}%
-            </span>
-          </p>
-        </div>
-        <Button variant="outline" tone="teal" onClick={add}>
-          <Plus className="h-4 w-4" strokeWidth={2} /> Add criterion
-        </Button>
-      </div>
-      <ul className="space-y-2">
+      <ul className="mt-3 space-y-2">
         {criteria.map((c) => (
           <li
             key={c.id}
-            className="flex flex-wrap items-center gap-2 rounded-md border border-border p-3"
+            className="flex flex-wrap items-center gap-2 rounded-md border border-border px-3 py-2"
           >
-            <input
-              value={c.name}
-              onChange={(e) => update(c.id, { name: e.target.value })}
-              className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-[color:var(--teal)]"
-            />
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={c.weight}
-                onChange={(e) => update(c.id, { weight: Number(e.target.value) })}
-                className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-[color:var(--teal)]"
-              />
-              <span className="text-sm text-muted-foreground">%</span>
-              <button
-                onClick={() => remove(c.id)}
-                className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-[color:var(--magenta)]"
-                aria-label="Remove criterion"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-semibold text-foreground">{c.name}</div>
+              {c.description && (
+                <div className="truncate text-xs text-muted-foreground">{c.description}</div>
+              )}
             </div>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={c.weight}
+              onChange={(e) =>
+                save.mutate({
+                  id: c.id,
+                  round_id: roundId,
+                  name: c.name,
+                  description: c.description,
+                  weight: Number(e.target.value) || 0,
+                  max_score: c.max_score,
+                  sort_order: c.sort_order,
+                })
+              }
+              className="w-16 rounded-md border border-border bg-background px-2 py-1 text-sm"
+              aria-label={`Weight for ${c.name}`}
+            />
+            <span className="text-xs text-muted-foreground">% · max {c.max_score}</span>
+            <button
+              onClick={() => remove.mutate(c.id)}
+              aria-label={`Remove ${c.name}`}
+              className="rounded-md p-1.5 hover:bg-muted"
+              style={{ color: "var(--magenta)" }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </li>
         ))}
         {criteria.length === 0 && (
-          <li className="rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-            No criteria yet. Add one to begin scoring this round.
+          <li className="text-xs text-muted-foreground">
+            No criteria yet — judges cannot score this round until you add some.
           </li>
         )}
       </ul>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Text label="Criterion" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Originality" />
+        <Text
+          label="Guidance for judges"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="What a strong answer looks like"
+        />
+        <Text
+          label="Weight (%)"
+          type="number"
+          value={weight}
+          onChange={(e) => setWeight(Number(e.target.value) || 0)}
+        />
+        <Text
+          label="Max score"
+          type="number"
+          value={maxScore}
+          onChange={(e) => setMaxScore(Number(e.target.value) || 5)}
+        />
+      </div>
+      <div className="mt-3">
+        <Button
+          variant="outline"
+          tone="teal"
+          disabled={!name}
+          onClick={async () => {
+            await save.mutateAsync({
+              round_id: roundId,
+              name,
+              description,
+              weight,
+              max_score: maxScore,
+              sort_order: criteria.length,
+            });
+            setName("");
+            setDescription("");
+          }}
+        >
+          <Plus className="h-4 w-4" /> Add criterion
+        </Button>
+      </div>
     </div>
   );
 }
 
-function JudgesTab() {
-  return (
-    <Card className="p-6">
-      <h2 className="text-lg font-semibold text-foreground">Judges panel</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Invite judges and track their scoring progress.
-      </p>
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-border text-xs uppercase tracking-wider text-muted-foreground">
-            <tr>
-              <th className="py-2 pr-4">Judge</th>
-              <th className="py-2 pr-4">Scored</th>
-              <th className="py-2 pr-4">Pending</th>
-              <th className="py-2 pr-4">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { name: "Sarah Mitchell", scored: 8, pending: 0 },
-              { name: "James Rodriguez", scored: 5, pending: 3 },
-              { name: "Emily Watson", scored: 0, pending: 2 },
-            ].map((j) => (
-              <tr key={j.name} className="border-b border-border last:border-0">
-                <td className="py-3 pr-4 font-medium text-foreground">{j.name}</td>
-                <td className="py-3 pr-4 text-foreground">{j.scored}</td>
-                <td className="py-3 pr-4 text-foreground">{j.pending}</td>
-                <td className="py-3 pr-4">
-                  {j.pending === 0 ? (
-                    <Pill tone="teal">Complete</Pill>
-                  ) : (
-                    <Pill tone="magenta">In progress</Pill>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
+function RubricTab({ event }: { event: EventRow }) {
+  const { data: rounds = [] } = useRounds(event.id);
+  const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
 
-function RubricTab() {
   return (
     <Card className="p-6">
-      <h2 className="text-lg font-semibold text-foreground">Default rubric</h2>
+      <h2 className="text-lg font-bold text-foreground">Rubric overview</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Used as a starting template for new rounds. Each criterion is scored on a 1–5 scale.
+        Each round has its own criteria — edit them under Rounds.
       </p>
-      <ul className="mt-5 divide-y divide-border">
-        {[
-          { name: "Originality", weight: "25%" },
-          { name: "Feasibility", weight: "25%" },
-          { name: "User Experience", weight: "25%" },
-          { name: "Impact & Scale", weight: "25%" },
-        ].map((c) => (
-          <li key={c.name} className="flex items-center justify-between py-3">
-            <div>
-              <div className="font-medium text-foreground">{c.name}</div>
-              <div className="text-xs text-muted-foreground">1–5 scale</div>
+      <div className="mt-5 space-y-5">
+        {rounds.map((r) => {
+          const list = criteria.filter((c) => c.round_id === r.id);
+          const total = list.reduce((sum, c) => sum + c.weight, 0);
+          return (
+            <div key={r.id} className="rounded-md border border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-bold text-foreground">{r.name}</h3>
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: total === 100 ? "var(--teal)" : "var(--magenta)" }}
+                >
+                  {total}%
+                </span>
+              </div>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                {list.map((c) => (
+                  <li key={c.id}>
+                    {c.name} — {c.weight}% (max {c.max_score})
+                  </li>
+                ))}
+                {list.length === 0 && <li className="text-xs">No criteria yet.</li>}
+              </ul>
             </div>
-            <Pill tone="teal" variant="outline">{c.weight}</Pill>
-          </li>
-        ))}
-      </ul>
+          );
+        })}
+        {rounds.length === 0 && (
+          <p className="text-sm text-muted-foreground">Add rounds to define a rubric.</p>
+        )}
+      </div>
     </Card>
   );
 }

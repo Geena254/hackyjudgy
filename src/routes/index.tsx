@@ -75,6 +75,12 @@ function Landing() {
           <PlpLogo className="h-10 sm:h-11" />
           <div className="flex items-center gap-2">
             <Link
+              to="/submit"
+              className="rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Submit a project
+            </Link>
+            <Link
               to="/auth"
               className="rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
             >
@@ -109,11 +115,17 @@ function Landing() {
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  to="/auth"
+                  to="/submit"
                   className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white"
                   style={{ background: "var(--teal)" }}
                 >
-                  Create your account <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                  Submit your project <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                </Link>
+                <Link
+                  to="/auth"
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                >
+                  Create your account
                 </Link>
                 <Link
                   to="/auth"
