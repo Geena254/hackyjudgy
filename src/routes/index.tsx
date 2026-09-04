@@ -81,6 +81,12 @@ function Landing() {
               Submit a project
             </Link>
             <Link
+              to="/how-to-organize-a-hackathon"
+              className="hidden rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted sm:inline-flex"
+            >
+              Organiser guide
+            </Link>
+            <Link
               to="/auth"
               className="rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
             >
