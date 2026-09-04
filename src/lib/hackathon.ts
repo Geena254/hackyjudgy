@@ -565,7 +565,7 @@ export function useSubmitProject() {
       demo_url?: string;
       deck_url?: string;
     }) => {
-      const { error } = await supabase.from("submissions").insert({
+      const { data, error } = await supabase.from("submissions").insert({
         event_id: input.event_id,
         round_id: input.round_id || null,
         title: input.title,
@@ -578,8 +578,45 @@ export function useSubmitProject() {
         demo_url: input.demo_url || null,
         deck_url: input.deck_url || null,
         status: "submitted",
-      });
+      }).select("id").single();
       if (error) throw error;
+      return (data as { id: string }).id;
+    },
+  });
+}
+
+/** Publicly viewable showcase details for one submission (no contact details). */
+export function usePublicSubmission(id: string | undefined) {
+  return useQuery({
+    queryKey: ["public-submission", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("submissions")
+        .select(
+          "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, status, created_at",
+        )
+        .eq("id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as Omit<SubmissionRow, "submitter_name" | "submitter_email"> | null;
+    },
+  });
+}
+
+/** Public event lookup by id (only active events are readable without signing in). */
+export function usePublicEvent(id: string | undefined) {
+  return useQuery({
+    queryKey: ["public-event", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as EventRow | null;
     },
   });
 }

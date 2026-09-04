@@ -13,15 +13,13 @@ const adminNav = [
   { to: "/judges", label: "Judges" },
   { to: "/analytics", label: "Analytics" },
   { to: "/integrations", label: "Integrations" },
-  { to: "/settings", label: "Settings" },
-
+  { to: "/portal", label: "Portal" },
 ] as const;
 
 const judgeNav = [
   { to: "/judge", label: "My Dashboard" },
   { to: "/scoring", label: "Scoring Queue" },
   { to: "/results", label: "Results" },
-  { to: "/settings", label: "Settings" },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -141,6 +139,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </Link>
                 );
               })}
+              <Link
+                to="/settings"
+                onClick={() => setOpen(false)}
+                className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted"
+              >
+                Settings
+              </Link>
               <button
                 onClick={signOut}
                 className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-muted-foreground hover:bg-muted"
