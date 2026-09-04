@@ -76,12 +76,13 @@ function EventSetup() {
   const [tab, setTab] = useState<Tab>("details");
   const { data: events = [] } = useEvents();
   const [eventId, setEventId] = useState<string | undefined>();
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    if (!eventId && events.length > 0) setEventId(events[0]!.id);
-  }, [events, eventId]);
+    if (!creating && !eventId && events.length > 0) setEventId(events[0]!.id);
+  }, [events, eventId, creating]);
 
-  const event = events.find((e) => e.id === eventId);
+  const event = creating ? undefined : events.find((e) => e.id === eventId);
 
   if (ready && !isAdmin) {
     return (
@@ -104,18 +105,34 @@ function EventSetup() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select
-            value={eventId ?? ""}
-            onChange={(e) => setEventId(e.target.value || undefined)}
+            value={creating ? "" : (eventId ?? "")}
+            onChange={(e) => {
+              const value = e.target.value;
+              setCreating(!value);
+              setEventId(value || undefined);
+              if (!value) setTab("details");
+            }}
             className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+            aria-label="Choose hackathon"
           >
+            <option value="">
+              {events.length === 0 ? "No hackathons yet" : "New hackathon…"}
+            </option>
             {events.map((e) => (
               <option key={e.id} value={e.id}>
-                {e.name}
+                {e.name} ({e.status})
               </option>
             ))}
-            {events.length === 0 && <option value="">No hackathons yet</option>}
           </select>
-          <Button variant="outline" tone="teal" onClick={() => setEventId(undefined)}>
+          <Button
+            variant="outline"
+            tone="teal"
+            onClick={() => {
+              setCreating(true);
+              setEventId(undefined);
+              setTab("details");
+            }}
+          >
             <Plus className="h-4 w-4" /> New hackathon
           </Button>
         </div>
@@ -147,7 +164,17 @@ function EventSetup() {
 
         <div className="min-w-0 space-y-6">
           {tab === "details" && (
-            <DetailsTab event={event} onCreated={(id) => setEventId(id)} />
+            <DetailsTab
+              event={event}
+              onCreated={(id) => {
+                setCreating(false);
+                setEventId(id);
+              }}
+              onDeleted={() => {
+                setCreating(false);
+                setEventId(undefined);
+              }}
+            />
           )}
           {tab !== "details" && !event && (
             <Card className="p-8 text-sm text-muted-foreground">
@@ -165,9 +192,11 @@ function EventSetup() {
 function DetailsTab({
   event,
   onCreated,
+  onDeleted,
 }: {
   event: EventRow | undefined;
   onCreated: (id: string) => void;
+  onDeleted: () => void;
 }) {
   const save = useSaveEvent();
   const remove = useDeleteEvent();
@@ -278,7 +307,7 @@ function DetailsTab({
             tone="magenta"
             onClick={() => {
               if (confirm(`Delete "${event.name}" and all its rounds and entries?`))
-                remove.mutate(event.id);
+                remove.mutate(event.id, { onSuccess: onDeleted });
             }}
           >
             <Trash2 className="h-4 w-4" /> Delete

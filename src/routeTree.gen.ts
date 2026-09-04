@@ -16,10 +16,12 @@ import { Route as HowToOrganizeAHackathonRouteImport } from './routes/how-to-org
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as AuthenticatedSubmissionsRouteImport } from './routes/_authenticated/submissions'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedScoringRouteImport } from './routes/_authenticated/scoring'
 import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated/results'
+import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
 import { Route as AuthenticatedJudgesRouteImport } from './routes/_authenticated/judges'
 import { Route as AuthenticatedJudgeRouteImport } from './routes/_authenticated/judge'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
@@ -63,6 +65,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectIdRoute = ProjectIdRouteImport.update({
+  id: '/project/$id',
+  path: '/project/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSubmissionsRoute =
   AuthenticatedSubmissionsRouteImport.update({
     id: '/submissions',
@@ -82,6 +89,11 @@ const AuthenticatedScoringRoute = AuthenticatedScoringRouteImport.update({
 const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
   id: '/results',
   path: '/results',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPortalRoute = AuthenticatedPortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedJudgesRoute = AuthenticatedJudgesRouteImport.update({
@@ -141,10 +153,12 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/judge': typeof AuthenticatedJudgeRoute
   '/judges': typeof AuthenticatedJudgesRoute
+  '/portal': typeof AuthenticatedPortalRoute
   '/results': typeof AuthenticatedResultsRoute
   '/scoring': typeof AuthenticatedScoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
+  '/project/$id': typeof ProjectIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRoutesByTo {
@@ -161,10 +175,12 @@ export interface FileRoutesByTo {
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/judge': typeof AuthenticatedJudgeRoute
   '/judges': typeof AuthenticatedJudgesRoute
+  '/portal': typeof AuthenticatedPortalRoute
   '/results': typeof AuthenticatedResultsRoute
   '/scoring': typeof AuthenticatedScoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
+  '/project/$id': typeof ProjectIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRoutesById {
@@ -183,10 +199,12 @@ export interface FileRoutesById {
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/judge': typeof AuthenticatedJudgeRoute
   '/_authenticated/judges': typeof AuthenticatedJudgesRoute
+  '/_authenticated/portal': typeof AuthenticatedPortalRoute
   '/_authenticated/results': typeof AuthenticatedResultsRoute
   '/_authenticated/scoring': typeof AuthenticatedScoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/submissions': typeof AuthenticatedSubmissionsRoute
+  '/project/$id': typeof ProjectIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRouteTypes {
@@ -205,10 +223,12 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/judge'
     | '/judges'
+    | '/portal'
     | '/results'
     | '/scoring'
     | '/settings'
     | '/submissions'
+    | '/project/$id'
     | '/.lovable/oauth/consent'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -225,10 +245,12 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/judge'
     | '/judges'
+    | '/portal'
     | '/results'
     | '/scoring'
     | '/settings'
     | '/submissions'
+    | '/project/$id'
     | '/.lovable/oauth/consent'
   id:
     | '__root__'
@@ -246,10 +268,12 @@ export interface FileRouteTypes {
     | '/_authenticated/integrations'
     | '/_authenticated/judge'
     | '/_authenticated/judges'
+    | '/_authenticated/portal'
     | '/_authenticated/results'
     | '/_authenticated/scoring'
     | '/_authenticated/settings'
     | '/_authenticated/submissions'
+    | '/project/$id'
     | '/.lovable/oauth/consent'
   fileRoutesById: FileRoutesById
 }
@@ -262,6 +286,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SubmitRoute: typeof SubmitRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  ProjectIdRoute: typeof ProjectIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
 
@@ -316,6 +341,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/project/$id': {
+      id: '/project/$id'
+      path: '/project/$id'
+      fullPath: '/project/$id'
+      preLoaderRoute: typeof ProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/submissions': {
       id: '/_authenticated/submissions'
       path: '/submissions'
@@ -342,6 +374,13 @@ declare module '@tanstack/react-router' {
       path: '/results'
       fullPath: '/results'
       preLoaderRoute: typeof AuthenticatedResultsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portal': {
+      id: '/_authenticated/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof AuthenticatedPortalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/judges': {
@@ -410,6 +449,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedJudgeRoute: typeof AuthenticatedJudgeRoute
   AuthenticatedJudgesRoute: typeof AuthenticatedJudgesRoute
+  AuthenticatedPortalRoute: typeof AuthenticatedPortalRoute
   AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
   AuthenticatedScoringRoute: typeof AuthenticatedScoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -423,6 +463,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedJudgeRoute: AuthenticatedJudgeRoute,
   AuthenticatedJudgesRoute: AuthenticatedJudgesRoute,
+  AuthenticatedPortalRoute: AuthenticatedPortalRoute,
   AuthenticatedResultsRoute: AuthenticatedResultsRoute,
   AuthenticatedScoringRoute: AuthenticatedScoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -442,6 +483,7 @@ const rootRouteChildren: RootRouteChildren = {
   SubmitRoute: SubmitRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  ProjectIdRoute: ProjectIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
 export const routeTree = rootRouteImport

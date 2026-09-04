@@ -47,7 +47,7 @@ function SubmitPage() {
   const { data: event, isLoading } = useActiveEvent();
   const { data: rounds = [] } = useRounds(event?.id);
   const submit = useSubmitProject();
-  const [done, setDone] = useState(false);
+  const [doneId, setDoneId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
@@ -70,12 +70,12 @@ function SubmitPage() {
     if (!event) return;
     const submissionRound = rounds.find((r) => r.phase === "submissions") ?? rounds[0];
     try {
-      await submit.mutateAsync({
+      const id = await submit.mutateAsync({
         event_id: event.id,
         round_id: submissionRound?.id ?? null,
         ...form,
       });
-      setDone(true);
+      setDoneId(id);
       if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -111,7 +111,7 @@ function SubmitPage() {
           </Card>
         )}
 
-        {!isLoading && event && done && (
+        {!isLoading && event && doneId && (
           <Card className="p-8">
             <CheckCircle2 className="h-10 w-10" style={{ color: "var(--teal)" }} strokeWidth={2} />
             <h1 className="mt-4 text-2xl font-bold text-foreground">Submission received</h1>
@@ -119,11 +119,30 @@ function SubmitPage() {
               Thanks — your project is now with the judging panel for {event.name}. We will be in
               touch by email with the results.
             </p>
-            <div className="mt-6">
+            <div className="mt-6 rounded-md border border-border p-4">
+              <h2 className="text-sm font-bold text-foreground">Your project page</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Share this link to show what you built — it has your project description and your
+                code, demo and pitch deck links.
+              </p>
+              <p className="mt-3 break-all text-sm font-semibold" style={{ color: "var(--teal)" }}>
+                {typeof window !== "undefined"
+                  ? `${window.location.origin}/project/${doneId}`
+                  : `/project/${doneId}`}
+              </p>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                to="/"
+                to="/project/$id"
+                params={{ id: doneId }}
                 className="inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-white"
                 style={{ background: "var(--teal)" }}
+              >
+                View my project page
+              </Link>
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted"
               >
                 Back to home
               </Link>
@@ -131,7 +150,7 @@ function SubmitPage() {
           </Card>
         )}
 
-        {!isLoading && event && !done && (
+        {!isLoading && event && !doneId && (
           <>
             <Pill tone="teal" variant="outline">
               Open for entries
