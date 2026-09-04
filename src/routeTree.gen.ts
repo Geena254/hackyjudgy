@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSubmissionsRouteImport } from './routes/_authenticated/submissions'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedScoringRouteImport } from './routes/_authenticated/scoring'
+import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticated/results'
 import { Route as AuthenticatedJudgesRouteImport } from './routes/_authenticated/judges'
 import { Route as AuthenticatedJudgeRouteImport } from './routes/_authenticated/judge'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
@@ -63,6 +64,11 @@ const AuthenticatedScoringRoute = AuthenticatedScoringRouteImport.update({
   path: '/scoring',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedResultsRoute = AuthenticatedResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedJudgesRoute = AuthenticatedJudgesRouteImport.update({
   id: '/judges',
   path: '/judges',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof AuthenticatedEventsRoute
   '/judge': typeof AuthenticatedJudgeRoute
   '/judges': typeof AuthenticatedJudgesRoute
+  '/results': typeof AuthenticatedResultsRoute
   '/scoring': typeof AuthenticatedScoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/events': typeof AuthenticatedEventsRoute
   '/judge': typeof AuthenticatedJudgeRoute
   '/judges': typeof AuthenticatedJudgesRoute
+  '/results': typeof AuthenticatedResultsRoute
   '/scoring': typeof AuthenticatedScoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/_authenticated/events': typeof AuthenticatedEventsRoute
   '/_authenticated/judge': typeof AuthenticatedJudgeRoute
   '/_authenticated/judges': typeof AuthenticatedJudgesRoute
+  '/_authenticated/results': typeof AuthenticatedResultsRoute
   '/_authenticated/scoring': typeof AuthenticatedScoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/submissions': typeof AuthenticatedSubmissionsRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/judge'
     | '/judges'
+    | '/results'
     | '/scoring'
     | '/settings'
     | '/submissions'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/judge'
     | '/judges'
+    | '/results'
     | '/scoring'
     | '/settings'
     | '/submissions'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/_authenticated/events'
     | '/_authenticated/judge'
     | '/_authenticated/judges'
+    | '/_authenticated/results'
     | '/_authenticated/scoring'
     | '/_authenticated/settings'
     | '/_authenticated/submissions'
@@ -245,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScoringRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/results': {
+      id: '/_authenticated/results'
+      path: '/results'
+      fullPath: '/results'
+      preLoaderRoute: typeof AuthenticatedResultsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/judges': {
       id: '/_authenticated/judges'
       path: '/judges'
@@ -289,6 +308,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRoute
   AuthenticatedJudgeRoute: typeof AuthenticatedJudgeRoute
   AuthenticatedJudgesRoute: typeof AuthenticatedJudgesRoute
+  AuthenticatedResultsRoute: typeof AuthenticatedResultsRoute
   AuthenticatedScoringRoute: typeof AuthenticatedScoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSubmissionsRoute: typeof AuthenticatedSubmissionsRoute
@@ -300,6 +320,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEventsRoute: AuthenticatedEventsRoute,
   AuthenticatedJudgeRoute: AuthenticatedJudgeRoute,
   AuthenticatedJudgesRoute: AuthenticatedJudgesRoute,
+  AuthenticatedResultsRoute: AuthenticatedResultsRoute,
   AuthenticatedScoringRoute: AuthenticatedScoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSubmissionsRoute: AuthenticatedSubmissionsRoute,
