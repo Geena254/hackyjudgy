@@ -80,3 +80,11 @@ export function databaseError(
   }
   return toolError("DATABASE_ERROR", `Could not ${what}.`, error.message);
 }
+
+/** Successful response: pretty JSON text plus the same structured payload. */
+export function toolSuccess(payload: Record<string, unknown>, text?: string) {
+  return {
+    content: [{ type: "text" as const, text: text ?? JSON.stringify(payload) }],
+    structuredContent: payload as Record<string, never>,
+  };
+}
