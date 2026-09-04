@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://tshqmujogshfvqcyyfdf.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "evaldesk-insights",
+      "version": "0.1.0",
+      "title": "EvalDesk Insights"
+    },
+    "tools": [
+      {
+        "name": "list_events",
+        "title": "List hackathon events",
+        "description": "List the hackathon events visible to the signed-in user, with status and dates. Admins see drafts too.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_rubric",
+        "title": "Get event rubric",
+        "description": "Get the rounds of an event with their judging criteria, weights and maximum scores.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The event to read the rubric for."
+            }
+          },
+          "required": [
+            "event_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_submissions",
+        "title": "List submissions",
+        "description": "List project submissions for an event, including team, category, status and project links. Only admins and judges can read these.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The event whose submissions to list."
+            },
+            "status": {
+              "description": "Optional status filter, e.g. submitted, under_review, scored.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "event_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "score_submission",
+        "title": "Score a submission",
+        "description": "Record the signed-in judge's scores for a submission's rubric criteria, with optional feedback, private notes and completion flag.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "submission_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The submission being scored."
+            },
+            "scores": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "criterion_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "criterion_id",
+                  "value"
+                ]
+              },
+              "description": "One entry per rubric criterion, using that criterion's scale."
+            },
+            "feedback": {
+              "description": "Feedback shared with organisers.",
+              "type": "string",
+              "maxLength": 4000
+            },
+            "private_notes": {
+              "description": "Notes visible only to this judge.",
+              "type": "string",
+              "maxLength": 4000
+            },
+            "completed": {
+              "description": "Mark this review as finished.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "submission_id",
+            "scores"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_scoring_progress",
+        "title": "My scoring progress",
+        "description": "Show the signed-in judge's own scores and reviews, including which submissions they have finished.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
