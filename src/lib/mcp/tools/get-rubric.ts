@@ -20,7 +20,7 @@ export default defineTool({
     if (roundsError)
       return { content: [{ type: "text", text: roundsError.message }], isError: true };
     const roundIds = (rounds ?? []).map((r) => r.id);
-    let criteria: unknown[] = [];
+    let criteria: Record<string, unknown>[] = [];
     if (roundIds.length > 0) {
       const { data, error } = await supabase
         .from("criteria")
@@ -28,9 +28,10 @@ export default defineTool({
         .in("round_id", roundIds)
         .order("sort_order");
       if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-      criteria = data ?? [];
+      criteria = (data ?? []) as Record<string, unknown>[];
     }
-    const payload = { rounds: rounds ?? [], criteria };
+    const payload = { rounds: (rounds ?? []) as Record<string, unknown>[], criteria };
+
     return {
       content: [{ type: "text", text: JSON.stringify(payload) }],
       structuredContent: payload,

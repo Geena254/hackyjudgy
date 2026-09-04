@@ -7,11 +7,13 @@ import { Card, Button } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//")
-      ? s.next
-      : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+    const raw = s.next;
+    const safe =
+      typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined;
+    return safe ? { next: safe } : {};
+  },
+
 
   head: () => ({
     meta: [
