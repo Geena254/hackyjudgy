@@ -67,7 +67,7 @@ function Text({ label, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & 
 }
 
 function SubmissionsAdmin() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, ready } = useAuth();
   const { data: events = [] } = useEvents();
   const [eventId, setEventId] = useState<string | undefined>();
   useEffect(() => {
@@ -124,7 +124,7 @@ function SubmissionsAdmin() {
     setOpen(false);
   }
 
-  if (!loading && !isAdmin) {
+  if (ready && !isAdmin) {
     return (
       <AppShell>
         <Card className="p-8 text-sm text-muted-foreground">
