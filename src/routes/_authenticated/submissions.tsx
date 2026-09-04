@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/submissions")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: SubmissionsAdmin;
+  component: SubmissionsAdmin,
 });
 
 const STATUSES: SubmissionStatus[] = [
