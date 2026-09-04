@@ -127,6 +127,72 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_clients: {
+        Row: {
+          call_count: number
+          client_id: string
+          client_name: string | null
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          revoked_at: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          call_count?: number
+          client_id: string
+          client_name?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          revoked_at?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          call_count?: number
+          client_id?: string
+          client_name?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          revoked_at?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mcp_tool_calls: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          error_code: string | null
+          id: string
+          ok: boolean
+          tool: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          ok?: boolean
+          tool: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          ok?: boolean
+          tool?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
