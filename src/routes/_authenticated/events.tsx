@@ -72,7 +72,7 @@ function Text({
 }
 
 function EventSetup() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, ready } = useAuth();
   const [tab, setTab] = useState<Tab>("details");
   const { data: events = [] } = useEvents();
   const [eventId, setEventId] = useState<string | undefined>();
@@ -83,7 +83,7 @@ function EventSetup() {
 
   const event = events.find((e) => e.id === eventId);
 
-  if (!loading && !isAdmin) {
+  if (ready && !isAdmin) {
     return (
       <AppShell>
         <Card className="p-8 text-sm text-muted-foreground">

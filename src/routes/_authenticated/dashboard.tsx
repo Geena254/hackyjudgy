@@ -105,12 +105,12 @@ function StatusCard({
 }
 
 function Dashboard() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, ready } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !isAdmin) navigate({ to: "/judge", replace: true });
-  }, [loading, isAdmin, navigate]);
+    if (ready && !isAdmin) navigate({ to: "/judge", replace: true });
+  }, [ready, isAdmin, navigate]);
 
   const { data: events = [] } = useEvents();
   const event = events.find((e) => e.status === "active") ?? events[0];

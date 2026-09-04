@@ -9,6 +9,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rolesLoading, setRolesLoading] = useState(true);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
@@ -27,22 +28,35 @@ export function useAuth() {
   useEffect(() => {
     if (!user) {
       setRoles([]);
+      setRolesLoading(loading);
       return;
     }
     let active = true;
+    setRolesLoading(true);
     supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .then(({ data }) => {
-        if (active) setRoles(((data ?? []) as { role: Role }[]).map((r) => r.role));
+        if (active) {
+          setRoles(((data ?? []) as { role: Role }[]).map((r) => r.role));
+          setRolesLoading(false);
+        }
       });
     return () => {
       active = false;
     };
-  }, [user]);
+  }, [user, loading]);
 
-  return { session, user, roles, loading, isAdmin: roles.includes("admin") };
+  return {
+    session,
+    user,
+    roles,
+    loading,
+    rolesLoading,
+    ready: !loading && !rolesLoading,
+    isAdmin: roles.includes("admin"),
+  };
 }
 
 export function displayName(user: User | null) {
