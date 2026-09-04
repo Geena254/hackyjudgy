@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { PlpLogo, PowerCommunityMark } from "@/components/brand";
+import { PlpLogo, SiteFooter } from "@/components/brand";
 import { Pill } from "@/components/app-shell";
 
 export const Route = createFileRoute("/how-to-organize-a-hackathon")({
