@@ -53,15 +53,15 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0 0);
 
-  /* Primary blue #1D4ED8 */
-  --teal: oklch(0.49 0.21 264);
+  /* Logo teal #00A69E */
+  --teal: oklch(0.646 0.106 186.5);
   --teal-foreground: oklch(1 0 0);
-  --teal-soft: oklch(0.96 0.025 264);
+  --teal-soft: oklch(0.962 0.03 186.5);
 
-  /* Graphite / black accent #111111 */
-  --magenta: oklch(0.22 0 0);
+  /* Logo magenta #C41E69 */
+  --magenta: oklch(0.532 0.196 359);
   --magenta-foreground: oklch(1 0 0);
-  --magenta-soft: oklch(0.955 0 0);
+  --magenta-soft: oklch(0.962 0.028 359);
 
   --primary: var(--teal);
   --primary-foreground: oklch(1 0 0);
