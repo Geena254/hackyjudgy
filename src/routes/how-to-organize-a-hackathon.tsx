@@ -6,13 +6,13 @@ import { Pill } from "@/components/app-shell";
 export const Route = createFileRoute("/how-to-organize-a-hackathon")({
   head: () => ({
     meta: [
-      { title: "How to Organize a Hackathon: Step-by-Step Guide" },
+      { title: "Hackathon Guide: How to Set Up and Judge a Hackathon" },
       {
         name: "description",
         content:
           "A practical guide to organizing a hackathon: planning and setup, submissions, judging rubrics, blind judging, and running a judge portal that scores fairly.",
       },
-      { property: "og:title", content: "How to Organize a Hackathon: Step-by-Step Guide" },
+      { property: "og:title", content: "Hackathon Guide: Setup and Judging, Step by Step" },
       {
         property: "og:description",
         content:
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/how-to-organize-a-hackathon")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "How to Organize a Hackathon: Step-by-Step Guide",
+          headline: "Hackathon Guide: How to Set Up and Judge a Hackathon",
           description:
             "A practical guide to planning, running and judging a hackathon, including rubric design and blind judging.",
           mainEntityOfPage:
@@ -145,10 +145,11 @@ function GuidePage() {
             Organiser guide
           </Pill>
           <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
-            How to organize a hackathon
+            Hackathon guide: setup and judging
           </h1>
           <p className="mt-5 text-lg text-muted-foreground">
-            Running a hackathon is two jobs: getting good projects built, and judging them
+            A hackathon is a time-boxed build event where teams ship a working prototype
+            against a brief, then a panel judges it. Running one is two jobs: getting good projects built, and judging them
             fairly. This guide walks through the planning steps in order, then the judging
             decisions that decide whether your results hold up — the same decisions EvalDesk
             was built around for Power Learn Project hackathons.
@@ -227,6 +228,12 @@ function GuidePage() {
                 className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
               >
                 Submit a project
+              </Link>
+              <Link
+                to="/hackathon"
+                className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+              >
+                See a live hackathon page
               </Link>
             </div>
           </section>

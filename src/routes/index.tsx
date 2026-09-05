@@ -75,6 +75,12 @@ function Landing() {
           <PlpLogo className="h-10 sm:h-11" />
           <div className="flex items-center gap-2">
             <Link
+              to="/hackathon"
+              className="rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Live hackathon
+            </Link>
+            <Link
               to="/submit"
               className="rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
             >
