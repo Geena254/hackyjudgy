@@ -620,3 +620,137 @@ export function usePublicEvent(id: string | undefined) {
     },
   });
 }
+
+/* ----------------------- public standings (live board) --------------------- */
+
+/** Public submissions for one event (no submitter contact details). */
+export function usePublicSubmissions(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ["public-submissions", eventId],
+    enabled: !!eventId,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("submissions")
+        .select(
+          "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, status, created_at",
+        )
+        .eq("event_id", eventId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as PublicSubmission[];
+    },
+  });
+}
+
+export type PublicSubmission = Omit<SubmissionRow, "submitter_name" | "submitter_email">;
+
+export type PublicScore = { id: string; submission_id: string; criterion_id: string; value: number };
+
+/** Anonymous score values for an event's submissions — judge identities stay private. */
+export function usePublicScores(submissionIds: string[]) {
+  const key = [...submissionIds].sort().join(",");
+  return useQuery({
+    queryKey: ["public-scores", key],
+    enabled: submissionIds.length > 0,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scores")
+        .select("id, submission_id, criterion_id, value")
+        .in("submission_id", submissionIds);
+      if (error) throw error;
+      return (data ?? []) as PublicScore[];
+    },
+  });
+}
+
+export type CriterionContribution = {
+  criterion: CriterionRow;
+  /** Mean judge score on this criterion (raw, e.g. 4.2 out of 5). */
+  average: number | null;
+  /** Points this criterion adds to the weighted total, out of 100. */
+  points: number;
+  /** Maximum points this criterion could add, out of 100. */
+  maxPoints: number;
+  judgeCount: number;
+};
+
+export type Standing = {
+  submission: PublicSubmission;
+  /** Weighted total out of 100 — every criterion scaled by its weight, not a plain sum. */
+  weightedTotal: number | null;
+  /** Plain unweighted mean of criterion percentages, for comparison. */
+  simpleTotal: number | null;
+  rank: number | null;
+  judgeCount: number;
+  breakdown: CriterionContribution[];
+};
+
+/**
+ * Ranks submissions on a weighted total: each criterion's mean judge score is
+ * converted to a share of its own maximum, multiplied by that criterion's weight,
+ * and divided by the total weight of scored criteria. The per-criterion `points`
+ * show exactly how much each criterion moved the final ranking.
+ */
+export function buildStandings(
+  submissions: PublicSubmission[],
+  criteria: CriterionRow[],
+  scores: PublicScore[],
+  rounds: RoundRow[] = [],
+): Standing[] {
+  const rows = submissions.map((submission) => {
+    const scoped = criteriaForSubmission(submission, rounds, criteria);
+    const totalWeight = scoped.reduce((sum, c) => sum + (c.weight || 0), 0) || 1;
+    const mine = scores.filter((s) => s.submission_id === submission.id);
+    const judgeCount = new Set(mine.map((s) => s.criterion_id + ":" + s.id)).size;
+
+    const breakdown: CriterionContribution[] = scoped.map((criterion) => {
+      const values = mine.filter((s) => s.criterion_id === criterion.id).map((s) => s.value);
+      const average =
+        values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+      const maxPoints = ((criterion.weight || 0) / totalWeight) * 100;
+      const points =
+        average === null ? 0 : (average / (criterion.max_score || 5)) * maxPoints;
+      return {
+        criterion,
+        average,
+        points: Math.round(points * 10) / 10,
+        maxPoints: Math.round(maxPoints * 10) / 10,
+        judgeCount: values.length,
+      };
+    });
+
+    const scoredParts = breakdown.filter((b) => b.average !== null);
+    const weightedTotal =
+      scoredParts.length === 0
+        ? null
+        : Math.round(
+            (scoredParts.reduce((sum, b) => sum + b.points, 0) /
+              (scoredParts.reduce((sum, b) => sum + b.maxPoints, 0) || 1)) *
+              1000,
+          ) / 10;
+    const simpleTotal =
+      scoredParts.length === 0
+        ? null
+        : Math.round(
+            (scoredParts.reduce(
+              (sum, b) => sum + (b.average! / (b.criterion.max_score || 5)) * 100,
+              0,
+            ) /
+              scoredParts.length) *
+              10,
+          ) / 10;
+
+    const maxJudges = Math.max(0, ...breakdown.map((b) => b.judgeCount));
+    return { submission, weightedTotal, simpleTotal, breakdown, judgeCount: maxJudges };
+  });
+
+  const ranked = [...rows].sort(
+    (a, b) => (b.weightedTotal ?? -1) - (a.weightedTotal ?? -1),
+  );
+  return ranked.map((row, i) => ({
+    ...row,
+    rank: row.weightedTotal === null ? null : i + 1,
+  }));
+}
