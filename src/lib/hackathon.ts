@@ -703,7 +703,6 @@ export function buildStandings(
     const scoped = criteriaForSubmission(submission, rounds, criteria);
     const totalWeight = scoped.reduce((sum, c) => sum + (c.weight || 0), 0) || 1;
     const mine = scores.filter((s) => s.submission_id === submission.id);
-    const judgeCount = new Set(mine.map((s) => s.criterion_id + ":" + s.id)).size;
 
     const breakdown: CriterionContribution[] = scoped.map((criterion) => {
       const values = mine.filter((s) => s.criterion_id === criterion.id).map((s) => s.value);
