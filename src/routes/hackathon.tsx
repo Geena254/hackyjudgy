@@ -61,7 +61,7 @@ function HackathonPage() {
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: submissions = [] } = usePublicSubmissions(event?.id);
-  const { data: scores = [] } = usePublicScores(submissions.map((s) => s.id));
+  const { data: scores = [] } = usePublicScores(event?.id);
   const submit = useSubmitProject();
 
   const [doneId, setDoneId] = useState<string | null>(null);
