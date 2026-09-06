@@ -626,16 +626,11 @@ export function usePublicSubmissions(eventId: string | undefined) {
     enabled: !!eventId,
     refetchInterval: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("submissions")
-        .select(
-          "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, status, created_at",
-        )
-        .eq("event_id", eventId!)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("public_submissions", { _event_id: eventId! });
       if (error) throw error;
       return (data ?? []) as PublicSubmission[];
     },
+
   });
 }
 
