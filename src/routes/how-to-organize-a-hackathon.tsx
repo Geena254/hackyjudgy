@@ -217,17 +217,18 @@ function GuidePage() {
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
-                to="/auth"
+                to="/for-organisers"
                 className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white"
                 style={{ background: "var(--teal)" }}
               >
-                Create your account <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                See EvalDesk for organisers <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </Link>
               <Link
-                to="/submit"
-                className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                to="/auth"
+                className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white"
+                style={{ background: "var(--magenta)" }}
               >
-                Submit a project
+                Create your account <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </Link>
               <Link
                 to="/hackathon"
@@ -236,6 +237,7 @@ function GuidePage() {
                 See a live hackathon page
               </Link>
             </div>
+
           </section>
         </article>
       </main>

@@ -591,18 +591,14 @@ export function usePublicSubmission(id: string | undefined) {
     queryKey: ["public-submission", id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("submissions")
-        .select(
-          "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, status, created_at",
-        )
-        .eq("id", id!)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("public_submission", { _id: id! });
       if (error) throw error;
-      return (data ?? null) as Omit<SubmissionRow, "submitter_name" | "submitter_email"> | null;
+      const rows = (data ?? []) as PublicSubmission[];
+      return rows[0] ?? null;
     },
   });
 }
+
 
 /** Public event lookup by id (only active events are readable without signing in). */
 export function usePublicEvent(id: string | undefined) {
@@ -630,40 +626,43 @@ export function usePublicSubmissions(eventId: string | undefined) {
     enabled: !!eventId,
     refetchInterval: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("submissions")
-        .select(
-          "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, status, created_at",
-        )
-        .eq("event_id", eventId!)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("public_submissions", { _event_id: eventId! });
       if (error) throw error;
       return (data ?? []) as PublicSubmission[];
     },
+
   });
 }
 
 export type PublicSubmission = Omit<SubmissionRow, "submitter_name" | "submitter_email">;
 
-export type PublicScore = { id: string; submission_id: string; criterion_id: string; value: number };
+/** Averaged criterion score for one submission — never an individual judge's mark. */
+export type PublicScore = {
+  submission_id: string;
+  criterion_id: string;
+  avg_value: number;
+  judge_count: number;
+};
 
-/** Anonymous score values for an event's submissions — judge identities stay private. */
-export function usePublicScores(submissionIds: string[]) {
-  const key = [...submissionIds].sort().join(",");
+/** Averaged public scores for a running event — individual judge marks stay private. */
+export function usePublicScores(eventId: string | undefined) {
   return useQuery({
-    queryKey: ["public-scores", key],
-    enabled: submissionIds.length > 0,
+    queryKey: ["public-score-averages", eventId],
+    enabled: !!eventId,
     refetchInterval: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("scores")
-        .select("id, submission_id, criterion_id, value")
-        .in("submission_id", submissionIds);
+      const { data, error } = await supabase.rpc("public_score_averages", {
+        _event_id: eventId!,
+      });
       if (error) throw error;
-      return (data ?? []) as PublicScore[];
+      return ((data ?? []) as PublicScore[]).map((r) => ({
+        ...r,
+        avg_value: Number(r.avg_value),
+      }));
     },
   });
 }
+
 
 export type CriterionContribution = {
   criterion: CriterionRow;
@@ -705,20 +704,19 @@ export function buildStandings(
     const mine = scores.filter((s) => s.submission_id === submission.id);
 
     const breakdown: CriterionContribution[] = scoped.map((criterion) => {
-      const values = mine.filter((s) => s.criterion_id === criterion.id).map((s) => s.value);
-      const average =
-        values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+      const row = mine.find((s) => s.criterion_id === criterion.id);
+      const average = row ? row.avg_value : null;
       const maxPoints = ((criterion.weight || 0) / totalWeight) * 100;
-      const points =
-        average === null ? 0 : (average / (criterion.max_score || 5)) * maxPoints;
+      const points = average === null ? 0 : (average / (criterion.max_score || 5)) * maxPoints;
       return {
         criterion,
         average,
         points: Math.round(points * 10) / 10,
         maxPoints: Math.round(maxPoints * 10) / 10,
-        judgeCount: values.length,
+        judgeCount: row?.judge_count ?? 0,
       };
     });
+
 
     const scoredParts = breakdown.filter((b) => b.average !== null);
     const weightedTotal =
