@@ -448,6 +448,40 @@ export type Database = {
           submission_id: string
         }[]
       }
+      public_submission: {
+        Args: { _id: string }
+        Returns: {
+          category: string
+          created_at: string
+          deck_url: string
+          demo_url: string
+          description: string
+          event_id: string
+          id: string
+          repo_url: string
+          round_id: string
+          status: string
+          team_name: string
+          title: string
+        }[]
+      }
+      public_submissions: {
+        Args: { _event_id: string }
+        Returns: {
+          category: string
+          created_at: string
+          deck_url: string
+          demo_url: string
+          description: string
+          event_id: string
+          id: string
+          repo_url: string
+          round_id: string
+          status: string
+          team_name: string
+          title: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "judge"
