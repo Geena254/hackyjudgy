@@ -591,18 +591,14 @@ export function usePublicSubmission(id: string | undefined) {
     queryKey: ["public-submission", id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("submissions")
-        .select(
-          "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, status, created_at",
-        )
-        .eq("id", id!)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("public_submission", { _id: id! });
       if (error) throw error;
-      return (data ?? null) as Omit<SubmissionRow, "submitter_name" | "submitter_email"> | null;
+      const rows = (data ?? []) as PublicSubmission[];
+      return rows[0] ?? null;
     },
   });
 }
+
 
 /** Public event lookup by id (only active events are readable without signing in). */
 export function usePublicEvent(id: string | undefined) {
