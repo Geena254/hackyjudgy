@@ -436,7 +436,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_score_averages: {
+        Row: {
+          avg_value: number | null
+          criterion_id: string | null
+          judge_count: number | null
+          submission_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scores_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scores_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
