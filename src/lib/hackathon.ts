@@ -645,25 +645,33 @@ export function usePublicSubmissions(eventId: string | undefined) {
 
 export type PublicSubmission = Omit<SubmissionRow, "submitter_name" | "submitter_email">;
 
-export type PublicScore = { id: string; submission_id: string; criterion_id: string; value: number };
+/** Averaged criterion score for one submission — never an individual judge's mark. */
+export type PublicScore = {
+  submission_id: string;
+  criterion_id: string;
+  avg_value: number;
+  judge_count: number;
+};
 
-/** Anonymous score values for an event's submissions — judge identities stay private. */
-export function usePublicScores(submissionIds: string[]) {
-  const key = [...submissionIds].sort().join(",");
+/** Averaged public scores for a running event — individual judge marks stay private. */
+export function usePublicScores(eventId: string | undefined) {
   return useQuery({
-    queryKey: ["public-scores", key],
-    enabled: submissionIds.length > 0,
+    queryKey: ["public-score-averages", eventId],
+    enabled: !!eventId,
     refetchInterval: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("scores")
-        .select("id, submission_id, criterion_id, value")
-        .in("submission_id", submissionIds);
+      const { data, error } = await supabase.rpc("public_score_averages", {
+        _event_id: eventId!,
+      });
       if (error) throw error;
-      return (data ?? []) as PublicScore[];
+      return ((data ?? []) as PublicScore[]).map((r) => ({
+        ...r,
+        avg_value: Number(r.avg_value),
+      }));
     },
   });
 }
+
 
 export type CriterionContribution = {
   criterion: CriterionRow;
