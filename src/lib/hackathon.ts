@@ -713,20 +713,19 @@ export function buildStandings(
     const mine = scores.filter((s) => s.submission_id === submission.id);
 
     const breakdown: CriterionContribution[] = scoped.map((criterion) => {
-      const values = mine.filter((s) => s.criterion_id === criterion.id).map((s) => s.value);
-      const average =
-        values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+      const row = mine.find((s) => s.criterion_id === criterion.id);
+      const average = row ? row.avg_value : null;
       const maxPoints = ((criterion.weight || 0) / totalWeight) * 100;
-      const points =
-        average === null ? 0 : (average / (criterion.max_score || 5)) * maxPoints;
+      const points = average === null ? 0 : (average / (criterion.max_score || 5)) * maxPoints;
       return {
         criterion,
         average,
         points: Math.round(points * 10) / 10,
         maxPoints: Math.round(maxPoints * 10) / 10,
-        judgeCount: values.length,
+        judgeCount: row?.judge_count ?? 0,
       };
     });
+
 
     const scoredParts = breakdown.filter((b) => b.average !== null);
     const weightedTotal =
