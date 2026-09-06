@@ -14,6 +14,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as HowToOrganizeAHackathonRouteImport } from './routes/how-to-organize-a-hackathon'
 import { Route as HackathonRouteImport } from './routes/hackathon'
+import { Route as ForOrganisersRouteImport } from './routes/for-organisers'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -55,6 +56,11 @@ const HowToOrganizeAHackathonRoute = HowToOrganizeAHackathonRouteImport.update({
 const HackathonRoute = HackathonRouteImport.update({
   id: '/hackathon',
   path: '/hackathon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForOrganisersRoute = ForOrganisersRouteImport.update({
+  id: '/for-organisers',
+  path: '/for-organisers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -148,6 +154,7 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/for-organisers': typeof ForOrganisersRoute
   '/hackathon': typeof HackathonRoute
   '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/mcp': typeof McpRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/for-organisers': typeof ForOrganisersRoute
   '/hackathon': typeof HackathonRoute
   '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/mcp': typeof McpRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/for-organisers': typeof ForOrganisersRoute
   '/hackathon': typeof HackathonRoute
   '/how-to-organize-a-hackathon': typeof HowToOrganizeAHackathonRoute
   '/mcp': typeof McpRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/for-organisers'
     | '/hackathon'
     | '/how-to-organize-a-hackathon'
     | '/mcp'
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/for-organisers'
     | '/hackathon'
     | '/how-to-organize-a-hackathon'
     | '/mcp'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/for-organisers'
     | '/hackathon'
     | '/how-to-organize-a-hackathon'
     | '/mcp'
@@ -293,6 +305,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ForOrganisersRoute: typeof ForOrganisersRoute
   HackathonRoute: typeof HackathonRoute
   HowToOrganizeAHackathonRoute: typeof HowToOrganizeAHackathonRoute
   McpRoute: typeof McpRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/hackathon'
       fullPath: '/hackathon'
       preLoaderRoute: typeof HackathonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-organisers': {
+      id: '/for-organisers'
+      path: '/for-organisers'
+      fullPath: '/for-organisers'
+      preLoaderRoute: typeof ForOrganisersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -497,6 +517,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ForOrganisersRoute: ForOrganisersRoute,
   HackathonRoute: HackathonRoute,
   HowToOrganizeAHackathonRoute: HowToOrganizeAHackathonRoute,
   McpRoute: McpRoute,
