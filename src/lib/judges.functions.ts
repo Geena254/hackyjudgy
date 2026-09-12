@@ -48,11 +48,44 @@ export const inviteJudge = createServerFn({ method: "POST" })
     if (inviteError) {
       const already = /already been registered|already exists/i.test(inviteError.message);
       if (!already) throw new Error(inviteError.message);
-      return { emailed: false, message: "This person already has an account — role recorded." };
+
+      // The person already has an account: grant judging access now and email a sign-in link.
+      let existingId: string | null = null;
+      for (let page = 1; page <= 10 && !existingId; page++) {
+        const { data: users, error } = await supabaseAdmin.auth.admin.listUsers({
+          page,
+          perPage: 200,
+        });
+        if (error) break;
+        const match = users.users.find((u) => (u.email ?? "").toLowerCase() === email);
+        if (match) existingId = match.id;
+        if (users.users.length < 200) break;
+      }
+      if (existingId) {
+        await supabaseAdmin
+          .from("user_roles")
+          .upsert({ user_id: existingId, role: "judge" }, { onConflict: "user_id,role" });
+      }
+
+      const { error: linkError } = await supabaseAdmin.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false, emailRedirectTo: `${data.appOrigin}/auth` },
+      });
+      if (linkError) {
+        return {
+          emailed: false,
+          message: `${email} already has an account and now has judging access. We couldn't email a sign-in link — ask them to sign in normally.`,
+        };
+      }
+      return {
+        emailed: true,
+        message: `${email} already had an account — judging access granted and a sign-in link emailed.`,
+      };
     }
 
     return { emailed: true, message: `Invitation email sent to ${email}.` };
   });
+
 
 export const listInvitations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
