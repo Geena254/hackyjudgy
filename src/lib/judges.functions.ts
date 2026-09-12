@@ -64,3 +64,74 @@ export const listInvitations = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+async function assertAdmin(supabase: any, userId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Only admins can manage judge invitations.");
+}
+
+export const revokeInvitation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+
+    const { data: invite, error: fetchError } = await supabase
+      .from("judge_invitations")
+      .select("id, email, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (fetchError) throw new Error(fetchError.message);
+    if (!invite) throw new Error("Invitation not found.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Find the invited account (if any) so we can invalidate the invite link.
+    let account: { id: string; last_sign_in_at: string | null } | null = null;
+    for (let page = 1; page <= 10 && !account; page++) {
+      const { data: users, error } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: 200,
+      });
+      if (error) throw new Error(error.message);
+      const match = users.users.find(
+        (u) => (u.email ?? "").toLowerCase() === invite.email.toLowerCase(),
+      );
+      if (match) account = { id: match.id, last_sign_in_at: match.last_sign_in_at ?? null };
+      if (users.users.length < 200) break;
+    }
+
+    let message = "";
+    if (account && !account.last_sign_in_at) {
+      // Never signed in — delete the pending account so the emailed link stops working.
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(account.id);
+      if (error) throw new Error(error.message);
+      message = "Invitation withdrawn — the emailed link no longer works.";
+    } else if (account) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", account.id)
+        .eq("role", "judge");
+      if (error) throw new Error(error.message);
+      message = "Access withdrawn — this judge can no longer score submissions.";
+    } else {
+      message = "Invitation withdrawn.";
+    }
+
+    const { error: updateError } = await supabase
+      .from("judge_invitations")
+      .update({ status: "revoked", accepted_at: null })
+      .eq("id", invite.id);
+    if (updateError) throw new Error(updateError.message);
+
+    return { message };
+  });
+
