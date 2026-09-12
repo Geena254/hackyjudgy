@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/analytics")({
         content:
           "See scoring progress, judge activity and weighted rubric results for your hackathon rounds.",
       },
-      { property: "og:url", content: "https://hackyjudgy.lovable.app/analytics" },
+      { property: "og:url", content: "https://gavellab.lovable.app/analytics" },
       { name: "robots", content: "noindex" },
     ],
   }),

@@ -31,10 +31,10 @@ export const Route = createFileRoute("/hackathon")({
           "Submit your hackathon project and watch the live leaderboard, ranked by weighted rubric scores from the judging panel.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://hackyjudgy.lovable.app/hackathon" },
+      { property: "og:url", content: "https://gavellab.lovable.app/hackathon" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://hackyjudgy.lovable.app/hackathon" }],
+    links: [{ rel: "canonical", href: "https://gavellab.lovable.app/hackathon" }],
   }),
   component: HackathonPage,
 });

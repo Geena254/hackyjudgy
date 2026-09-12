@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
         property: "og:description",
         content: "Manage your account details, hackathon preferences and judging panel settings.",
       },
-      { property: "og:url", content: "https://hackyjudgy.lovable.app/settings" },
+      { property: "og:url", content: "https://gavellab.lovable.app/settings" },
       { name: "robots", content: "noindex" },
     ],
   }),
