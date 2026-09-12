@@ -48,6 +48,8 @@ function JudgesPage() {
   const queryClient = useQueryClient();
   const invite = useServerFn(inviteJudge);
   const list = useServerFn(listInvitations);
+  const revokeInvite = useServerFn(revokeInvitation);
+
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
