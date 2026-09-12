@@ -31,7 +31,7 @@ export function SiteFooter() {
         <div className="flex flex-col items-center gap-3 lg:items-start">
           <PlpLogo className="h-10" />
           <p className="max-w-sm text-center text-sm text-muted-foreground lg:text-left">
-            GavelLab is the judging and scoring platform for Power Learn Project hackathons.
+            GavelLab helps organisers run hackathons, pitch competitions and innovation programmes end to end.
           </p>
         </div>
         <div className="flex flex-col items-center gap-3">
