@@ -28,12 +28,12 @@ import {
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Organiser Dashboard — EvalDesk" },
+      { title: "Organiser Dashboard — GavelLab" },
       {
         name: "description",
         content: "Live overview of entries, judge activity and scoring progress for your hackathon.",
       },
-      { property: "og:title", content: "Organiser Dashboard — EvalDesk" },
+      { property: "og:title", content: "Organiser Dashboard — GavelLab" },
       {
         property: "og:description",
         content: "Track entries, judges and scoring progress in one place.",

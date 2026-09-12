@@ -19,14 +19,14 @@ export const Route = createFileRoute("/auth")({
 
   head: () => ({
     meta: [
-      { title: "Sign in — EvalDesk by Power Learn Project" },
+      { title: "Sign in — GavelLab by Power Learn Project" },
       {
         name: "description",
         content:
-          "Sign in or create your EvalDesk account to manage hackathon events, submissions and judging.",
+          "Sign in or create your GavelLab account to manage hackathon events, submissions and judging.",
       },
-      { property: "og:title", content: "Sign in — EvalDesk" },
-      { property: "og:description", content: "Access the EvalDesk judging and scoring platform." },
+      { property: "og:title", content: "Sign in — GavelLab" },
+      { property: "og:description", content: "Access the GavelLab judging and scoring platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -131,7 +131,7 @@ function AuthPage() {
     <div className="flex min-h-screen flex-col bg-surface">
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-          <Link to="/" aria-label="EvalDesk home">
+          <Link to="/" aria-label="GavelLab home">
             <PlpLogo className="h-10" />
           </Link>
         </div>
@@ -140,7 +140,7 @@ function AuthPage() {
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Card className="p-6 sm:p-8">
           <h1 className="text-2xl font-bold text-foreground">
-            {mode === "signin" ? "Sign in to EvalDesk" : "Create your account"}
+            {mode === "signin" ? "Sign in to GavelLab" : "Create your account"}
           </h1>
           {mode === "signup" && (
             <p className="mt-1 text-sm text-muted-foreground">
@@ -210,7 +210,7 @@ function AuthPage() {
           </button>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "signin" ? "New to EvalDesk?" : "Already have an account?"}{" "}
+            {mode === "signin" ? "New to GavelLab?" : "Already have an account?"}{" "}
             <button
               onClick={() => {
                 setMode(mode === "signin" ? "signup" : "signin");

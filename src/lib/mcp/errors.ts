@@ -30,15 +30,15 @@ export function toolError(code: McpErrorCode, message: string, hint?: string): M
 export function unauthenticatedError(): McpToolError {
   return toolError(
     "UNAUTHENTICATED",
-    "You are not signed in to EvalDesk.",
-    "Reconnect this assistant and approve access with your EvalDesk account.",
+    "You are not signed in to GavelLab.",
+    "Reconnect this assistant and approve access with your GavelLab account.",
   );
 }
 
 export function revokedError(): McpToolError {
   return toolError(
     "ACCESS_REVOKED",
-    "An EvalDesk admin revoked this assistant's access.",
+    "An GavelLab admin revoked this assistant's access.",
     "Ask an admin to restore it, or reconnect to request access again.",
   );
 }
@@ -64,7 +64,7 @@ export function databaseError(
   if (code === "42501" || code === "PGRST301" || /row-level security|permission denied/i.test(error.message)) {
     return toolError(
       "PERMISSION_DENIED",
-      `Your EvalDesk account is not allowed to ${what}.`,
+      `Your GavelLab account is not allowed to ${what}.`,
       "Judges can only read active events and manage their own scores.",
     );
   }

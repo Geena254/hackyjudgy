@@ -7,13 +7,13 @@ import { usePublicSubmission, usePublicEvent, formatDate } from "@/lib/hackathon
 export const Route = createFileRoute("/project/$id")({
   head: () => ({
     meta: [
-      { title: "Hackathon Project Showcase — EvalDesk" },
+      { title: "Hackathon Project Showcase — GavelLab" },
       {
         name: "description",
         content:
           "A shareable page for a hackathon project: what it does, who built it, and links to the code, demo and pitch deck.",
       },
-      { property: "og:title", content: "Hackathon Project Showcase — EvalDesk" },
+      { property: "og:title", content: "Hackathon Project Showcase — GavelLab" },
       {
         property: "og:description",
         content: "See what this team built, and explore their code, demo and pitch deck.",

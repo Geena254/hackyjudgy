@@ -19,13 +19,13 @@ import {
 export const Route = createFileRoute("/_authenticated/results")({
   head: () => ({
     meta: [
-      { title: "My Results — EvalDesk" },
+      { title: "My Results — GavelLab" },
       {
         name: "description",
         content:
           "Review the final score, rank and feedback you recorded for every submission you judged.",
       },
-      { property: "og:title", content: "My judging results — EvalDesk" },
+      { property: "og:title", content: "My judging results — GavelLab" },
       {
         property: "og:description",
         content: "Final scores, ranks and feedback for the submissions you judged.",

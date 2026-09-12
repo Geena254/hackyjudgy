@@ -35,12 +35,12 @@ export const Route = createFileRoute("/_authenticated/scoring")({
   }),
   head: () => ({
     meta: [
-      { title: "Scoring Queue — EvalDesk" },
+      { title: "Scoring Queue — GavelLab" },
       {
         name: "description",
         content: "Score submissions against the rubric with autosaved feedback and Save & Next.",
       },
-      { property: "og:title", content: "Scoring Queue — EvalDesk" },
+      { property: "og:title", content: "Scoring Queue — GavelLab" },
       { property: "og:description", content: "Work through your judging queue submission by submission." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

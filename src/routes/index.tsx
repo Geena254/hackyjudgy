@@ -15,13 +15,13 @@ import { PlpLogo, SiteFooter } from "@/components/brand";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "EvalDesk — Hackathon Judging & Scoring by Power Learn Project" },
+      { title: "GavelLab — Hackathon Judging & Scoring by Power Learn Project" },
       {
         name: "description",
         content:
-          "EvalDesk runs Power Learn Project hackathons end to end: rounds, rubrics, blind judging and live scoring in one place.",
+          "GavelLab runs Power Learn Project hackathons end to end: rounds, rubrics, blind judging and live scoring in one place.",
       },
-      { property: "og:title", content: "EvalDesk — Hackathon Judging & Scoring" },
+      { property: "og:title", content: "GavelLab — Hackathon Judging & Scoring" },
       {
         property: "og:description",
         content:
@@ -121,7 +121,7 @@ function Landing() {
                 Judge hackathons fairly, at scale.
               </h1>
               <p className="mt-5 text-lg text-muted-foreground">
-                EvalDesk is the judging and scoring platform behind Power Learn Project
+                GavelLab is the judging and scoring platform behind Power Learn Project
                 hackathons. Set up events and rounds, invite your judge panel by email, and
                 score every submission against a shared rubric.
               </p>

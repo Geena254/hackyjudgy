@@ -15,10 +15,10 @@ export function PlpLogo({ className = "h-9" }: { className?: string }) {
 
 export function BrandLink() {
   return (
-    <Link to="/" className="flex shrink-0 items-center gap-3" aria-label="EvalDesk home">
+    <Link to="/" className="flex shrink-0 items-center gap-3" aria-label="GavelLab home">
       <PlpLogo className="h-10 sm:h-11" />
       <span className="hidden border-l border-border pl-3 text-base font-bold tracking-tight text-foreground sm:inline">
-        EvalDesk
+        GavelLab
       </span>
     </Link>
   );
@@ -31,7 +31,7 @@ export function SiteFooter() {
         <div className="flex flex-col items-center gap-3 lg:items-start">
           <PlpLogo className="h-10" />
           <p className="max-w-sm text-center text-sm text-muted-foreground lg:text-left">
-            EvalDesk is the judging and scoring platform for Power Learn Project hackathons.
+            GavelLab is the judging and scoring platform for Power Learn Project hackathons.
           </p>
         </div>
         <div className="flex flex-col items-center gap-3">

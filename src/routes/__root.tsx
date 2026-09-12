@@ -77,10 +77,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "EvalDesk — Hackathon Judging & Scoring by Power Learn Project" },
-      { name: "description", content: "EvalDesk is the judging and scoring platform for Power Learn Project hackathons." },
+      { title: "GavelLab — Hackathon Judging & Scoring by Power Learn Project" },
+      { name: "description", content: "GavelLab is the judging and scoring platform for Power Learn Project hackathons." },
       { name: "author", content: "Power Learn Project" },
-      { property: "og:title", content: "EvalDesk — Hackathon Judging & Scoring" },
+      { property: "og:title", content: "GavelLab — Hackathon Judging & Scoring" },
       { property: "og:description", content: "Run hackathon judging end to end: rounds, rubrics, blind judging and live scoring." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

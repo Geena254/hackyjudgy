@@ -18,12 +18,12 @@ import {
 export const Route = createFileRoute("/_authenticated/submissions")({
   head: () => ({
     meta: [
-      { title: "Entries — EvalDesk" },
+      { title: "Entries — GavelLab" },
       {
         name: "description",
         content: "Add, edit and track every project entered into your hackathon.",
       },
-      { property: "og:title", content: "Entries — EvalDesk" },
+      { property: "og:title", content: "Entries — GavelLab" },
       { property: "og:description", content: "Manage the projects your judges will score." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

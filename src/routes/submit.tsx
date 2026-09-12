@@ -8,13 +8,13 @@ import { useActiveEvent, useRounds, useSubmitProject, formatDate } from "@/lib/h
 export const Route = createFileRoute("/submit")({
   head: () => ({
     meta: [
-      { title: "Submit Your Project — EvalDesk Hackathon Entry" },
+      { title: "Submit Your Project — GavelLab Hackathon Entry" },
       {
         name: "description",
         content:
           "Enter your team's project into the current Power Learn Project hackathon: title, description, repository, demo and pitch deck.",
       },
-      { property: "og:title", content: "Submit Your Project — EvalDesk" },
+      { property: "og:title", content: "Submit Your Project — GavelLab" },
       {
         property: "og:description",
         content: "Send your hackathon entry to the judging panel in a couple of minutes.",

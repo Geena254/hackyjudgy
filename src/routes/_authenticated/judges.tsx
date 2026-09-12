@@ -12,12 +12,12 @@ import { useAuth, initials } from "@/hooks/use-auth";
 export const Route = createFileRoute("/_authenticated/judges")({
   head: () => ({
     meta: [
-      { title: "Judges — EvalDesk" },
+      { title: "Judges — GavelLab" },
       {
         name: "description",
         content: "Invite judges by email and track who has joined your judging panel.",
       },
-      { property: "og:title", content: "Judges — EvalDesk" },
+      { property: "og:title", content: "Judges — GavelLab" },
       { property: "og:description", content: "Manage your hackathon judging panel." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -100,7 +100,7 @@ function JudgesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Judges</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Invite judges by email. Each invited judge receives a link to create their EvalDesk
+            Invite judges by email. Each invited judge receives a link to create their GavelLab
             account and is added to the panel automatically.
           </p>
         </div>
