@@ -153,7 +153,7 @@ function IntegrationsPage() {
               {clients.data?.length === 0 && (
                 <p className="mt-4 text-sm text-muted-foreground">
                   No assistant has connected yet. Connections appear here the first time an
-                  assistant runs an GavelLab tool.
+                  assistant runs a GavelLab tool.
                 </p>
               )}
 
@@ -242,7 +242,7 @@ function IntegrationsPage() {
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Endpoint <code className="rounded bg-muted px-1">{MCP_ENDPOINT_PATH}</code> on this
-                site. Assistants sign in with an GavelLab account and approve access, then act with
+                site. Assistants sign in with a GavelLab account and approve access, then act with
                 exactly that account's permissions.
               </p>
 

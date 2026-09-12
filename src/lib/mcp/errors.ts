@@ -38,7 +38,7 @@ export function unauthenticatedError(): McpToolError {
 export function revokedError(): McpToolError {
   return toolError(
     "ACCESS_REVOKED",
-    "An GavelLab admin revoked this assistant's access.",
+    "A GavelLab admin revoked this assistant's access.",
     "Ask an admin to restore it, or reconnect to request access again.",
   );
 }
