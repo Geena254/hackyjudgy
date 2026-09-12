@@ -193,10 +193,33 @@ function JudgesPage() {
                       </div>
                     </div>
                     <Pill tone={statusTone(inv.status)} variant="outline">
-                      {inv.status === "accepted" ? "Joined" : "Pending"}
+                      {inv.status === "accepted"
+                        ? "Joined"
+                        : inv.status === "revoked"
+                          ? "Withdrawn"
+                          : "Pending"}
                     </Pill>
+                    {inv.status !== "revoked" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Withdraw the invitation for ${inv.email}? Their invite link will stop working.`,
+                            )
+                          )
+                            revoke.mutate({ id: inv.id });
+                        }}
+                        disabled={revoke.isPending}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-60"
+                      >
+                        <XCircle className="h-3.5 w-3.5" strokeWidth={2} />
+                        Withdraw
+                      </button>
+                    )}
                   </li>
                 ))}
+
               </ul>
             </Card>
           </div>
