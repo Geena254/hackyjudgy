@@ -41,7 +41,7 @@ export const inviteJudge = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${data.appOrigin}/auth`,
+      redirectTo: `${data.appOrigin}/auth?mode=signup`,
       data: { full_name: data.fullName ?? null, invited_as: "judge" },
     });
 
