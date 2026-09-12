@@ -18,7 +18,7 @@ import {
 export const Route = createFileRoute("/hackathon")({
   head: () => ({
     meta: [
-      { title: "Hackathon Home — Enter and Follow Live Standings | EvalDesk" },
+      { title: "Hackathon Home — Enter and Follow Live Standings | GavelLab" },
       {
         name: "description",
         content:
@@ -113,7 +113,7 @@ function HackathonPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" aria-label="EvalDesk home">
+          <Link to="/" aria-label="GavelLab home">
             <PlpLogo className="h-10 sm:h-11" />
           </Link>
           <div className="flex items-center gap-2">
@@ -476,7 +476,7 @@ function HackathonPage() {
             <section className="mt-14 rounded-lg border border-border bg-surface p-6">
               <h2 className="text-xl font-bold text-foreground">Running your own hackathon?</h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                EvalDesk gives you rounds, a weighted rubric, blind judging and standings like the
+                GavelLab gives you rounds, a weighted rubric, blind judging and standings like the
                 ones above.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">

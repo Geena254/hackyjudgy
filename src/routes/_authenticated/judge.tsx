@@ -20,12 +20,12 @@ import {
 export const Route = createFileRoute("/_authenticated/judge")({
   head: () => ({
     meta: [
-      { title: "Judge Dashboard — EvalDesk" },
+      { title: "Judge Dashboard — GavelLab" },
       {
         name: "description",
         content: "Track your judging progress and the submissions assigned to you.",
       },
-      { property: "og:title", content: "Judge Dashboard — EvalDesk" },
+      { property: "og:title", content: "Judge Dashboard — GavelLab" },
       { property: "og:description", content: "Your judging progress at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

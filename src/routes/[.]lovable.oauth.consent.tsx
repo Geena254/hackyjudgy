@@ -82,7 +82,7 @@ function Consent() {
       <Card className="w-full max-w-md p-6">
         <PlpLogo className="mb-6 h-9" />
         <h1 className="text-xl font-semibold text-foreground">
-          Connect {clientName} to your EvalDesk account
+          Connect {clientName} to your GavelLab account
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {clientName} will be able to read events, rubrics and submissions you can already see, and

@@ -31,13 +31,13 @@ import {
 export const Route = createFileRoute("/_authenticated/events")({
   head: () => ({
     meta: [
-      { title: "Hackathon Setup — EvalDesk" },
+      { title: "Hackathon Setup — GavelLab" },
       {
         name: "description",
         content:
           "Create hackathons, publish them for entries, and configure rounds with their own weighted rubric criteria.",
       },
-      { property: "og:title", content: "Hackathon Setup — EvalDesk" },
+      { property: "og:title", content: "Hackathon Setup — GavelLab" },
       { property: "og:description", content: "Set up events, rounds and rubrics." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

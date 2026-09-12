@@ -16,16 +16,16 @@ import {
 export const Route = createFileRoute("/_authenticated/integrations")({
   head: () => ({
     meta: [
-      { title: "Agent integrations — EvalDesk" },
+      { title: "Agent integrations — GavelLab" },
       {
         name: "description",
         content:
-          "Review connected AI assistants, revoke their access, and read the EvalDesk tool documentation.",
+          "Review connected AI assistants, revoke their access, and read the GavelLab tool documentation.",
       },
-      { property: "og:title", content: "Agent integrations — EvalDesk" },
+      { property: "og:title", content: "Agent integrations — GavelLab" },
       {
         property: "og:description",
-        content: "Manage assistant connections and EvalDesk tool documentation.",
+        content: "Manage assistant connections and GavelLab tool documentation.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -109,7 +109,7 @@ function IntegrationsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Agent integrations</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {MCP_SERVER_NAME} lets AI assistants work with EvalDesk on behalf of a signed-in
+            {MCP_SERVER_NAME} lets AI assistants work with GavelLab on behalf of a signed-in
             account. Review the assistants people have connected, cut off any you don't recognise,
             and share the tool reference below with whoever is integrating.
           </p>
@@ -138,7 +138,7 @@ function IntegrationsPage() {
                 Connected assistants
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Each row is one assistant connected to one EvalDesk account. Revoking blocks every
+                Each row is one assistant connected to one GavelLab account. Revoking blocks every
                 further request from that assistant until you restore it.
               </p>
 
@@ -153,7 +153,7 @@ function IntegrationsPage() {
               {clients.data?.length === 0 && (
                 <p className="mt-4 text-sm text-muted-foreground">
                   No assistant has connected yet. Connections appear here the first time an
-                  assistant runs an EvalDesk tool.
+                  assistant runs a GavelLab tool.
                 </p>
               )}
 
@@ -242,7 +242,7 @@ function IntegrationsPage() {
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Endpoint <code className="rounded bg-muted px-1">{MCP_ENDPOINT_PATH}</code> on this
-                site. Assistants sign in with an EvalDesk account and approve access, then act with
+                site. Assistants sign in with a GavelLab account and approve access, then act with
                 exactly that account's permissions.
               </p>
 

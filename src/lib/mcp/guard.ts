@@ -9,7 +9,7 @@ import {
   type McpToolError,
 } from "./errors";
 
-/** Maximum tool calls a single EvalDesk account may make per rolling minute. */
+/** Maximum tool calls a single GavelLab account may make per rolling minute. */
 export const RATE_LIMIT_PER_MINUTE = 40;
 
 type Supabase = ReturnType<typeof supabaseForUser>;

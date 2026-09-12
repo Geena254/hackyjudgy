@@ -151,7 +151,7 @@ function GuidePage() {
             A hackathon is a time-boxed build event where teams ship a working prototype
             against a brief, then a panel judges it. Running one is two jobs: getting good projects built, and judging them
             fairly. This guide walks through the planning steps in order, then the judging
-            decisions that decide whether your results hold up — the same decisions EvalDesk
+            decisions that decide whether your results hold up — the same decisions GavelLab
             was built around for Power Learn Project hackathons.
           </p>
 
@@ -210,7 +210,7 @@ function GuidePage() {
           </section>
 
           <section className="mt-14 rounded-lg border border-border bg-surface p-6">
-            <h2 className="text-xl font-bold text-foreground">Run your judging on EvalDesk</h2>
+            <h2 className="text-xl font-bold text-foreground">Run your judging on GavelLab</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Create your event and rounds, invite judges by email, and let them score every
               submission against a weighted rubric with blind judging on.
@@ -221,7 +221,7 @@ function GuidePage() {
                 className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white"
                 style={{ background: "var(--teal)" }}
               >
-                See EvalDesk for organisers <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                See GavelLab for organisers <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </Link>
               <Link
                 to="/auth"

@@ -11,9 +11,9 @@
   },
   "mcp": {
     "server": {
-      "name": "evaldesk-insights",
+      "name": "gavellab-insights",
       "version": "0.2.0",
-      "title": "EvalDesk Insights"
+      "title": "GavelLab Insights"
     },
     "tools": [
       {

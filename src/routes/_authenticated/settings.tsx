@@ -8,13 +8,13 @@ import { useAuth, displayName } from "@/hooks/use-auth";
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — EvalDesk" },
+      { title: "Settings — GavelLab" },
       {
         name: "description",
         content:
-          "Manage your EvalDesk account, hackathon preferences and judging panel settings in one place.",
+          "Manage your GavelLab account, hackathon preferences and judging panel settings in one place.",
       },
-      { property: "og:title", content: "Account & event settings — EvalDesk" },
+      { property: "og:title", content: "Account & event settings — GavelLab" },
       {
         property: "og:description",
         content: "Manage your account details, hackathon preferences and judging panel settings.",
@@ -245,7 +245,7 @@ function SettingsPage() {
             <h2 className="text-lg font-bold text-foreground">Session</h2>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sign out of EvalDesk on this device.
+            Sign out of GavelLab on this device.
           </p>
           <Button className="mt-4" variant="outline" tone="magenta" onClick={signOut}>
             Sign out

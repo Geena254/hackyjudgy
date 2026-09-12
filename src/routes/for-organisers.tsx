@@ -15,13 +15,13 @@ import { PlpLogo, SiteFooter } from "@/components/brand";
 export const Route = createFileRoute("/for-organisers")({
   head: () => ({
     meta: [
-      { title: "Hackathon Judging Software for Organisers | EvalDesk" },
+      { title: "Hackathon Judging Software for Organisers | GavelLab" },
       {
         name: "description",
         content:
-          "Run a hackathon end to end: rounds, a weighted judging rubric, blind judging, invited judges and live standings. Set up your first hackathon on EvalDesk in minutes.",
+          "Run a hackathon end to end: rounds, a weighted judging rubric, blind judging, invited judges and live standings. Set up your first hackathon on GavelLab in minutes.",
       },
-      { property: "og:title", content: "Hackathon Judging Software for Organisers | EvalDesk" },
+      { property: "og:title", content: "Hackathon Judging Software for Organisers | GavelLab" },
       {
         property: "og:description",
         content:
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/for-organisers")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "EvalDesk",
+          name: "GavelLab",
           applicationCategory: "BusinessApplication",
           description:
             "Hackathon judging and scoring platform with rounds, weighted rubrics, blind judging and live standings.",
@@ -112,7 +112,7 @@ function OrganisersPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" aria-label="EvalDesk home">
+          <Link to="/" aria-label="GavelLab home">
             <PlpLogo className="h-10 sm:h-11" />
           </Link>
           <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ function OrganisersPage() {
             Judge your hackathon fairly, and show the results as they happen
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">
-            EvalDesk gives you rounds, a weighted judging rubric, blind judging, invited judges and
+            GavelLab gives you rounds, a weighted judging rubric, blind judging, invited judges and
             a public standings board — so scoring a hackathon takes an afternoon instead of a
             spreadsheet marathon.
           </p>

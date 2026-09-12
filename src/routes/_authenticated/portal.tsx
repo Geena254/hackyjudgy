@@ -15,13 +15,13 @@ import {
 export const Route = createFileRoute("/_authenticated/portal")({
   head: () => ({
     meta: [
-      { title: "Admin Portal — EvalDesk" },
+      { title: "Admin Portal — GavelLab" },
       {
         name: "description",
         content:
           "One place for organisers to see the whole platform: live hackathons, entries, judging progress and every public page.",
       },
-      { property: "og:title", content: "Admin Portal — EvalDesk" },
+      { property: "og:title", content: "Admin Portal — GavelLab" },
       { property: "og:description", content: "See the whole platform at a glance." },
       { name: "robots", content: "noindex" },
     ],

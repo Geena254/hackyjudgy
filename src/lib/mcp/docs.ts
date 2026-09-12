@@ -11,12 +11,12 @@ export type ToolDoc = {
   output: string;
 };
 
-export const MCP_SERVER_NAME = "EvalDesk Insights";
+export const MCP_SERVER_NAME = "GavelLab Insights";
 export const MCP_ENDPOINT_PATH = "/mcp";
 export const MCP_RATE_LIMIT_PER_MINUTE = 40;
 
 export const MCP_ERROR_CODES: { code: string; meaning: string }[] = [
-  { code: "UNAUTHENTICATED", meaning: "No valid EvalDesk sign-in — reconnect the assistant." },
+  { code: "UNAUTHENTICATED", meaning: "No valid GavelLab sign-in — reconnect the assistant." },
   { code: "ACCESS_REVOKED", meaning: "An admin revoked this assistant's access." },
   { code: "RATE_LIMITED", meaning: `More than ${MCP_RATE_LIMIT_PER_MINUTE} calls in one minute.` },
   { code: "PERMISSION_DENIED", meaning: "The account may not read or change that data." },
