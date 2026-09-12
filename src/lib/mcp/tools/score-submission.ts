@@ -14,7 +14,11 @@ export default defineTool({
       .array(
         z.object({
           criterion_id: z.string().uuid(),
-          value: z.number().int().min(0).max(100),
+          value: z
+            .number()
+            .int()
+            .min(0)
+            .describe("Must be between 0 and that criterion's max_score (see get_rubric)."),
         }),
       )
       .min(1)
