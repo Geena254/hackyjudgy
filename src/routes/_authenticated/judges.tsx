@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Loader2, Mail, ShieldCheck, UserPlus } from "lucide-react";
+import { Loader2, Mail, ShieldCheck, UserPlus, XCircle } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
-import { inviteJudge, listInvitations } from "@/lib/judges.functions";
+import { inviteJudge, listInvitations, revokeInvitation } from "@/lib/judges.functions";
+
 import { judges } from "@/lib/eval-data";
 import { useAuth, initials } from "@/hooks/use-auth";
 
@@ -47,6 +48,8 @@ function JudgesPage() {
   const queryClient = useQueryClient();
   const invite = useServerFn(inviteJudge);
   const list = useServerFn(listInvitations);
+  const revokeInvite = useServerFn(revokeInvitation);
+
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -76,6 +79,20 @@ function JudgesPage() {
       setNotice(null);
     },
   });
+
+  const revoke = useMutation({
+    mutationFn: (vars: { id: string }) => revokeInvite({ data: vars }),
+    onSuccess: (res) => {
+      setNotice(res.message);
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ["judge-invitations"] });
+    },
+    onError: (e) => {
+      setError(e instanceof Error ? e.message : "Could not withdraw the invitation.");
+      setNotice(null);
+    },
+  });
+
 
   return (
     <AppShell>
@@ -193,10 +210,33 @@ function JudgesPage() {
                       </div>
                     </div>
                     <Pill tone={statusTone(inv.status)} variant="outline">
-                      {inv.status === "accepted" ? "Joined" : "Pending"}
+                      {inv.status === "accepted"
+                        ? "Joined"
+                        : inv.status === "revoked"
+                          ? "Withdrawn"
+                          : "Pending"}
                     </Pill>
+                    {inv.status !== "revoked" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Withdraw the invitation for ${inv.email}? Their invite link will stop working.`,
+                            )
+                          )
+                            revoke.mutate({ id: inv.id });
+                        }}
+                        disabled={revoke.isPending}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-60"
+                      >
+                        <XCircle className="h-3.5 w-3.5" strokeWidth={2} />
+                        Withdraw
+                      </button>
+                    )}
                   </li>
                 ))}
+
               </ul>
             </Card>
           </div>
