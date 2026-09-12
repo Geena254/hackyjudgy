@@ -152,7 +152,7 @@ function GuidePage() {
             against a brief, then a panel judges it. Running one is two jobs: getting good projects built, and judging them
             fairly. This guide walks through the planning steps in order, then the judging
             decisions that decide whether your results hold up — the same decisions GavelLab
-            was built around for Power Learn Project hackathons.
+            was built around for hackathons, pitch competitions and innovation programmes.
           </p>
 
           <section className="mt-12">

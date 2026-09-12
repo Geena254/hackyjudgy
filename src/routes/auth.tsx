@@ -19,7 +19,7 @@ export const Route = createFileRoute("/auth")({
 
   head: () => ({
     meta: [
-      { title: "Sign in — GavelLab by Power Learn Project" },
+      { title: "Sign in — GavelLab" },
       {
         name: "description",
         content:
