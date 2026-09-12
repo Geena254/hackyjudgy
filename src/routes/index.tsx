@@ -11,15 +11,17 @@ import {
 } from "lucide-react";
 import { Card, Pill } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
+import heroImage from "@/assets/landing-hero.jpg";
+import judgingImage from "@/assets/landing-judging.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "GavelLab — Hackathon Judging & Scoring by Power Learn Project" },
+      { title: "GavelLab — Hackathon Judging & Scoring" },
       {
         name: "description",
         content:
-          "GavelLab runs Power Learn Project hackathons end to end: rounds, rubrics, blind judging and live scoring in one place.",
+          "GavelLab helps organisers run hackathons, pitch competitions and innovation programmes end to end: rounds, rubrics, blind judging and live scoring.",
       },
       { property: "og:title", content: "GavelLab — Hackathon Judging & Scoring" },
       {
@@ -113,51 +115,63 @@ function Landing() {
         {/* Hero */}
         <section className="border-b border-border bg-surface">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-            <div className="max-w-3xl">
-              <Pill tone="teal" variant="outline">
-                Power Learn Project
-              </Pill>
-              <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
-                Judge hackathons fairly, at scale.
-              </h1>
-              <p className="mt-5 text-lg text-muted-foreground">
-                GavelLab is the judging and scoring platform behind Power Learn Project
-                hackathons. Set up events and rounds, invite your judge panel by email, and
-                score every submission against a shared rubric.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  to="/submit"
-                  className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white"
-                  style={{ background: "var(--teal)" }}
-                >
-                  Submit your project <ArrowRight className="h-4 w-4" strokeWidth={2} />
-                </Link>
-                <Link
-                  to="/auth"
-                  className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
-                >
-                  Create your account
-                </Link>
-                <Link
-                  to="/auth"
-                  className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
-                >
-                  I have an invitation
-                </Link>
+            <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div className="max-w-3xl">
+                <Pill tone="teal" variant="outline">
+                  For hackathons & innovation programmes
+                </Pill>
+                <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
+                  Judge hackathons fairly, at scale.
+                </h1>
+                <p className="mt-5 text-lg text-muted-foreground">
+                  GavelLab helps organisers run hackathons, pitch competitions and innovation
+                  programmes end to end. Set up events and rounds, invite your judge panel by email,
+                  and score every submission against a shared rubric.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Link
+                    to="/submit"
+                    className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white"
+                    style={{ background: "var(--teal)" }}
+                  >
+                    Submit your project <ArrowRight className="h-4 w-4" strokeWidth={2} />
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                  >
+                    Create your account
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted"
+                  >
+                    I have an invitation
+                  </Link>
+                </div>
+                <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                  {["No spreadsheets", "Blind judging built in", "Weighted rubrics"].map((t) => (
+                    <li key={t} className="flex items-center gap-2">
+                      <CheckCircle2
+                        className="h-4 w-4"
+                        style={{ color: "var(--teal)" }}
+                        strokeWidth={2}
+                      />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                {["No spreadsheets", "Blind judging built in", "Weighted rubrics"].map((t) => (
-                  <li key={t} className="flex items-center gap-2">
-                    <CheckCircle2
-                      className="h-4 w-4"
-                      style={{ color: "var(--teal)" }}
-                      strokeWidth={2}
-                    />
-                    {t}
-                  </li>
-                ))}
-              </ul>
+              <div className="relative">
+                <img
+                  src={heroImage}
+                  alt="Diverse teams and judges collaborating at a hackathon event"
+                  width={1200}
+                  height={800}
+                  loading="eager"
+                  className="rounded-lg border border-border shadow-sm"
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -183,26 +197,71 @@ function Landing() {
           </div>
         </section>
 
-        {/* How it works */}
+        {/* Judging highlight */}
         <section className="border-y border-border bg-surface">
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-foreground sm:text-3xl">How it works</h2>
-            <ol className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {[
-                { n: "01", t: "Set up your event", d: "Create the event, add rounds and define rubric criteria with weights." },
-                { n: "02", t: "Invite your judges", d: "Enter judge emails — each one gets an invitation to join the panel." },
-                { n: "03", t: "Score and rank", d: "Judges score submissions; you watch progress and publish results." },
-              ].map((s) => (
-                <li key={s.n}>
-                  <div className="text-sm font-bold" style={{ color: "var(--teal)" }}>
-                    {s.n}
-                  </div>
-                  <h3 className="mt-2 text-lg font-semibold text-foreground">{s.t}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
-                </li>
-              ))}
-            </ol>
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+            <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div className="order-2 lg:order-1">
+                <img
+                  src={judgingImage}
+                  alt="GavelLab judging dashboard showing a weighted rubric and live scores"
+                  width={1024}
+                  height={768}
+                  loading="lazy"
+                  className="rounded-lg border border-border shadow-sm"
+                />
+              </div>
+              <div className="order-1 max-w-xl lg:order-2">
+                <Pill tone="magenta" variant="outline">
+                  Weighted, transparent scoring
+                </Pill>
+                <h2 className="mt-5 text-2xl font-bold text-foreground sm:text-3xl">
+                  Keep every score fair and defensible
+                </h2>
+                <p className="mt-4 text-muted-foreground">
+                  Build a rubric that reflects what actually matters. Judges score each criterion
+                  independently, and GavelLab weights the results into a final total everyone can
+                  explain.
+                </p>
+                <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
+                  {[
+                    "Custom criteria and weights per round",
+                    "Automatic saving of scores, feedback and private notes",
+                    "Aggregate totals without exposing individual judge marks",
+                  ].map((t) => (
+                    <li key={t} className="flex items-start gap-2">
+                      <CheckCircle2
+                        className="mt-0.5 h-4 w-4 shrink-0"
+                        style={{ color: "var(--magenta)" }}
+                        strokeWidth={2}
+                      />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
+        </section>
+
+        {/* How it works */}
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-foreground sm:text-3xl">How it works</h2>
+          <ol className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {[
+              { n: "01", t: "Set up your event", d: "Create the event, add rounds and define rubric criteria with weights." },
+              { n: "02", t: "Invite your judges", d: "Enter judge emails — each one gets an invitation to join the panel." },
+              { n: "03", t: "Score and rank", d: "Judges score submissions; you watch progress and publish results." },
+            ].map((s) => (
+              <li key={s.n}>
+                <div className="text-sm font-bold" style={{ color: "var(--teal)" }}>
+                  {s.n}
+                </div>
+                <h3 className="mt-2 text-lg font-semibold text-foreground">{s.t}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
+              </li>
+            ))}
+          </ol>
         </section>
 
         {/* CTA */}
