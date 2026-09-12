@@ -4,24 +4,50 @@ import { Card, Pill } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
 import { usePublicSubmission, usePublicEvent, formatDate } from "@/lib/hackathon";
 
+async function loadProjectMeta(id: string) {
+  const url = import.meta.env["VITE_SUPABASE_URL"] as string | undefined;
+  const key = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined;
+  if (!url || !key) return null;
+  try {
+    const res = await fetch(`${url}/rest/v1/rpc/public_submission`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: key },
+      body: JSON.stringify({ _id: id }),
+    });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Array<{ project_title?: string; summary?: string }>;
+    const row = rows?.[0];
+    if (!row?.project_title) return null;
+    return { title: row.project_title, summary: row.summary ?? null };
+  } catch {
+    return null;
+  }
+}
+
 export const Route = createFileRoute("/project/$id")({
-  head: () => ({
-    meta: [
-      { title: "Hackathon Project Showcase — GavelLab" },
-      {
-        name: "description",
-        content:
-          "A shareable page for a hackathon project: what it does, who built it, and links to the code, demo and pitch deck.",
-      },
-      { property: "og:title", content: "Hackathon Project Showcase — GavelLab" },
-      {
-        property: "og:description",
-        content: "See what this team built, and explore their code, demo and pitch deck.",
-      },
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  loader: async ({ params }) => ({ meta: await loadProjectMeta(params.id) }),
+  head: ({ params, loaderData }) => {
+    const name = loaderData?.meta?.title;
+    const title = name
+      ? `${name} — Hackathon project on GavelLab`
+      : "Hackathon Project Showcase — GavelLab";
+    const description = loaderData?.meta?.summary
+      ? loaderData.meta.summary.slice(0, 155)
+      : "A shareable page for a hackathon project: what it does, who built it, and links to the code, demo and pitch deck.";
+    const canonical = `https://gavellab.lovable.app/project/${params.id}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: canonical },
+        { property: "og:type", content: "article" },
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+    };
+  },
   component: ProjectShowcase,
 });
 

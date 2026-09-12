@@ -21,14 +21,14 @@ export const Route = createFileRoute("/how-to-organize-a-hackathon")({
       { property: "og:type", content: "article" },
       {
         property: "og:url",
-        content: "https://hackyjudgy.lovable.app/how-to-organize-a-hackathon",
+        content: "https://gavellab.lovable.app/how-to-organize-a-hackathon",
       },
       { name: "twitter:card", content: "summary" },
     ],
     links: [
       {
         rel: "canonical",
-        href: "https://hackyjudgy.lovable.app/how-to-organize-a-hackathon",
+        href: "https://gavellab.lovable.app/how-to-organize-a-hackathon",
       },
     ],
     scripts: [
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/how-to-organize-a-hackathon")({
           description:
             "A practical guide to planning, running and judging a hackathon, including rubric design and blind judging.",
           mainEntityOfPage:
-            "https://hackyjudgy.lovable.app/how-to-organize-a-hackathon",
+            "https://gavellab.lovable.app/how-to-organize-a-hackathon",
         }),
       },
     ],

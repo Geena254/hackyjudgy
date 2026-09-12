@@ -28,10 +28,10 @@ export const Route = createFileRoute("/for-organisers")({
           "Rounds, weighted rubrics, blind judging, judge invitations and live standings — everything you need to judge a hackathon fairly.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://hackyjudgy.lovable.app/for-organisers" },
+      { property: "og:url", content: "https://gavellab.lovable.app/for-organisers" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://hackyjudgy.lovable.app/for-organisers" }],
+    links: [{ rel: "canonical", href: "https://gavellab.lovable.app/for-organisers" }],
     scripts: [
       {
         type: "application/ld+json",
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/for-organisers")({
           applicationCategory: "BusinessApplication",
           description:
             "Hackathon judging and scoring platform with rounds, weighted rubrics, blind judging and live standings.",
-          url: "https://hackyjudgy.lovable.app/for-organisers",
+          url: "https://gavellab.lovable.app/for-organisers",
           offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         }),
       },
