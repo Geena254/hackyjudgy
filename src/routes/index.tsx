@@ -17,13 +17,14 @@ import judgingImage from "@/assets/landing-judging.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "GavelLab — Hackathon Judging & Scoring" },
+      { title: "GavelLab — Fair Hackathon Judging & Live Scoring Platform" },
       {
         name: "description",
         content:
           "GavelLab helps organisers run hackathons, pitch competitions and innovation programmes end to end: rounds, rubrics, blind judging and live scoring.",
       },
-      { property: "og:title", content: "GavelLab — Hackathon Judging & Scoring" },
+      { property: "og:title", content: "Run hackathon judging end to end with GavelLab" },
+      { property: "og:url", content: "https://gavellab.lovable.app/" },
       {
         property: "og:description",
         content:
