@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Loader2, Mail, ShieldCheck, UserPlus } from "lucide-react";
+import { Loader2, Mail, ShieldCheck, UserPlus, XCircle } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
-import { inviteJudge, listInvitations } from "@/lib/judges.functions";
+import { inviteJudge, listInvitations, revokeInvitation } from "@/lib/judges.functions";
+
 import { judges } from "@/lib/eval-data";
 import { useAuth, initials } from "@/hooks/use-auth";
 
