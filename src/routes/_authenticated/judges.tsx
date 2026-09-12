@@ -78,6 +78,20 @@ function JudgesPage() {
     },
   });
 
+  const revoke = useMutation({
+    mutationFn: (vars: { id: string }) => revokeInvite({ data: vars }),
+    onSuccess: (res) => {
+      setNotice(res.message);
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ["judge-invitations"] });
+    },
+    onError: (e) => {
+      setError(e instanceof Error ? e.message : "Could not withdraw the invitation.");
+      setNotice(null);
+    },
+  });
+
+
   return (
     <AppShell>
       <div className="space-y-6">
