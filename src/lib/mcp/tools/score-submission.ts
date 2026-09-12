@@ -1,7 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { authorize } from "../guard";
-import { databaseError, notFoundError, toolSuccess } from "../errors";
+import { databaseError, notFoundError, toolError, toolSuccess } from "../errors";
 
 export default defineTool({
   name: "score_submission",
@@ -14,7 +14,11 @@ export default defineTool({
       .array(
         z.object({
           criterion_id: z.string().uuid(),
-          value: z.number().int().min(0).max(100),
+          value: z
+            .number()
+            .int()
+            .min(0)
+            .describe("Must be between 0 and that criterion's max_score (see get_rubric)."),
         }),
       )
       .min(1)
@@ -40,7 +44,7 @@ export default defineTool({
 
     const { data: submission, error: submissionError } = await gate.supabase
       .from("submissions")
-      .select("id, title")
+      .select("id, title, round_id")
       .eq("id", submission_id)
       .maybeSingle();
     if (submissionError) {
@@ -51,6 +55,45 @@ export default defineTool({
       await gate.finish({ ok: false, code: "NOT_FOUND" });
       return notFoundError("That submission");
     }
+
+    // Validate every score against its own criterion's configured scale.
+    const criterionIds = [...new Set(scores.map((s) => s.criterion_id))];
+    const { data: criteria, error: criteriaError } = await gate.supabase
+      .from("criteria")
+      .select("id, name, max_score, round_id")
+      .in("id", criterionIds);
+    if (criteriaError) {
+      await gate.finish({ ok: false, code: "DATABASE_ERROR" });
+      return databaseError(criteriaError, "look up this submission's rubric");
+    }
+
+    const byId = new Map((criteria ?? []).map((c) => [c.id, c]));
+    const problems: string[] = [];
+    for (const s of scores) {
+      const criterion = byId.get(s.criterion_id);
+      if (!criterion) {
+        problems.push(`criterion ${s.criterion_id} does not exist or is not visible to you`);
+        continue;
+      }
+      if (submission.round_id && criterion.round_id !== submission.round_id) {
+        problems.push(`"${criterion.name}" does not belong to this submission's round`);
+        continue;
+      }
+      const max = criterion.max_score ?? 5;
+      if (s.value < 0 || s.value > max) {
+        problems.push(`"${criterion.name}" accepts 0-${max}, but ${s.value} was given`);
+      }
+    }
+    if (problems.length > 0) {
+      await gate.finish({ ok: false, code: "INVALID_INPUT" });
+      return toolError(
+        "INVALID_INPUT",
+        `No scores were saved: ${problems.join("; ")}.`,
+        "Call get_rubric first and stay within each criterion's max_score.",
+      );
+    }
+
+
 
     const { error: scoreError } = await gate.supabase.from("scores").upsert(
       scores.map((s) => ({
