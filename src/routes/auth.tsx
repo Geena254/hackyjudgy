@@ -7,12 +7,14 @@ import { Card, Button } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+  validateSearch: (s: Record<string, unknown>): { next?: string; mode?: "signup" } => {
     const raw = s.next;
     const safe =
       typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined;
-    return safe ? { next: safe } : {};
+    const mode = s.mode === "signup" ? ("signup" as const) : undefined;
+    return { ...(safe ? { next: safe } : {}), ...(mode ? { mode } : {}) };
   },
+
 
 
   head: () => ({
@@ -55,8 +57,8 @@ function Field({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { next } = Route.useSearch();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { next, mode: initialMode } = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode === "signup" ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -140,11 +142,11 @@ function AuthPage() {
           <h1 className="text-2xl font-bold text-foreground">
             {mode === "signin" ? "Sign in to EvalDesk" : "Create your account"}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signin"
-              ? "Admins and judges use the same sign-in."
-              : "Invited judges should sign up with the email that received the invitation."}
-          </p>
+          {mode === "signup" && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Invited judges should sign up with the email that received the invitation.
+            </p>
+          )}
 
           <form onSubmit={submit} className="mt-6 space-y-4">
             {mode === "signup" && (
