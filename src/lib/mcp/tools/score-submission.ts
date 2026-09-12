@@ -1,7 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { authorize } from "../guard";
-import { databaseError, notFoundError, toolSuccess } from "../errors";
+import { databaseError, notFoundError, toolError, toolSuccess } from "../errors";
 
 export default defineTool({
   name: "score_submission",
