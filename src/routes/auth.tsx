@@ -7,12 +7,14 @@ import { Card, Button } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+  validateSearch: (s: Record<string, unknown>): { next?: string; mode?: "signup" } => {
     const raw = s.next;
     const safe =
       typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined;
-    return safe ? { next: safe } : {};
+    const mode = s.mode === "signup" ? ("signup" as const) : undefined;
+    return { ...(safe ? { next: safe } : {}), ...(mode ? { mode } : {}) };
   },
+
 
 
   head: () => ({
