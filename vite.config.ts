@@ -20,5 +20,11 @@ export default defineConfig({
   ...(isVercel ? { nitro: { preset: "vercel" } } : {}),
   vite: {
     plugins: [mcpPlugin()],
+    // `cloudflare:workers` is only resolvable on the Cloudflare runtime. The MCP
+    // library imports it dynamically inside a try/catch for optional metrics, so
+    // leaving it external is safe on other hosts (Vercel/Node).
+    build: {
+      rollupOptions: { external: [/^cloudflare:/] },
+    },
   },
 });
