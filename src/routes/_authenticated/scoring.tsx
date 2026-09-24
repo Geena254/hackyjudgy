@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
+import { AiSummaryPanel } from "@/components/ai-summary-panel";
 import {
   useEvents,
   useRounds,
@@ -244,6 +245,13 @@ function ScoringQueue() {
                   </div>
                 )}
               </Card>
+
+              <AiSummaryPanel
+                key={`ai-${selected.id}`}
+                title={selected.title}
+                defaultText={selected.description ?? ""}
+                criteria={crit.map((c) => ({ name: c.name, description: c.description ?? null, weight: Number(c.weight) }))}
+              />
 
               <Rubric
                 key={selected.id}
