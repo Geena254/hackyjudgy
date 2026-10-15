@@ -1,5 +1,5 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "hacky-judgy",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -9,7 +9,9 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "postinstall": "node scripts/patch-mcp.mjs",
+    "test:email": "node scripts/test-sendgrid.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.72",
@@ -56,6 +58,7 @@
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
+    "nodemailer": "^10.1.1",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",
