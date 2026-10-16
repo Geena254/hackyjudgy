@@ -200,9 +200,26 @@ function Dashboard() {
               </p>
             )}
           </div>
-          {event && (
-            <Pill tone={event.status === "active" ? "teal" : "gray"}>{event.status}</Pill>
-          )}
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            {event && (
+              <Pill tone={event.status === "active" ? "teal" : "gray"}>{event.status}</Pill>
+            )}
+            <Link to="/events">
+              <Button variant="outline" tone="teal">
+                <Plus className="h-4 w-4" strokeWidth={2} /> New hackathon
+              </Button>
+            </Link>
+            <Link to="/submissions">
+              <Button variant="outline" tone="teal">
+                <Upload className="h-4 w-4" strokeWidth={2} /> Add entries
+              </Button>
+            </Link>
+            <Link to="/events">
+              <Button variant="outline" tone="teal">
+                <Layers className="h-4 w-4" strokeWidth={2} /> Rounds &amp; rubric
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div>
@@ -279,26 +296,6 @@ function Dashboard() {
           scores={scores}
           judges={judges}
         />
-
-        <Card className="p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <Link to="/events">
-              <Button variant="outline" tone="teal">
-                <Plus className="h-4 w-4" strokeWidth={2} /> New hackathon
-              </Button>
-            </Link>
-            <Link to="/submissions">
-              <Button variant="outline" tone="teal">
-                <Upload className="h-4 w-4" strokeWidth={2} /> Add entries
-              </Button>
-            </Link>
-            <Link to="/events">
-              <Button variant="outline" tone="teal">
-                <Layers className="h-4 w-4" strokeWidth={2} /> Rounds &amp; rubric
-              </Button>
-            </Link>
-          </div>
-        </Card>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card className="p-5 lg:col-span-2">
