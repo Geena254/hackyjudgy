@@ -1,12 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2, Mail, ShieldCheck, UserPlus, XCircle } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { inviteJudge, listInvitations, revokeInvitation } from "@/lib/judges.functions";
-
-import { judges } from "@/lib/eval-data";
+import {
+  useEvents,
+  useRounds,
+  useCriteria,
+  useSubmissions,
+  useAllScores,
+  useJudges,
+  criteriaForSubmission,
+  scoreMap,
+} from "@/lib/hackathon";
 import { useAuth, initials } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/judges")({
@@ -242,31 +250,76 @@ function JudgesPage() {
           </div>
         )}
 
-        <Card className="p-5">
-          <h2 className="text-lg font-semibold text-foreground">Panel activity</h2>
-          <ul className="mt-4 divide-y divide-border">
-            {judges.map((j) => (
-              <li key={j.name} className="flex flex-wrap items-center gap-3 py-3">
-                <span
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold text-white"
-                  style={{ background: "var(--magenta)" }}
-                >
-                  {initials(j.name)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-foreground">{j.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {j.scored} scored · {j.pending} pending
-                  </div>
-                </div>
-                <Pill tone="teal" variant="outline">
-                  {j.scored}
-                </Pill>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        {isAdmin && <PanelActivity />}
       </div>
     </AppShell>
+  );
+}
+
+/** Live scoring progress for every judge on the active event. */
+function PanelActivity() {
+  const { data: events = [] } = useEvents();
+  const event = events.find((e) => e.status === "active") ?? events[0];
+  const { data: rounds = [] } = useRounds(event?.id);
+  const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
+  const { data: subs = [] } = useSubmissions(event?.id);
+  const { data: scores = [] } = useAllScores();
+  const { data: judges = [], isLoading } = useJudges();
+
+  const rows = useMemo(
+    () =>
+      judges
+        .map((j) => {
+          let scored = 0;
+          let inProgress = 0;
+          for (const s of subs) {
+            const crit = criteriaForSubmission(s, rounds, criteria);
+            if (crit.length === 0) continue;
+            const vals = scoreMap(scores, s.id, j.id);
+            const n = crit.filter((c) => vals[c.id] !== undefined).length;
+            if (n === crit.length) scored += 1;
+            else if (n > 0) inProgress += 1;
+          }
+          return { ...j, scored, inProgress, pending: subs.length - scored - inProgress };
+        })
+        .sort((a, b) => b.scored - a.scored || a.name.localeCompare(b.name)),
+    [judges, subs, rounds, criteria, scores],
+  );
+
+  return (
+    <Card className="p-5">
+      <h2 className="text-lg font-semibold text-foreground">Panel activity</h2>
+      {event && <p className="mt-1 text-xs text-muted-foreground">{event.name}</p>}
+      <ul className="mt-4 divide-y divide-border">
+        {rows.map((j) => (
+          <li key={j.id} className="flex flex-wrap items-center gap-3 py-3">
+            <span
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold text-white"
+              style={{ background: "var(--magenta)" }}
+            >
+              {initials(j.name)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium text-foreground">{j.name}</div>
+              {j.email && j.email !== j.name && (
+                <div className="truncate text-xs text-muted-foreground">{j.email}</div>
+              )}
+              <div className="text-xs text-muted-foreground">
+                {j.scored} scored
+                {j.inProgress > 0 && <> · {j.inProgress} in progress</>} · {j.pending} pending
+              </div>
+            </div>
+            <Pill tone={subs.length > 0 && j.scored === subs.length ? "teal" : "gray"} variant="outline">
+              {j.scored}/{subs.length}
+            </Pill>
+          </li>
+        ))}
+        {!isLoading && rows.length === 0 && (
+          <li className="py-3 text-sm text-muted-foreground">
+            No judges yet — invited judges appear here once they join.
+          </li>
+        )}
+      </ul>
+    </Card>
   );
 }
