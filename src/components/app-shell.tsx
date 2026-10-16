@@ -26,7 +26,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
-  const { user, isAdmin, ready } = useAuth();
+  const { user, roles, isAdmin, ready } = useAuth();
+  const noAccess = ready && !!user && roles.length === 0;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const name = displayName(user);
@@ -157,7 +158,22 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        {children}
+        {noAccess ? (
+          <Card className="mx-auto max-w-xl p-8 text-center">
+            <h1 className="text-xl font-bold text-foreground">You don't have judging access yet</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You're signed in as <strong className="text-foreground">{user?.email}</strong>, but this
+              account hasn't been added to the judging panel. If you were invited with a different
+              email, sign out and use the link sent to that address — or ask the organiser to invite
+              this email.
+            </p>
+            <div className="mt-5">
+              <Button onClick={signOut}>Sign out</Button>
+            </div>
+          </Card>
+        ) : (
+          children
+        )}
       </main>
       <SiteFooter />
     </div>
