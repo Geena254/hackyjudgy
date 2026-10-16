@@ -61,7 +61,7 @@ export const MCP_TOOL_DOCS: ToolDoc[] = [
       },
     ],
     output:
-      "{ event_id, count, submissions: [{ id, title, team_name, category, description, status, repo_url, demo_url, deck_url, round_id }] }",
+      "{ event_id, count, submissions: [{ id, title, team_name, category, description, status, repo_url, demo_url, deck_url, concept_note_url, round_id }] }",
   },
   {
     name: "score_submission",

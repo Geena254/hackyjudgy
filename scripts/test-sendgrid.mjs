@@ -22,9 +22,7 @@ if (existsSync(resolve(process.cwd(), ".env"))) {
     if (eqIdx !== -1) {
       const key = trimmed.slice(0, eqIdx).trim();
       const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, "");
-      if (!process.env[key]) {
-        process.env[key] = val;
-      }
+      process.env[key] = val;
     }
   }
 }
@@ -78,7 +76,7 @@ console.log("");
 const transporter = nodemailer.createTransport({
   host: smtpHost,
   port: smtpPort,
-  secure: smtpPort === 465, // true for 465, false for other ports
+  secure: smtpPort === 465,
   auth: {
     user: smtpUser,
     pass: apiKey,

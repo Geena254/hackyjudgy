@@ -347,6 +347,7 @@ export type Database = {
       submissions: {
         Row: {
           category: string | null
+          concept_note_url: string | null
           created_at: string
           deck_url: string | null
           demo_url: string | null
@@ -364,6 +365,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          concept_note_url?: string | null
           created_at?: string
           deck_url?: string | null
           demo_url?: string | null
@@ -381,6 +383,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          concept_note_url?: string | null
           created_at?: string
           deck_url?: string | null
           demo_url?: string | null

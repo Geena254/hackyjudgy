@@ -50,6 +50,7 @@ const empty = {
   repo_url: "",
   demo_url: "",
   deck_url: "",
+  concept_note_url: "",
   round_id: "",
   status: "submitted" as SubmissionStatus,
 };
@@ -111,6 +112,7 @@ function SubmissionsAdmin() {
       repo_url: s.repo_url ?? "",
       demo_url: s.demo_url ?? "",
       deck_url: s.deck_url ?? "",
+      concept_note_url: s.concept_note_url ?? "",
       round_id: s.round_id ?? "",
       status: s.status,
     });
@@ -239,21 +241,6 @@ function SubmissionsAdmin() {
                 value={form.submitter_email}
                 onChange={(e) => setForm({ ...form, submitter_email: e.target.value })}
               />
-              <Text
-                label="Repository link"
-                value={form.repo_url}
-                onChange={(e) => setForm({ ...form, repo_url: e.target.value })}
-              />
-              <Text
-                label="Demo link"
-                value={form.demo_url}
-                onChange={(e) => setForm({ ...form, demo_url: e.target.value })}
-              />
-              <Text
-                label="Pitch deck link"
-                value={form.deck_url}
-                onChange={(e) => setForm({ ...form, deck_url: e.target.value })}
-              />
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-foreground">Status</span>
                 <select
@@ -270,6 +257,42 @@ function SubmissionsAdmin() {
                   ))}
                 </select>
               </label>
+            </div>
+            <div>
+              <h3 className="mb-1 text-sm font-semibold text-foreground">Project links</h3>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Judges see these links on the Scoring page.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Text
+                label="Concept note link"
+                type="url"
+                placeholder="https://docs.google.com/..."
+                value={form.concept_note_url}
+                onChange={(e) => setForm({ ...form, concept_note_url: e.target.value })}
+              />
+              <Text
+                label="Pitch deck link"
+                type="url"
+                placeholder="https://..."
+                value={form.deck_url}
+                onChange={(e) => setForm({ ...form, deck_url: e.target.value })}
+              />
+              <Text
+                label="Live site link"
+                type="url"
+                placeholder="https://..."
+                value={form.demo_url}
+                onChange={(e) => setForm({ ...form, demo_url: e.target.value })}
+              />
+              <Text
+                label="Repository link"
+                type="url"
+                placeholder="https://github.com/..."
+                value={form.repo_url}
+                onChange={(e) => setForm({ ...form, repo_url: e.target.value })}
+              />
             </div>
             <Button type="submit" variant="primary" tone="teal" disabled={save.isPending}>
               {save.isPending ? "Saving…" : editing ? "Save entry" : "Add entry"}

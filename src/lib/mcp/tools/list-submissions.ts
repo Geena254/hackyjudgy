@@ -24,7 +24,7 @@ export default defineTool({
     let query = gate.supabase
       .from("submissions")
       .select(
-        "id, title, team_name, category, description, status, repo_url, demo_url, deck_url, round_id",
+        "id, title, team_name, category, description, status, repo_url, demo_url, deck_url, concept_note_url, round_id",
       )
       .eq("event_id", event_id)
       .order("created_at", { ascending: false });

@@ -6,7 +6,9 @@ import {
   ExternalLink,
   FileText,
   Github,
+  Globe,
   Lock,
+  Presentation,
   Search,
   Unlock,
 } from "lucide-react";
@@ -225,15 +227,19 @@ function ScoringQueue() {
                   </p>
                 )}
 
-                <div className="mt-5 flex flex-wrap items-center gap-4">
+                <div className="mt-5">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Project materials
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <Material href={selected.concept_note_url} icon={FileText} label="Concept note" />
+                    <Material href={selected.deck_url} icon={Presentation} label="Pitch deck" />
+                    <Material href={selected.demo_url} icon={Globe} label="Live site" />
+                  </div>
                   {selected.repo_url && (
-                    <LinkOut href={selected.repo_url} icon={Github} label="Repository" />
-                  )}
-                  {selected.demo_url && (
-                    <LinkOut href={selected.demo_url} icon={ExternalLink} label="Demo" />
-                  )}
-                  {selected.deck_url && (
-                    <LinkOut href={selected.deck_url} icon={FileText} label="Pitch deck" />
+                    <div className="mt-3">
+                      <LinkOut href={selected.repo_url} icon={Github} label="Repository" />
+                    </div>
                   )}
                 </div>
 
@@ -274,6 +280,38 @@ function ScoringQueue() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+function Material({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string | null;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  label: string;
+}) {
+  if (!href) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-2.5 text-sm text-muted-foreground">
+        <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+        <span className="truncate">{label}: not provided yet</span>
+      </div>
+    );
+  }
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-2 rounded-md border border-border px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
+      style={{ color: "var(--teal)" }}
+    >
+      <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+      <span className="truncate">{label}</span>
+      <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+    </a>
   );
 }
 
@@ -353,7 +391,7 @@ function Rubric({
             Rubric
           </h3>
           <p className="text-sm text-muted-foreground">
-            Score each criterion — weights are applied automatically.
+            Score each criterion (half points allowed) — weights are applied automatically.
           </p>
         </div>
         <div className="rounded-md border border-border px-3 py-2 text-right">
@@ -390,7 +428,7 @@ function Rubric({
                     </span>
                   </div>
                   {c.description && (
-                    <div className="text-xs text-muted-foreground">{c.description}</div>
+                    <div className="whitespace-pre-line text-xs text-muted-foreground">{c.description}</div>
                   )}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -398,7 +436,7 @@ function Rubric({
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {Array.from({ length: max }, (_, i) => i + 1).map((n) => {
+                {Array.from({ length: max * 2 + 1 }, (_, i) => i / 2).map((n) => {
                   const active = v === n;
                   return (
                     <label

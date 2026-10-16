@@ -53,6 +53,7 @@ export type SubmissionRow = {
   repo_url: string | null;
   demo_url: string | null;
   deck_url: string | null;
+  concept_note_url: string | null;
   status: SubmissionStatus;
   created_at: string;
 };
@@ -500,6 +501,7 @@ export function useSaveSubmission() {
         repo_url: input.repo_url || null,
         demo_url: input.demo_url || null,
         deck_url: input.deck_url || null,
+        concept_note_url: input.concept_note_url || null,
         status: input.status ?? "submitted",
       };
       if (input.id) {

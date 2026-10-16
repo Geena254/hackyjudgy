@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import logo from "@/assets/plp-logo.png.asset.json";
+import logoUrl from "@/assets/plp-logo.png";
 import community from "@/assets/power-community.png.asset.json";
 
 export function PlpLogo({ className = "h-9" }: { className?: string }) {
   return (
     <img
-      src={logo.url}
+      src={logoUrl}
       alt="Power Learn Project"
       className={className + " w-auto object-contain"}
       loading="eager"
@@ -40,6 +40,9 @@ export function SiteFooter() {
             alt="#PowerCommunity"
             className="h-9 w-auto object-contain"
             loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
           />
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Power Learn Project. All rights reserved.
