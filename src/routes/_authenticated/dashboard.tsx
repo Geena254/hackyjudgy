@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { AppShell, Card, Button, Pill, ProgressBar } from "@/components/app-shell";
 import { useAuth, initials } from "@/hooks/use-auth";
+import { AdminResults } from "@/components/admin-results";
 import {
   useEvents,
   useRounds,
@@ -195,6 +196,15 @@ function Dashboard() {
             tone="magenta"
           />
         </div>
+
+        <AdminResults
+          event={event}
+          rounds={rounds}
+          criteria={criteria}
+          subs={subs}
+          scores={scores}
+          judges={judges}
+        />
 
         <Card className="p-4">
           <div className="flex flex-wrap items-center gap-3">
