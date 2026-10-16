@@ -1,24 +1,21 @@
 import { Fragment, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Download, Trophy } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ChevronDown, ChevronRight, Download, FileText, Trophy } from "lucide-react";
 import { Card, Button, Pill } from "@/components/app-shell";
 import {
   useAllReviews,
-  buildStandings,
   criteriaForSubmission,
   scoreMap,
   weightedPercent,
   type CriterionRow,
   type EventRow,
-  type PublicScore,
   type RoundRow,
   type ScoreRow,
   type SubmissionRow,
 } from "@/lib/hackathon";
+import { TIE_BREAKERS, judgingRubric, rankStandings } from "@/lib/results";
 
 type Judge = { id: string; name: string; email: string };
-
-// Rubric tie-breakers, in order (criteria not in the rubric are skipped).
-const TIE_BREAKERS = ["Working Solution Demo", "Problem Validation"];
 
 const fmt = (n: number | null | undefined, digits = 1) =>
   n === null || n === undefined ? "—" : n.toFixed(digits).replace(/\.0$/, "");
@@ -48,55 +45,13 @@ export function AdminResults({
     return scores.filter((s) => ids.has(s.judge_id));
   }, [scores, judges]);
 
-  const rubric = useMemo(() => {
-    const judging = rounds.find((r) => r.phase === "judging");
-    const scoped = judging ? criteria.filter((c) => c.round_id === judging.id) : criteria;
-    return [...(scoped.length ? scoped : criteria)].sort((a, b) => a.sort_order - b.sort_order);
-  }, [rounds, criteria]);
+  const rubric = useMemo(() => judgingRubric(rounds, criteria), [rounds, criteria]);
   const totalWeight = rubric.reduce((sum, c) => sum + (c.weight || 0), 0);
 
-  const standings = useMemo(() => {
-    // Average every criterion across the panel, then rank on the weighted total.
-    const averages: PublicScore[] = [];
-    const groups = new Map<string, number[]>();
-    for (const s of panelScores) {
-      const key = `${s.submission_id}|${s.criterion_id}`;
-      groups.set(key, [...(groups.get(key) ?? []), Number(s.value)]);
-    }
-    for (const [key, values] of groups) {
-      const [submission_id, criterion_id] = key.split("|");
-      averages.push({
-        submission_id: submission_id!,
-        criterion_id: criterion_id!,
-        avg_value: values.reduce((a, b) => a + b, 0) / values.length,
-        judge_count: values.length,
-      });
-    }
-
-    const avgOf = (st: ReturnType<typeof buildStandings>[number], name: string) =>
-      st.breakdown.find((b) => b.criterion.name === name)?.average ?? -1;
-
-    const sorted = buildStandings(subs, criteria, averages, rounds).sort((a, b) => {
-      const diff = (b.weightedTotal ?? -1) - (a.weightedTotal ?? -1);
-      if (diff !== 0) return diff;
-      for (const name of TIE_BREAKERS) {
-        const t = avgOf(b, name) - avgOf(a, name);
-        if (t !== 0) return t;
-      }
-      return 0;
-    });
-
-    // Teams still level after the tie-breakers share a rank (decided by panel vote).
-    return sorted.map((row) => {
-      if (row.weightedTotal === null) return { ...row, rank: null, tied: false };
-      const same = (o: (typeof sorted)[number]) =>
-        o.weightedTotal === row.weightedTotal &&
-        TIE_BREAKERS.every((n) => avgOf(o, n) === avgOf(row, n));
-      const first = sorted.findIndex(same);
-      const tied = sorted.filter(same).length > 1;
-      return { ...row, rank: first + 1, tied };
-    });
-  }, [panelScores, subs, criteria, rounds]);
+  const standings = useMemo(
+    () => rankStandings(subs, criteria, rounds, scores, judges.map((j) => j.id)),
+    [subs, criteria, rounds, scores, judges],
+  );
 
   // Each judge's own weighted score for each team.
   const matrix = useMemo(
@@ -169,9 +124,16 @@ export function AdminResults({
               {judgesDone}/{judges.length} judges finished · click a team for each judge's scores
             </p>
           </div>
-          <Button variant="outline" tone="teal" onClick={exportCsv} disabled={standings.length === 0}>
-            <Download className="h-4 w-4" strokeWidth={2} /> Export CSV
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/team-report" search={{ id: undefined }}>
+              <Button variant="primary" tone="teal" disabled={standings.length === 0}>
+                <FileText className="h-4 w-4" strokeWidth={2} /> Team reports (PDF)
+              </Button>
+            </Link>
+            <Button variant="outline" tone="teal" onClick={exportCsv} disabled={standings.length === 0}>
+              <Download className="h-4 w-4" strokeWidth={2} /> Export CSV
+            </Button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -187,7 +149,8 @@ export function AdminResults({
                   </th>
                 ))}
                 <th className="py-2 pr-3 text-right">Total /100</th>
-                <th className="py-2 text-right">Judges</th>
+                <th className="py-2 pr-3 text-right">Judges</th>
+                <th className="py-2 text-right">Report</th>
               </tr>
             </thead>
             <tbody>
@@ -235,13 +198,24 @@ export function AdminResults({
                       <td className="py-3 pr-3 text-right text-base font-bold tabular-nums" style={{ color: "var(--teal)" }}>
                         {fmt(st.weightedTotal)}
                       </td>
-                      <td className="py-3 text-right tabular-nums text-muted-foreground">
+                      <td className="py-3 pr-3 text-right tabular-nums text-muted-foreground">
                         {st.judgeCount}/{judges.length}
+                      </td>
+                      <td className="py-3 text-right">
+                        <Link
+                          to="/team-report"
+                          search={{ id: st.submission.id }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+                          style={{ color: "var(--teal)" }}
+                        >
+                          <FileText className="h-3.5 w-3.5" strokeWidth={2} /> PDF
+                        </Link>
                       </td>
                     </tr>
                     {isOpen && (
                       <tr className="border-b border-border bg-muted/40">
-                        <td colSpan={rubric.length + 4} className="px-3 py-3">
+                        <td colSpan={rubric.length + 5} className="px-3 py-3">
                           <JudgeBreakdown
                             submissionId={st.submission.id}
                             rubric={rubric}
@@ -256,7 +230,7 @@ export function AdminResults({
               })}
               {standings.length === 0 && (
                 <tr>
-                  <td colSpan={rubric.length + 4} className="py-6 text-center text-muted-foreground">
+                  <td colSpan={rubric.length + 5} className="py-6 text-center text-muted-foreground">
                     No entries yet.
                   </td>
                 </tr>

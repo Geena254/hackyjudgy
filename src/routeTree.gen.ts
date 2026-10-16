@@ -30,6 +30,7 @@ import { Route as AuthenticatedResultsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedScoringRouteImport } from './routes/_authenticated/scoring'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSubmissionsRouteImport } from './routes/_authenticated/submissions'
+import { Route as AuthenticatedTeamReportRouteImport } from './routes/_authenticated/team-report'
 import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -140,6 +141,11 @@ const AuthenticatedSubmissionsRoute =
     path: '/submissions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTeamReportRoute = AuthenticatedTeamReportRouteImport.update({
+  id: '/team-report',
+  path: '/team-report',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ProjectIdRoute = ProjectIdRouteImport.update({
   id: '/project/$id',
   path: '/project/$id',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/scoring': typeof AuthenticatedScoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
+  '/team-report': typeof AuthenticatedTeamReportRoute
   '/project/$id': typeof ProjectIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/scoring': typeof AuthenticatedScoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/submissions': typeof AuthenticatedSubmissionsRoute
+  '/team-report': typeof AuthenticatedTeamReportRoute
   '/project/$id': typeof ProjectIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/_authenticated/scoring': typeof AuthenticatedScoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/submissions': typeof AuthenticatedSubmissionsRoute
+  '/_authenticated/team-report': typeof AuthenticatedTeamReportRoute
   '/project/$id': typeof ProjectIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/scoring'
     | '/settings'
     | '/submissions'
+    | '/team-report'
     | '/project/$id'
     | '/.lovable/oauth/consent'
   fileRoutesByTo: FileRoutesByTo
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/scoring'
     | '/settings'
     | '/submissions'
+    | '/team-report'
     | '/project/$id'
     | '/.lovable/oauth/consent'
   id:
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/_authenticated/scoring'
     | '/_authenticated/settings'
     | '/_authenticated/submissions'
+    | '/_authenticated/team-report'
     | '/project/$id'
     | '/.lovable/oauth/consent'
   fileRoutesById: FileRoutesById
@@ -465,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubmissionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/team-report': {
+      id: '/_authenticated/team-report'
+      path: '/team-report'
+      fullPath: '/team-report'
+      preLoaderRoute: typeof AuthenticatedTeamReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/project/$id': {
       id: '/project/$id'
       path: '/project/$id'
@@ -494,6 +513,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedScoringRoute: typeof AuthenticatedScoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSubmissionsRoute: typeof AuthenticatedSubmissionsRoute
+  AuthenticatedTeamReportRoute: typeof AuthenticatedTeamReportRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -508,6 +528,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedScoringRoute: AuthenticatedScoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSubmissionsRoute: AuthenticatedSubmissionsRoute,
+  AuthenticatedTeamReportRoute: AuthenticatedTeamReportRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
