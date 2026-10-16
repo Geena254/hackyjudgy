@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, Lock, Mail, User } from "lucide-react";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthLink } from "@/lib/auth-link";
 import { lovable } from "@/integrations/lovable/index";
 import { Card, Button } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
@@ -66,18 +68,88 @@ function AuthPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  const goNext = () => {
-    if (next) window.location.href = next;
-    else navigate({ to: "/dashboard" });
+  // "set-password": signed in from an invite/reset link, password not chosen yet
+  const [stage, setStage] = useState<"form" | "set-password">("form");
+
+  // Admins land on the organiser dashboard; judges go straight to the judging portal.
+  const goNext = async () => {
+    if (next) {
+      window.location.href = next;
+      return;
+    }
+    const { data: auth } = await supabase.auth.getUser();
+    const { data: roles } = auth.user
+      ? await supabase.from("user_roles").select("role").eq("user_id", auth.user.id)
+      : { data: [] };
+    const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+    navigate({ to: isAdmin ? "/dashboard" : "/judge", replace: true });
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) return;
-      if (next) window.location.href = next;
-      else navigate({ to: "/dashboard" });
+    const link = getAuthLink();
+    if (link?.error) {
+      setMode("signin");
+      setErr(
+        /expired|invalid/i.test(link.error)
+          ? "That email link has expired or was already used. Enter your email below and choose “Email me a sign-in link” to get a new one."
+          : link.error,
+      );
+    }
+
+    let handled = false;
+    const onSession = (session: Session | null) => {
+      if (!session || handled) return;
+      handled = true;
+      if (link?.type === "invite" || link?.type === "recovery") {
+        const meta = session.user.user_metadata as { full_name?: string } | undefined;
+        setName(meta?.full_name ?? "");
+        setEmail(session.user.email ?? "");
+        setStage("set-password");
+      } else {
+        void goNext();
+      }
+    };
+
+    supabase.auth.getSession().then(({ data }) => onSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => onSession(s));
+    return () => sub.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function savePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setErr(null);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password,
+        data: name.trim() ? { full_name: name.trim() } : undefined,
+      });
+      if (error) throw error;
+      await goNext();
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function emailLink() {
+    setErr(null);
+    setMsg(null);
+    if (!email.trim()) {
+      setErr("Enter your email first.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth` },
     });
-  }, [navigate, next]);
+    setBusy(false);
+    if (error) setErr(error.message);
+    else setMsg("Check your inbox — we've emailed you a sign-in link.");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -90,13 +162,13 @@ function AuthPage() {
           email: email.trim(),
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}${next ?? "/dashboard"}`,
+            emailRedirectTo: `${window.location.origin}/auth`,
             data: { full_name: name.trim() },
           },
         });
         if (error) throw error;
         const { data } = await supabase.auth.getSession();
-        if (data.session) goNext();
+        if (data.session) await goNext();
         else setMsg("Check your inbox to confirm your email, then sign in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -104,7 +176,7 @@ function AuthPage() {
           password,
         });
         if (error) throw error;
-        goNext();
+        await goNext();
       }
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : "Something went wrong.");
@@ -123,7 +195,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    goNext();
+    await goNext();
   }
 
 
@@ -138,6 +210,43 @@ function AuthPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
+        {stage === "set-password" ? (
+        <Card className="p-6 sm:p-8">
+          <h1 className="text-2xl font-bold text-foreground">Welcome to the judging panel</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose a password for <strong className="text-foreground">{email}</strong> so you can
+            sign back in at any time. You'll go straight to your judging dashboard.
+          </p>
+          <form onSubmit={savePassword} className="mt-6 space-y-4">
+            <Field
+              icon={<User className="h-4 w-4" strokeWidth={2} />}
+              title="Full name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Alex Morgan"
+              maxLength={120}
+              required
+            />
+            <Field
+              icon={<Lock className="h-4 w-4" strokeWidth={2} />}
+              title="New password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              minLength={8}
+              maxLength={72}
+              required
+            />
+            {err && <p className="text-sm font-medium text-destructive">{err}</p>}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save and open the judging portal
+            </Button>
+          </form>
+        </Card>
+        ) : (
         <Card className="p-6 sm:p-8">
           <h1 className="text-2xl font-bold text-foreground">
             {mode === "signin" ? "Sign in to GavelLab" : "Create your account"}
@@ -194,6 +303,17 @@ function AuthPage() {
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
               {mode === "signin" ? "Sign in" : "Create account"}
             </Button>
+            {mode === "signin" && (
+              <button
+                type="button"
+                onClick={emailLink}
+                disabled={busy}
+                className="w-full text-center text-sm font-semibold"
+                style={{ color: "var(--teal)" }}
+              >
+                Email me a sign-in link
+              </button>
+            )}
           </form>
 
           <div className="my-5 flex items-center gap-3">
@@ -224,6 +344,7 @@ function AuthPage() {
             </button>
           </p>
         </Card>
+        )}
       </main>
       <SiteFooter />
     </div>

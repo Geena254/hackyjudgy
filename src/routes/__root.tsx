@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { captureAuthLink } from "../lib/auth-link";
+
+captureAuthLink();
 
 function NotFoundComponent() {
   return (
