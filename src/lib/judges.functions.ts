@@ -26,6 +26,8 @@ export const inviteJudge = createServerFn({ method: "POST" })
 
 
     const email = data.email.toLowerCase();
+    const { getServerConfig } = await import("@/lib/config.server");
+    const { siteUrl } = getServerConfig();
 
     const { error: insertError } = await supabase.from("judge_invitations").upsert(
       {
@@ -41,7 +43,7 @@ export const inviteJudge = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${data.appOrigin}/auth?mode=signup`,
+      redirectTo: `${siteUrl}/auth?mode=signup`,
       data: { full_name: data.fullName ?? null, invited_as: "judge" },
     });
 
@@ -69,7 +71,7 @@ export const inviteJudge = createServerFn({ method: "POST" })
 
       const { error: linkError } = await supabaseAdmin.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: false, emailRedirectTo: `${data.appOrigin}/auth` },
+        options: { shouldCreateUser: false, emailRedirectTo: `${siteUrl}/auth` },
       });
       if (linkError) {
         return {

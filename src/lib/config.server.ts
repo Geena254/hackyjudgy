@@ -16,9 +16,15 @@ import process from "node:process";
 //     and server (analytics IDs, public URLs). Define in .env with the
 //     VITE_ prefix. Never put secrets here — they ship to the browser.
 
+const DEFAULT_SITE_URL = "https://judging.powerlearnprojectafrica.org";
+
 export function getServerConfig() {
   return {
     nodeEnv: process.env.NODE_ENV,
+    // Public site that auth emails (judge invites, sign-in links) send people to.
+    // Never the admin's current origin: *.vercel.app deployments sit behind
+    // Vercel's own login.
+    siteUrl: (process.env.PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, ""),
     // Add server-only values here, e.g.:
     //   databaseUrl: process.env.DATABASE_URL,
     //   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
