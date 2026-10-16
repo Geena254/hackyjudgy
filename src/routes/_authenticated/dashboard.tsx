@@ -2,8 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import {
   CheckCircle2,
+  Clock,
   Eye,
-  Star,
+  Inbox,
   Trophy,
   Plus,
   Layers,
@@ -25,6 +26,7 @@ import {
   formatDate,
   STATUS_LABELS,
 } from "@/lib/hackathon";
+import { rankStandings } from "@/lib/results";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -80,11 +82,13 @@ function StatusCard({
   label,
   value,
   tone,
+  hint,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   tone: "teal" | "magenta";
+  hint?: string;
 }) {
   const color = tone === "teal" ? "var(--teal)" : "var(--magenta)";
   return (
@@ -101,6 +105,7 @@ function StatusCard({
         </div>
       </div>
       <div className="mt-3 text-sm font-medium text-foreground">{label}</div>
+      {hint && <div className="mt-0.5 text-xs text-muted-foreground">{hint}</div>}
     </Card>
   );
 }
@@ -120,12 +125,6 @@ function Dashboard() {
   const { data: subs = [] } = useSubmissions(event?.id);
   const { data: scores = [] } = useAllScores();
   const { data: judges = [] } = useJudges();
-
-  const counts = useMemo(() => {
-    const by: Record<string, number> = {};
-    for (const s of subs) by[s.status] = (by[s.status] ?? 0) + 1;
-    return by;
-  }, [subs]);
 
   const progress = useMemo(() => {
     if (subs.length === 0 || judges.length === 0) return 0;
@@ -159,6 +158,31 @@ function Dashboard() {
 
   const left = daysLeft(event?.ends_on);
 
+  // Entry status from actual scoring: how many judges have finished each entry.
+  const entryStatus = useMemo(() => {
+    let notStarted = 0;
+    let underReview = 0;
+    let fullyScored = 0;
+    for (const s of subs) {
+      const crit = criteriaForSubmission(s, rounds, criteria);
+      const anyScore = scores.some((x) => x.submission_id === s.id && judges.some((j) => j.id === x.judge_id));
+      const finished = judges.filter((j) => {
+        const vals = scoreMap(scores, s.id, j.id);
+        return crit.length > 0 && crit.every((c) => vals[c.id] !== undefined);
+      }).length;
+      if (judges.length > 0 && finished === judges.length) fullyScored += 1;
+      else if (anyScore) underReview += 1;
+      else notStarted += 1;
+    }
+    return { notStarted, underReview, fullyScored };
+  }, [subs, rounds, criteria, scores, judges]);
+
+  const judgesFinished = judgeProgress.filter((j) => subs.length > 0 && j.scored === subs.length).length;
+  const leader = useMemo(
+    () => rankStandings(subs, criteria, rounds, scores, judges.map((j) => j.id))[0],
+    [subs, criteria, rounds, scores, judges],
+  );
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -181,20 +205,70 @@ function Dashboard() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="Entries" value={`${subs.length}`} tone="teal" />
-          <Metric label="Judges on the panel" value={`${judges.length}`} tone="magenta" />
-          <Metric
-            label="Scoring progress"
-            value={`${progress}%`}
-            progress={progress}
-            tone="teal"
-          />
-          <Metric
-            label="Days left"
-            value={left === null ? "—" : `${Math.max(0, left)}`}
-            tone="magenta"
-          />
+        <div>
+          <h2 className="mb-3 text-lg font-semibold text-foreground">Entry status</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatusCard
+              icon={<Inbox className="h-5 w-5" strokeWidth={2} />}
+              label="Entries submitted"
+              value={subs.length}
+              hint={event ? event.name : undefined}
+              tone="teal"
+            />
+            <StatusCard
+              icon={<Clock className="h-5 w-5" strokeWidth={2} />}
+              label="Awaiting judges"
+              value={entryStatus.notStarted}
+              hint="No scores yet"
+              tone="magenta"
+            />
+            <StatusCard
+              icon={<Eye className="h-5 w-5" strokeWidth={2} />}
+              label={STATUS_LABELS.under_review}
+              value={entryStatus.underReview}
+              hint="Some judges still scoring"
+              tone="magenta"
+            />
+            <StatusCard
+              icon={<CheckCircle2 className="h-5 w-5" strokeWidth={2} />}
+              label="Fully scored"
+              value={entryStatus.fullyScored}
+              hint={`Scored by all ${judges.length} judges`}
+              tone="teal"
+            />
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Metric
+              label="Judges on the panel"
+              value={`${judges.length}`}
+              sub={`${judgesFinished} finished`}
+              tone="magenta"
+            />
+            <Metric
+              label="Scoring progress"
+              value={`${progress}%`}
+              progress={progress}
+              tone="teal"
+            />
+            <Card className="p-5">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                <Trophy className="h-4 w-4" style={{ color: "var(--teal)" }} strokeWidth={2} /> Leading team
+              </div>
+              <div className="mt-2 truncate text-xl font-bold text-foreground">
+                {leader?.weightedTotal != null ? leader.submission.title : "—"}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {leader?.weightedTotal != null
+                  ? `${leader.weightedTotal} / 100${leader.tied ? " · tied" : ""}`
+                  : "No scores yet"}
+              </div>
+            </Card>
+            <Metric
+              label="Days left"
+              value={left === null ? "—" : `${Math.max(0, left)}`}
+              tone="magenta"
+            />
+          </div>
         </div>
 
         <AdminResults
@@ -225,36 +299,6 @@ function Dashboard() {
             </Link>
           </div>
         </Card>
-
-        <div>
-          <h2 className="mb-3 text-lg font-semibold text-foreground">Entry status</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatusCard
-              icon={<CheckCircle2 className="h-5 w-5" strokeWidth={2} />}
-              label={STATUS_LABELS.submitted}
-              value={counts.submitted ?? 0}
-              tone="teal"
-            />
-            <StatusCard
-              icon={<Eye className="h-5 w-5" strokeWidth={2} />}
-              label={STATUS_LABELS.under_review}
-              value={counts.under_review ?? 0}
-              tone="magenta"
-            />
-            <StatusCard
-              icon={<Star className="h-5 w-5" strokeWidth={2} />}
-              label={STATUS_LABELS.scored}
-              value={counts.scored ?? 0}
-              tone="teal"
-            />
-            <StatusCard
-              icon={<Trophy className="h-5 w-5" strokeWidth={2} />}
-              label={STATUS_LABELS.ranked}
-              value={counts.ranked ?? 0}
-              tone="magenta"
-            />
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card className="p-5 lg:col-span-2">

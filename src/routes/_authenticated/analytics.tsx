@@ -82,8 +82,28 @@ function AnalyticsPage() {
 
   const subIds = useMemo(() => new Set(submissions.map((s) => s.id)), [submissions]);
 
+  // A judge has finished a submission once every criterion is scored, or they
+  // marked the review complete — scoring alone shouldn't depend on "Save & next".
+  const done = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of reviews) if (r.completed) set.add(`${r.judge_id}|${r.submission_id}`);
+    for (const s of submissions) {
+      const crit = criteriaForSubmission(s, rounds, criteria);
+      if (crit.length === 0) continue;
+      for (const j of judges) {
+        const vals = scoreMap(scores, s.id, j.id);
+        if (crit.every((c) => vals[c.id] !== undefined)) set.add(`${j.id}|${s.id}`);
+      }
+    }
+    return set;
+  }, [reviews, submissions, rounds, criteria, judges, scores]);
+  const isDone = (judgeId: string, submissionId: string) => done.has(`${judgeId}|${submissionId}`);
+
   const expected = submissions.length * Math.max(judges.length, 1);
-  const completedReviews = reviews.filter((r) => r.completed && subIds.has(r.submission_id)).length;
+  const completedReviews = judges.reduce(
+    (sum, j) => sum + submissions.filter((s) => isDone(j.id, s.id)).length,
+    0,
+  );
   const completion = expected === 0 ? 0 : Math.round((completedReviews / expected) * 100);
 
   const roundProgress = useMemo(
@@ -91,9 +111,10 @@ function AnalyticsPage() {
       rounds.map((round) => {
         const subs = submissions.filter((s) => s.round_id === round.id);
         const target = subs.length * Math.max(judges.length, 1);
-        const done = reviews.filter(
-          (r) => r.completed && subs.some((s) => s.id === r.submission_id),
-        ).length;
+        const done = judges.reduce(
+          (sum, j) => sum + subs.filter((s) => isDone(j.id, s.id)).length,
+          0,
+        );
         return {
           round,
           submissions: subs.length,
@@ -102,7 +123,7 @@ function AnalyticsPage() {
           percent: target === 0 ? 0 : Math.round((done / target) * 100),
         };
       }),
-    [rounds, submissions, reviews, judges.length],
+    [rounds, submissions, judges, done],
   );
 
   const judgeActivity = useMemo(
@@ -112,7 +133,7 @@ function AnalyticsPage() {
           const mine = reviews.filter(
             (r) => r.judge_id === judge.id && subIds.has(r.submission_id),
           );
-          const done = mine.filter((r) => r.completed).length;
+          const done = submissions.filter((s) => isDone(judge.id, s.id)).length;
           const percent =
             submissions.length === 0 ? 0 : Math.round((done / submissions.length) * 100);
           const marks = scores.filter(
@@ -125,7 +146,7 @@ function AnalyticsPage() {
           return { judge, done, percent, marks, last };
         })
         .sort((a, b) => b.percent - a.percent),
-    [judges, reviews, scores, submissions.length, subIds],
+    [judges, reviews, scores, submissions, subIds, done],
   );
 
   const leaderboard = useMemo(() => {
