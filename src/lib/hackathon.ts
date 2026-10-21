@@ -17,6 +17,11 @@ export type EventRow = {
   starts_on: string | null;
   ends_on: string | null;
   status: EventStatus;
+  /** Show the public live standings while judging runs. */
+  show_live_rankings: boolean;
+  /** Concept note / brief for entrants. */
+  brief_url: string | null;
+  created_by: string | null;
   created_at: string;
 };
 
@@ -51,8 +56,11 @@ export type SubmissionRow = {
   submitter_name: string | null;
   submitter_email: string | null;
   repo_url: string | null;
+  /** Live prototype / site. */
   demo_url: string | null;
   deck_url: string | null;
+  /** Recorded video demo. */
+  video_url: string | null;
   concept_note_url: string | null;
   status: SubmissionStatus;
   created_at: string;
@@ -88,14 +96,12 @@ export const STATUS_LABELS: Record<SubmissionStatus, string> = {
 
 /* ---------------------------------- reads --------------------------------- */
 
+/** Hackathons the signed-in user works on: all for admins, their own for organisers, judged ones for judges. */
 export function useEvents() {
   return useQuery({
     queryKey: ["events"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("workspace_events");
       if (error) throw error;
       return (data ?? []) as EventRow[];
     },
@@ -209,10 +215,23 @@ export function useAllReviews() {
   });
 }
 
-export function useJudges() {
+/**
+ * Judges visible to the signed-in organiser. With an event, only that hackathon's
+ * panel — so progress figures never count other organisers' judges.
+ */
+export function useJudges(eventId?: string) {
   return useQuery({
-    queryKey: ["judge-roster"],
+    queryKey: ["judge-roster", eventId ?? "all"],
     queryFn: async () => {
+      if (eventId) {
+        const { data, error } = await supabase.rpc("event_judges", { _event_id: eventId });
+        if (error) throw error;
+        return (data ?? []).map((row) => ({
+          id: row.id,
+          name: row.full_name ?? row.email ?? "Judge",
+          email: row.email ?? "",
+        }));
+      }
       const { data: roles, error } = await supabase
         .from("user_roles")
         .select("user_id, role")
@@ -232,6 +251,25 @@ export function useJudges() {
           email: row.email ?? "",
         };
       });
+    },
+  });
+}
+
+/** Who organised each hackathon (id → email or name). Platform admins can read every profile. */
+export function useOrganisers(userIds: (string | null)[]) {
+  const ids = [...new Set(userIds.filter((x): x is string => !!x))].sort();
+  return useQuery({
+    queryKey: ["organisers", ids],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", ids);
+      if (error) throw error;
+      return Object.fromEntries(
+        (data ?? []).map((p) => [p.id, p.full_name ?? p.email ?? "Unknown organiser"]),
+      ) as Record<string, string>;
     },
   });
 }
@@ -307,7 +345,11 @@ export function criteriaForSubmission(
   const judging = rounds.find((r) => r.phase === "judging") ?? rounds[0];
   const roundId = submission.round_id ?? judging?.id;
   const scoped = criteria.filter((c) => c.round_id === roundId);
-  return scoped.length > 0 ? scoped : criteria;
+  if (scoped.length > 0) return scoped;
+  // Entries still in a round without a rubric (e.g. the submissions round) are
+  // scored on the first judging round's rubric, not every round's criteria.
+  const judged = criteria.filter((c) => c.round_id === judging?.id);
+  return judged.length > 0 ? judged : criteria;
 }
 
 /** Weighted score as a percentage (0-100) for one judge's scores on one submission. */
@@ -361,6 +403,8 @@ export function useSaveEvent() {
         starts_on: input.starts_on || null,
         ends_on: input.ends_on || null,
         status: input.status ?? "draft",
+        show_live_rankings: input.show_live_rankings ?? true,
+        brief_url: input.brief_url || null,
       };
       if (input.id) {
         const { error } = await supabase.from("events").update(payload).eq("id", input.id);
@@ -501,6 +545,7 @@ export function useSaveSubmission() {
         repo_url: input.repo_url || null,
         demo_url: input.demo_url || null,
         deck_url: input.deck_url || null,
+        video_url: input.video_url || null,
         concept_note_url: input.concept_note_url || null,
         status: input.status ?? "submitted",
       };
@@ -551,6 +596,24 @@ export function useActiveEvent() {
   });
 }
 
+/** Every published hackathon on the platform, soonest-ending first — readable without signing in. */
+export function usePublicEvents() {
+  return useQuery({
+    queryKey: ["public-events"],
+    queryFn: async () => {
+      // Filter explicitly: signed-in admins can also read drafts and closed events.
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("status", "active")
+        .order("ends_on", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as EventRow[];
+    },
+  });
+}
+
 /** Insert a participant's own submission into the active event. */
 export function useSubmitProject() {
   return useMutation({
@@ -566,6 +629,7 @@ export function useSubmitProject() {
       repo_url?: string;
       demo_url?: string;
       deck_url?: string;
+      video_url?: string;
     }) => {
       const { data, error } = await supabase.from("submissions").insert({
         event_id: input.event_id,
@@ -579,6 +643,7 @@ export function useSubmitProject() {
         repo_url: input.repo_url || null,
         demo_url: input.demo_url || null,
         deck_url: input.deck_url || null,
+        video_url: input.video_url || null,
         status: "submitted",
       }).select("id").single();
       if (error) throw error;

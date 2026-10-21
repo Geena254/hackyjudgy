@@ -81,7 +81,7 @@ function AuthPage() {
     const { data: roles } = auth.user
       ? await supabase.from("user_roles").select("role").eq("user_id", auth.user.id)
       : { data: [] };
-    const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+    const isAdmin = (roles ?? []).some((r) => r.role === "admin" || r.role === "organiser");
     navigate({ to: isAdmin ? "/dashboard" : "/judge", replace: true });
   };
 
@@ -253,7 +253,8 @@ function AuthPage() {
           </h1>
           {mode === "signup" && (
             <p className="mt-1 text-sm text-muted-foreground">
-              Invited judges should sign up with the email that received the invitation.
+              Organisers: sign up with your email to set up your own hackathons and invite your
+              judges. Invited judges should sign up with the email that received the invitation.
             </p>
           )}
 

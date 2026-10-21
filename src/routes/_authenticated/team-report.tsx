@@ -4,6 +4,7 @@ import { ArrowLeft, Printer } from "lucide-react";
 import { Card, Button } from "@/components/app-shell";
 import { PlpLogo } from "@/components/brand";
 import { useAuth } from "@/hooks/use-auth";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
 import {
   useEvents,
   useRounds,
@@ -50,13 +51,13 @@ function TeamReports() {
   const navigate = Route.useNavigate();
   const { isAdmin, ready } = useAuth();
   const { data: events = [] } = useEvents();
-  const event = events.find((e) => e.status === "active") ?? events[0];
+  const [event] = useSelectedEvent(events);
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
   const { data: scores = [] } = useAllScores();
   const { data: reviews = [] } = useAllReviews();
-  const { data: roster = [] } = useJudges();
+  const { data: roster = [] } = useJudges(event?.id);
 
   const [showNames, setShowNames] = useState(false);
   const [showRank, setShowRank] = useState(true);

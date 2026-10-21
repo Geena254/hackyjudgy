@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Award, CheckCircle2, FileText, Users } from "lucide-react";
 import { AppShell, Card, Pill, ProgressBar } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
 import {
   useEvents,
   useRounds,
@@ -72,13 +73,13 @@ function Stat({
 function AnalyticsPage() {
   const { isAdmin, ready } = useAuth();
   const { data: events = [] } = useEvents();
-  const event = events.find((e) => e.status === "active") ?? events[0];
+  const [event] = useSelectedEvent(events);
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: submissions = [] } = useSubmissions(event?.id);
   const { data: scores = [] } = useAllScores();
   const { data: reviews = [] } = useAllReviews();
-  const { data: judges = [] } = useJudges();
+  const { data: judges = [] } = useJudges(event?.id);
 
   const subIds = useMemo(() => new Set(submissions.map((s) => s.id)), [submissions]);
 
@@ -232,30 +233,7 @@ function AnalyticsPage() {
         />
       </div>
 
-      <Card className="mt-6 p-6">
-        <h2 className="text-lg font-bold text-foreground">Progress by round</h2>
-        <div className="mt-4 space-y-5">
-          {roundProgress.map((r) => (
-            <div key={r.round.id}>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-foreground">{r.round.name}</span>
-                  <Pill tone="gray">{r.round.phase}</Pill>
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  {r.done}/{r.target} reviews · {r.submissions} submissions
-                </span>
-              </div>
-              <div className="mt-2">
-                <ProgressBar value={r.percent} />
-              </div>
-            </div>
-          ))}
-          {roundProgress.length === 0 && (
-            <p className="text-sm text-muted-foreground">No rounds have been set up yet.</p>
-          )}
-        </div>
-      </Card>
+
 
       <Card className="mt-6 p-6">
         <h2 className="text-lg font-bold text-foreground">Judge activity</h2>
@@ -299,6 +277,31 @@ function AnalyticsPage() {
               )}
             </tbody>
           </table>
+        </div>
+      </Card>
+
+      <Card className="mt-6 p-6">
+        <h2 className="text-lg font-bold text-foreground">Progress by round</h2>
+        <div className="mt-4 space-y-5">
+          {roundProgress.map((r) => (
+            <div key={r.round.id}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground">{r.round.name}</span>
+                  <Pill tone="gray">{r.round.phase}</Pill>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {r.done}/{r.target} reviews · {r.submissions} submissions
+                </span>
+              </div>
+              <div className="mt-2">
+                <ProgressBar value={r.percent} />
+              </div>
+            </div>
+          ))}
+          {roundProgress.length === 0 && (
+            <p className="text-sm text-muted-foreground">No rounds have been set up yet.</p>
+          )}
         </div>
       </Card>
 

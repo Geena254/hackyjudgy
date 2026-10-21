@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { ArrowRight, CheckCircle2, Clock, ListChecks, Star } from "lucide-react";
 import { AppShell, Card, Pill, ProgressBar } from "@/components/app-shell";
 import { useAuth, displayName } from "@/hooks/use-auth";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
 import {
   useEvents,
   useRounds,
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/judge")({
 function JudgeHome() {
   const { user } = useAuth();
   const { data: events = [] } = useEvents();
-  const event = events.find((e) => e.status === "active") ?? events[0];
+  const [event] = useSelectedEvent(events);
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);

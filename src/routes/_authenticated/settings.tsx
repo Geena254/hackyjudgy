@@ -48,7 +48,7 @@ const inputClass =
   "w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary disabled:bg-muted disabled:text-muted-foreground";
 
 function SettingsPage() {
-  const { user, roles, isAdmin } = useAuth();
+  const { user, roles, isAdmin, isPlatformAdmin } = useAuth();
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [nameMsg, setNameMsg] = useState<string | null>(null);
@@ -202,14 +202,16 @@ function SettingsPage() {
           <div className="mt-4 flex flex-wrap gap-2">
             {roles.length === 0 && <Pill tone="gray">No role assigned yet</Pill>}
             {roles.map((r) => (
-              <Pill key={r} tone={r === "admin" ? "magenta" : "teal"}>
-                {r === "admin" ? "Organiser" : "Judge"}
+              <Pill key={r} tone={r === "judge" ? "teal" : "magenta"}>
+                {r === "admin" ? "Platform admin" : r === "organiser" ? "Organiser" : "Judge"}
               </Pill>
             ))}
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            {isAdmin
-              ? "You can create hackathons, manage rubrics and invite judges."
+            {isPlatformAdmin
+              ? "You can see and manage every hackathon on the platform, whoever organised it."
+              : isAdmin
+              ? "You can create your own hackathons, manage their rubrics and invite judges. Only you see your hackathons' entries and scores."
               : "You can score the submissions assigned to you and review your own results."}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">

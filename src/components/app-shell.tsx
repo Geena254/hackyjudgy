@@ -5,6 +5,26 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, displayName, initials } from "@/hooks/use-auth";
 import { BrandLink, SiteFooter } from "@/components/brand";
+import { HackathonPicker } from "@/components/hackathon-picker";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
+import { useEvents } from "@/lib/hackathon";
+
+/** One hackathon picker for the whole workspace; every page follows it. */
+function HackathonBar() {
+  const { data: events = [] } = useEvents();
+  const [event, setEvent] = useSelectedEvent(events);
+  if (events.length < 2) return null;
+  return (
+    <div className="border-b border-border bg-background">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Hackathon
+        </span>
+        <HackathonPicker events={events} value={event?.id} onChange={setEvent} />
+      </div>
+    </div>
+  );
+}
 
 const adminNav = [
   { to: "/dashboard", label: "Dashboard" },
@@ -25,7 +45,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
-  const { user, roles, isAdmin, ready } = useAuth();
+  const { user, roles, isAdmin, isPlatformAdmin, isOrganiser, ready } = useAuth();
   const noAccess = ready && !!user && roles.length === 0;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -40,7 +60,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface">
+    // Organisers' workspaces use the organiser palette; the PLP platform admin keeps PLP colours.
+    <div
+      className={"flex min-h-screen flex-col bg-surface" + (isOrganiser ? " theme-organiser" : "")}
+    >
       <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-8">
@@ -91,7 +114,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <div className="border-b border-border px-3 py-2">
                     <div className="truncate text-sm font-medium text-foreground">{name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {isAdmin ? "Event admin" : "Judge"}
+                      {isPlatformAdmin ? "Platform admin" : isAdmin ? "Organiser" : "Judge"}
                     </div>
                   </div>
                   <Link
@@ -156,6 +179,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         )}
       </header>
+      {ready && !noAccess && <HackathonBar />}
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {noAccess ? (
           <Card className="mx-auto max-w-xl p-8 text-center">

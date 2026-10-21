@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import {
   CheckCircle2,
+  ChevronDown,
   Clock,
   Eye,
   Inbox,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { AppShell, Card, Button, Pill, ProgressBar } from "@/components/app-shell";
 import { useAuth, initials } from "@/hooks/use-auth";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
 import { AdminResults } from "@/components/admin-results";
 import {
   useEvents,
@@ -20,6 +22,7 @@ import {
   useSubmissions,
   useAllScores,
   useJudges,
+  useOrganisers,
   criteriaForSubmission,
   scoreMap,
   daysLeft,
@@ -111,20 +114,24 @@ function StatusCard({
 }
 
 function Dashboard() {
-  const { isAdmin, ready } = useAuth();
+  const { isAdmin, isPlatformAdmin, ready } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (ready && !isAdmin) navigate({ to: "/judge", replace: true });
   }, [ready, isAdmin, navigate]);
 
-  const { data: events = [] } = useEvents();
-  const event = events.find((e) => e.status === "active") ?? events[0];
+  const { data: events = [], isSuccess: eventsLoaded } = useEvents();
+  const [event, setEvent] = useSelectedEvent(events);
+  // The platform admin sees every organiser's hackathons, so label who runs each one.
+  const { data: organisers = {} } = useOrganisers(
+    isPlatformAdmin ? events.map((e) => e.created_by) : [],
+  );
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
   const { data: scores = [] } = useAllScores();
-  const { data: judges = [] } = useJudges();
+  const { data: judges = [] } = useJudges(event?.id);
 
   const progress = useMemo(() => {
     if (subs.length === 0 || judges.length === 0) return 0;
@@ -191,9 +198,36 @@ function Dashboard() {
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Event overview
             </div>
-            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-              {event?.name ?? "No hackathon yet"}
-            </h1>
+            {event && events.length > 1 ? (
+              <div className="relative">
+                <label htmlFor="dashboard-event" className="sr-only">
+                  Choose hackathon
+                </label>
+                <select
+                  id="dashboard-event"
+                  value={event.id}
+                  onChange={(e) => setEvent(e.target.value)}
+                  className="max-w-full cursor-pointer appearance-none truncate rounded-md border border-transparent bg-transparent py-1 pr-9 text-2xl font-bold text-foreground hover:border-border hover:bg-background focus:border-[color:var(--teal)] focus:outline-none sm:text-3xl"
+                >
+                  {events.map((e) => {
+                    const by = e.created_by ? organisers[e.created_by] : undefined;
+                    return (
+                      <option key={e.id} value={e.id} className="text-base font-normal">
+                        {e.name} ({e.status}){by ? ` · by ${by}` : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-2 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
+                  strokeWidth={2}
+                />
+              </div>
+            ) : (
+              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+                {event?.name ?? "No hackathon yet"}
+              </h1>
+            )}
             {event && (
               <p className="mt-1 text-sm text-muted-foreground">
                 {formatDate(event.starts_on)} – {formatDate(event.ends_on)}
@@ -203,6 +237,11 @@ function Dashboard() {
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             {event && (
               <Pill tone={event.status === "active" ? "teal" : "gray"}>{event.status}</Pill>
+            )}
+            {event && !event.show_live_rankings && (
+              <Pill tone="gray" variant="outline">
+                Rankings private
+              </Pill>
             )}
             <Link to="/events">
               <Button variant="outline" tone="teal">
@@ -221,6 +260,29 @@ function Dashboard() {
             </Link>
           </div>
         </div>
+
+        {eventsLoaded && events.length === 0 && (
+          <Card className="p-6">
+            <h2 className="text-lg font-bold text-foreground">Welcome to your organiser workspace</h2>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              This is where you run your hackathons. Only you can see your hackathons&apos; entries,
+              judges and scores here. Start by creating your first hackathon, then invite your
+              judges by email.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link to="/events">
+                <Button variant="primary" tone="teal">
+                  <Plus className="h-4 w-4" strokeWidth={2} /> Create your first hackathon
+                </Button>
+              </Link>
+              <Link to="/judges">
+                <Button variant="outline" tone="teal">
+                  Invite judges
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        )}
 
         <div>
           <h2 className="mb-3 text-lg font-semibold text-foreground">Entry status</h2>

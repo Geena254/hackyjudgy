@@ -60,34 +60,40 @@ export type Database = {
       }
       events: {
         Row: {
+          brief_url: string | null
           created_at: string
           created_by: string | null
           description: string | null
           ends_on: string | null
           id: string
           name: string
+          show_live_rankings: boolean
           starts_on: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          brief_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           ends_on?: string | null
           id?: string
           name: string
+          show_live_rankings?: boolean
           starts_on?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          brief_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           ends_on?: string | null
           id?: string
           name?: string
+          show_live_rankings?: boolean
           starts_on?: string | null
           status?: string
           updated_at?: string
@@ -99,6 +105,7 @@ export type Database = {
           accepted_at: string | null
           created_at: string
           email: string
+          event_id: string | null
           expertise: string | null
           full_name: string | null
           id: string
@@ -109,6 +116,7 @@ export type Database = {
           accepted_at?: string | null
           created_at?: string
           email: string
+          event_id?: string | null
           expertise?: string | null
           full_name?: string | null
           id?: string
@@ -119,6 +127,7 @@ export type Database = {
           accepted_at?: string | null
           created_at?: string
           email?: string
+          event_id?: string | null
           expertise?: string | null
           full_name?: string | null
           id?: string
@@ -362,6 +371,7 @@ export type Database = {
           team_name: string | null
           title: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           category?: string | null
@@ -380,6 +390,7 @@ export type Database = {
           team_name?: string | null
           title: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           category?: string | null
@@ -398,6 +409,7 @@ export type Database = {
           team_name?: string | null
           title?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -466,6 +478,7 @@ export type Database = {
           status: string
           team_name: string
           title: string
+          video_url: string
         }[]
       }
       public_submissions: {
@@ -483,11 +496,24 @@ export type Database = {
           status: string
           team_name: string
           title: string
+          video_url: string
         }[]
+      }
+      event_judges: {
+        Args: { _event_id: string }
+        Returns: {
+          email: string | null
+          full_name: string | null
+          id: string
+        }[]
+      }
+      workspace_events: {
+        Args: never
+        Returns: Database["public"]["Tables"]["events"]["Row"][]
       }
     }
     Enums: {
-      app_role: "admin" | "judge"
+      app_role: "admin" | "judge" | "organiser"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -615,7 +641,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "judge"],
+      app_role: ["admin", "judge", "organiser"],
     },
   },
 } as const

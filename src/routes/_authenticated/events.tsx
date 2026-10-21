@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
 import {
   useEvents,
   useRounds,
@@ -21,6 +22,7 @@ import {
   useDeleteRound,
   useSaveCriterion,
   useDeleteCriterion,
+  useOrganisers,
   PHASES,
   formatDate,
   type EventRow,
@@ -72,17 +74,26 @@ function Text({
 }
 
 function EventSetup() {
-  const { isAdmin, ready } = useAuth();
+  const { user, isAdmin, isPlatformAdmin, ready } = useAuth();
   const [tab, setTab] = useState<Tab>("details");
   const { data: events = [] } = useEvents();
-  const [eventId, setEventId] = useState<string | undefined>();
-  const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useSelectedEvent(events);
+  const [creating, setCreating] = useState(events.length === 0);
 
+  // Picking a hackathon in the workspace bar leaves the new-hackathon form.
   useEffect(() => {
-    if (!creating && !eventId && events.length > 0) setEventId(events[0]!.id);
-  }, [events, eventId, creating]);
+    if (selected?.id) setCreating(false);
+  }, [selected?.id]);
 
-  const event = creating ? undefined : events.find((e) => e.id === eventId);
+  const event = creating ? undefined : selected;
+  // The platform admin sees every organiser's hackathons, so label who runs each one.
+  const { data: organisers = {} } = useOrganisers(
+    isPlatformAdmin ? events.map((e) => e.created_by) : [],
+  );
+  const organiserOf = (e: EventRow) =>
+    isPlatformAdmin && e.created_by && e.created_by !== user?.id
+      ? organisers[e.created_by]
+      : undefined;
 
   if (ready && !isAdmin) {
     return (
@@ -99,37 +110,26 @@ function EventSetup() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Organiser
+            {isPlatformAdmin ? "Platform admin · all organisers" : "Organiser"}
           </div>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Hackathon setup</h1>
+          {event && organiserOf(event) && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Organised by {organiserOf(event)}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={creating ? "" : (eventId ?? "")}
-            onChange={(e) => {
-              const value = e.target.value;
-              setCreating(!value);
-              setEventId(value || undefined);
-              if (!value) setTab("details");
-            }}
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-            aria-label="Choose hackathon"
-          >
-            <option value="">
-              {events.length === 0 ? "No hackathons yet" : "New hackathon…"}
-            </option>
-            {events.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.name} ({e.status})
-              </option>
-            ))}
-          </select>
+          {creating && events.length > 0 && (
+            <Button variant="ghost" tone="teal" onClick={() => setCreating(false)}>
+              Cancel
+            </Button>
+          )}
           <Button
             variant="outline"
             tone="teal"
             onClick={() => {
               setCreating(true);
-              setEventId(undefined);
               setTab("details");
             }}
           >
@@ -167,13 +167,11 @@ function EventSetup() {
             <DetailsTab
               event={event}
               onCreated={(id) => {
+                // A new hackathon becomes the selected one everywhere, with an empty judging panel.
                 setCreating(false);
-                setEventId(id);
+                setSelected(id);
               }}
-              onDeleted={() => {
-                setCreating(false);
-                setEventId(undefined);
-              }}
+              onDeleted={() => setCreating(false)}
             />
           )}
           {tab !== "details" && !event && (
@@ -206,6 +204,8 @@ function DetailsTab({
     starts_on: "",
     ends_on: "",
     status: "draft" as EventRow["status"],
+    brief_url: "",
+    show_live_rankings: true,
   });
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -216,8 +216,19 @@ function DetailsTab({
       starts_on: event?.starts_on ?? "",
       ends_on: event?.ends_on ?? "",
       status: event?.status ?? "draft",
+      brief_url: event?.brief_url ?? "",
+      show_live_rankings: event?.show_live_rankings ?? true,
     });
-  }, [event?.id, event?.name, event?.description, event?.starts_on, event?.ends_on, event?.status]);
+  }, [
+    event?.id,
+    event?.name,
+    event?.description,
+    event?.starts_on,
+    event?.ends_on,
+    event?.status,
+    event?.brief_url,
+    event?.show_live_rankings,
+  ]);
 
   async function submit(status?: EventRow["status"]) {
     const next = { ...form, status: status ?? form.status };
@@ -278,6 +289,30 @@ function DetailsTab({
             <option value="active">Published (open for entries)</option>
             <option value="closed">Closed</option>
           </select>
+        </label>
+        <Text
+          label="Concept note link (optional)"
+          type="url"
+          value={form.brief_url}
+          onChange={(e) => setForm({ ...form, brief_url: e.target.value })}
+          placeholder="https://docs.google.com/..."
+        />
+        <label className="flex items-start gap-3 rounded-md border border-border p-4">
+          <input
+            type="checkbox"
+            checked={form.show_live_rankings}
+            onChange={(e) => setForm({ ...form, show_live_rankings: e.target.checked })}
+            className="mt-0.5 h-4 w-4 accent-[color:var(--teal)]"
+          />
+          <span>
+            <span className="block text-sm font-medium text-foreground">
+              Show live rankings to the public
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              When on, the hackathon page shows standings that update as judges score. When off,
+              scores stay private until you announce the results. You can change this at any time.
+            </span>
+          </span>
         </label>
       </div>
 

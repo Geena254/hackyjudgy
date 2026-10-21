@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ExternalLink, Github, Presentation, PlayCircle } from "lucide-react";
+import { ExternalLink, Github, Globe, Presentation, PlayCircle } from "lucide-react";
 import { Card, Pill } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
 import { usePublicSubmission, usePublicEvent, formatDate } from "@/lib/hackathon";
@@ -137,13 +137,16 @@ function ProjectShowcase() {
               </Card>
             )}
 
-            {(project.repo_url || project.demo_url || project.deck_url) && (
+            {(project.repo_url || project.demo_url || project.deck_url || project.video_url) && (
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {project.repo_url && (
                   <LinkCard href={project.repo_url} label="View the code" icon={Github} />
                 )}
+                {project.video_url && (
+                  <LinkCard href={project.video_url} label="Watch the demo" icon={PlayCircle} />
+                )}
                 {project.demo_url && (
-                  <LinkCard href={project.demo_url} label="Watch the demo" icon={PlayCircle} />
+                  <LinkCard href={project.demo_url} label="Try the live prototype" icon={Globe} />
                 )}
                 {project.deck_url && (
                   <LinkCard href={project.deck_url} label="Pitch deck" icon={Presentation} />

@@ -109,8 +109,11 @@ const STEPS = [
 
 function OrganisersPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-background">
+    <div className="theme-organiser flex min-h-screen flex-col bg-background">
+      <header
+        className="sticky top-0 z-40 border-b-2 bg-background"
+        style={{ borderBottomColor: "var(--teal)" }}
+      >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/" aria-label="GavelLab home">
             <PlpLogo className="h-10 sm:h-11" />
@@ -124,6 +127,7 @@ function OrganisersPage() {
             </Link>
             <Link
               to="/auth"
+              search={{ mode: "signup" }}
               className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white"
               style={{ background: "var(--teal)" }}
             >
@@ -133,43 +137,46 @@ function OrganisersPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6 lg:py-16">
-        <section className="border-l-4 pl-5 sm:pl-7" style={{ borderColor: "var(--magenta)" }}>
-          <Pill tone="teal" variant="outline">
-            For hackathon organisers
-          </Pill>
-          <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
-            Judge your hackathon fairly, and show the results as they happen
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">
-            GavelLab gives you rounds, a weighted judging rubric, blind judging, invited judges and
-            a public standings board — so scoring a hackathon takes an afternoon instead of a
-            spreadsheet marathon.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/auth"
-              className="inline-flex items-center gap-2 rounded-md px-6 py-3.5 text-sm font-semibold text-white"
-              style={{ background: "var(--teal)" }}
-            >
-              Set up your hackathon <ArrowRight className="h-4 w-4" strokeWidth={2} />
-            </Link>
-            <Link
-              to="/hackathon"
-              className="inline-flex items-center gap-2 rounded-md border border-border px-6 py-3.5 text-sm font-semibold text-foreground hover:bg-muted"
-            >
-              See a live hackathon page
-            </Link>
+      <div className="border-b border-border" style={{ background: "var(--teal-soft)" }}>
+        <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:py-16">
+          <div className="border-l-4 pl-5 sm:pl-7" style={{ borderColor: "var(--magenta)" }}>
+            <Pill tone="teal" variant="outline">
+              For hackathon organisers
+            </Pill>
+            <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
+              Judge your hackathon fairly, and show the results as they happen
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">
+              GavelLab gives you rounds, a weighted judging rubric, blind judging, invited judges
+              and a public standings board — so scoring a hackathon takes an afternoon instead of a
+              spreadsheet marathon.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
+                className="inline-flex items-center gap-2 rounded-md px-6 py-3.5 text-sm font-semibold text-white"
+                style={{ background: "var(--teal)" }}
+              >
+                Set up your hackathon <ArrowRight className="h-4 w-4" strokeWidth={2} />
+              </Link>
+              <Link
+                to="/hackathon"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-6 py-3.5 text-sm font-semibold text-foreground hover:bg-muted"
+              >
+                Browse live hackathons
+              </Link>
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              No card needed. Invite your judges the same day you sign up.
+            </p>
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            No card needed. Invite your judges the same day you sign up.
-          </p>
         </section>
+      </div>
 
-        <section className="mt-16">
-          <h2 className="text-2xl font-bold text-foreground">
-            Everything a hackathon panel needs
-          </h2>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6 lg:py-16">
+        <section>
+          <h2 className="text-2xl font-bold text-foreground">Everything a hackathon panel needs</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
               <Card key={f.title} className="h-full p-5">
@@ -251,6 +258,7 @@ function OrganisersPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               to="/auth"
+              search={{ mode: "signup" }}
               className="inline-flex items-center gap-2 rounded-md px-6 py-3.5 text-sm font-semibold text-white"
               style={{ background: "var(--magenta)" }}
             >

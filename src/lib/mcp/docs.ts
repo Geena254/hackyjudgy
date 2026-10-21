@@ -31,7 +31,7 @@ export const MCP_TOOL_DOCS: ToolDoc[] = [
     name: "list_events",
     title: "List hackathon events",
     purpose: "Find hackathons and their status and dates before calling any other tool.",
-    auth: "Signed in. Judges see active events; admins also see drafts.",
+    auth: "Signed in. Platform admins see every event, organisers see their own, judges see the events they judge.",
     inputs: [],
     output: "{ events: [{ id, name, description, status, starts_on, ends_on }] }",
   },

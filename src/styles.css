@@ -104,12 +104,39 @@
   --ring: var(--teal);
 }
 
+/* Organiser marketing pages get their own palette so they read as distinct
+   from the PLP-branded hackathon pages. Components keep using var(--teal) /
+   var(--magenta); this scope just remaps them to indigo and orange. */
+.theme-organiser {
+  /* Indigo #4338CA */
+  --teal: oklch(0.457 0.24 277);
+  --teal-foreground: oklch(1 0 0);
+  --teal-soft: oklch(0.962 0.025 277);
+
+  /* Burnt orange #C2410C */
+  --magenta: oklch(0.553 0.195 38.4);
+  --magenta-foreground: oklch(1 0 0);
+  --magenta-soft: oklch(0.968 0.022 48);
+
+  --surface: oklch(0.975 0.01 277);
+  --primary: var(--teal);
+  --accent: var(--teal-soft);
+  --ring: var(--teal);
+}
+
+.dark .theme-organiser {
+  --teal: oklch(0.68 0.16 277);
+  --magenta: oklch(0.7 0.17 45);
+  --surface: oklch(0.2 0.02 277);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
   }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);

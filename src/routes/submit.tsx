@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
-import { Card, Button, Pill } from "@/components/app-shell";
+import { Card, Pill } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
-import { useActiveEvent, useRounds, useSubmitProject, formatDate } from "@/lib/hackathon";
+import { EntryForm } from "@/components/entry-form";
+import { useActiveEvent, useRounds, formatDate } from "@/lib/hackathon";
 
 export const Route = createFileRoute("/submit")({
   head: () => ({
@@ -26,61 +27,10 @@ export const Route = createFileRoute("/submit")({
   component: SubmitPage,
 });
 
-function Field({
-  label,
-  hint,
-  ...rest
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
-      <input
-        {...rest}
-        className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
-      />
-      {hint && <span className="mt-1 block text-xs text-muted-foreground">{hint}</span>}
-    </label>
-  );
-}
-
 function SubmitPage() {
   const { data: event, isLoading } = useActiveEvent();
   const { data: rounds = [] } = useRounds(event?.id);
-  const submit = useSubmitProject();
   const [doneId, setDoneId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    title: "",
-    team_name: "",
-    category: "",
-    description: "",
-    submitter_name: "",
-    submitter_email: "",
-    repo_url: "",
-    demo_url: "",
-    deck_url: "",
-  });
-
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((prev) => ({ ...prev, [k]: e.target.value }));
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!event) return;
-    const submissionRound = rounds.find((r) => r.phase === "submissions") ?? rounds[0];
-    try {
-      const id = await submit.mutateAsync({
-        event_id: event.id,
-        round_id: submissionRound?.id ?? null,
-        ...form,
-      });
-      setDoneId(id);
-      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-    }
-  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -166,83 +116,14 @@ function SubmitPage() {
             )}
 
             <Card className="mt-6 p-6">
-              <form onSubmit={onSubmit} className="space-y-4">
-                <Field
-                  label="Project title"
-                  required
-                  value={form.title}
-                  onChange={set("title")}
-                  placeholder="e.g. AgriTrack"
-                />
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Team name" value={form.team_name} onChange={set("team_name")} />
-                  <Field
-                    label="Category"
-                    value={form.category}
-                    onChange={set("category")}
-                    placeholder="e.g. AgriTech"
-                  />
-                </div>
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-foreground">
-                    Project description
-                  </span>
-                  <textarea
-                    required
-                    rows={5}
-                    value={form.description}
-                    onChange={set("description")}
-                    placeholder="What problem does it solve, who is it for, and what did you build?"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
-                  />
-                </label>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field
-                    label="Your name"
-                    required
-                    value={form.submitter_name}
-                    onChange={set("submitter_name")}
-                  />
-                  <Field
-                    label="Your email"
-                    type="email"
-                    required
-                    value={form.submitter_email}
-                    onChange={set("submitter_email")}
-                  />
-                </div>
-                <Field
-                  label="Code repository link"
-                  type="url"
-                  value={form.repo_url}
-                  onChange={set("repo_url")}
-                  placeholder="https://github.com/..."
-                />
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field
-                    label="Demo video or live link"
-                    type="url"
-                    value={form.demo_url}
-                    onChange={set("demo_url")}
-                  />
-                  <Field
-                    label="Pitch deck link"
-                    type="url"
-                    value={form.deck_url}
-                    onChange={set("deck_url")}
-                  />
-                </div>
-
-                {error && (
-                  <p className="text-sm" style={{ color: "var(--magenta)" }}>
-                    {error}
-                  </p>
-                )}
-
-                <Button type="submit" variant="primary" tone="teal" disabled={submit.isPending}>
-                  {submit.isPending ? "Sending…" : "Submit project"}
-                </Button>
-              </form>
+              <EntryForm
+                event={event}
+                rounds={rounds}
+                onDone={(id) => {
+                  setDoneId(id);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
             </Card>
           </>
         )}

@@ -131,6 +131,7 @@ function GuidePage() {
           </Link>
           <Link
             to="/auth"
+            search={{ mode: "signup" }}
             className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white"
             style={{ background: "var(--teal)" }}
           >
@@ -225,6 +226,7 @@ function GuidePage() {
               </Link>
               <Link
                 to="/auth"
+                search={{ mode: "signup" }}
                 className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-white"
                 style={{ background: "var(--magenta)" }}
               >

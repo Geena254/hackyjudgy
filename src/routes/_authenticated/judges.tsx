@@ -14,8 +14,10 @@ import {
   useJudges,
   criteriaForSubmission,
   scoreMap,
+  type EventRow,
 } from "@/lib/hackathon";
 import { useAuth, initials } from "@/hooks/use-auth";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
 
 export const Route = createFileRoute("/_authenticated/judges")({
   head: () => ({
@@ -58,6 +60,9 @@ function JudgesPage() {
   const list = useServerFn(listInvitations);
   const revokeInvite = useServerFn(revokeInvitation);
 
+  // Judges are invited per hackathon: this page shows only the selected hackathon's panel.
+  const { data: events = [] } = useEvents();
+  const [event] = useSelectedEvent(events);
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -66,14 +71,14 @@ function JudgesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const invitations = useQuery({
-    queryKey: ["judge-invitations"],
-    queryFn: () => list(),
-    enabled: isAdmin,
+    queryKey: ["judge-invitations", event?.id],
+    queryFn: () => list({ data: { eventId: event!.id } }),
+    enabled: isAdmin && !!event,
   });
 
   const mutation = useMutation({
     mutationFn: (vars: { email: string; fullName?: string; expertise?: string }) =>
-      invite({ data: { ...vars, appOrigin: window.location.origin } }),
+      invite({ data: { ...vars, eventId: event!.id, appOrigin: window.location.origin } }),
     onSuccess: (res) => {
       setNotice(res.message);
       setError(null);
@@ -81,6 +86,7 @@ function JudgesPage() {
       setName("");
       setExpertise("");
       queryClient.invalidateQueries({ queryKey: ["judge-invitations"] });
+      queryClient.invalidateQueries({ queryKey: ["judge-roster"] });
     },
     onError: (e) => {
       setError(e instanceof Error ? e.message : "Could not send the invitation.");
@@ -94,6 +100,7 @@ function JudgesPage() {
       setNotice(res.message);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["judge-invitations"] });
+      queryClient.invalidateQueries({ queryKey: ["judge-roster"] });
     },
     onError: (e) => {
       setError(e instanceof Error ? e.message : "Could not withdraw the invitation.");
@@ -105,13 +112,22 @@ function JudgesPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Judges</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Invite judges by email. Each invited judge receives a link to create their GavelLab
-            account and is added to the panel automatically.
-          </p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Judges</h1>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Each hackathon has its own judging panel. New judges get an email to create their
+              GavelLab account. Judges already on GavelLab are added straight away and can start
+              judging.
+            </p>
+          </div>
         </div>
+
+        {isAdmin && events.length === 0 && (
+          <Card className="p-5 text-sm text-muted-foreground">
+            Create a hackathon on the Events page first, then invite its judges here.
+          </Card>
+        )}
 
         {!loading && !isAdmin && (
           <Card className="p-5">
@@ -129,13 +145,14 @@ function JudgesPage() {
           </Card>
         )}
 
-        {isAdmin && (
+        {isAdmin && event && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Card className="p-5 lg:col-span-1">
               <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
                 <UserPlus className="h-5 w-5" style={{ color: "var(--teal)" }} strokeWidth={2} />
                 Invite a judge
               </h2>
+              <p className="mt-1 text-xs text-muted-foreground">To {event.name}</p>
               <form
                 className="mt-4 space-y-4"
                 onSubmit={(e) => {
@@ -196,7 +213,7 @@ function JudgesPage() {
               )}
               {invitations.data?.length === 0 && (
                 <p className="mt-4 text-sm text-muted-foreground">
-                  No invitations yet. Invite your first judge using the form.
+                  No judges on this hackathon yet. Invite your first judge using the form.
                 </p>
               )}
               <ul className="mt-4 divide-y divide-border">
@@ -230,7 +247,7 @@ function JudgesPage() {
                         onClick={() => {
                           if (
                             window.confirm(
-                              `Withdraw the invitation for ${inv.email}? Their invite link will stop working.`,
+                              `Remove ${inv.email} from ${event.name}? They won't be able to score it. Any other hackathons they judge aren't affected.`,
                             )
                           )
                             revoke.mutate({ id: inv.id });
@@ -250,21 +267,19 @@ function JudgesPage() {
           </div>
         )}
 
-        {isAdmin && <PanelActivity />}
+        {isAdmin && event && <PanelActivity event={event} />}
       </div>
     </AppShell>
   );
 }
 
-/** Live scoring progress for every judge on the active event. */
-function PanelActivity() {
-  const { data: events = [] } = useEvents();
-  const event = events.find((e) => e.status === "active") ?? events[0];
+/** Live scoring progress for every judge on one hackathon's panel. */
+function PanelActivity({ event }: { event: EventRow }) {
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
   const { data: scores = [] } = useAllScores();
-  const { data: judges = [], isLoading } = useJudges();
+  const { data: judges = [], isLoading } = useJudges(event?.id);
 
   const rows = useMemo(
     () =>

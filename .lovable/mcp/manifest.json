@@ -4,16 +4,16 @@
   "path": "/mcp",
   "auth": {
     "type": "oauth",
-    "issuer": "https://tshqmujogshfvqcyyfdf.supabase.co/auth/v1",
+    "issuer": "https://aimlcqmcnkegpqfubqfi.supabase.co/auth/v1",
     "accepted_audiences": [
       "authenticated"
     ]
   },
   "mcp": {
     "server": {
-      "name": "gavellab-insights",
-      "version": "0.2.0",
-      "title": "GavelLab Insights"
+      "name": "hackyjudgy",
+      "version": "0.1.0",
+      "title": "Hacky Judgy"
     },
     "tools": [
       {

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Trash2, X } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
 import {
   useEvents,
   useRounds,
@@ -50,6 +51,7 @@ const empty = {
   repo_url: "",
   demo_url: "",
   deck_url: "",
+  video_url: "",
   concept_note_url: "",
   round_id: "",
   status: "submitted" as SubmissionStatus,
@@ -70,11 +72,8 @@ function Text({ label, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & 
 function SubmissionsAdmin() {
   const { isAdmin, ready } = useAuth();
   const { data: events = [] } = useEvents();
-  const [eventId, setEventId] = useState<string | undefined>();
-  useEffect(() => {
-    if (!eventId && events.length > 0)
-      setEventId((events.find((e) => e.status === "active") ?? events[0]!).id);
-  }, [events, eventId]);
+  const [event] = useSelectedEvent(events);
+  const eventId = event?.id;
 
   const { data: rounds = [] } = useRounds(eventId);
   const { data: subs = [] } = useSubmissions(eventId);
@@ -112,6 +111,7 @@ function SubmissionsAdmin() {
       repo_url: s.repo_url ?? "",
       demo_url: s.demo_url ?? "",
       deck_url: s.deck_url ?? "",
+      video_url: s.video_url ?? "",
       concept_note_url: s.concept_note_url ?? "",
       round_id: s.round_id ?? "",
       status: s.status,
@@ -146,18 +146,9 @@ function SubmissionsAdmin() {
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Entries</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={eventId ?? ""}
-            onChange={(e) => setEventId(e.target.value || undefined)}
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-          >
-            {events.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.name}
-              </option>
-            ))}
-            {events.length === 0 && <option value="">No hackathons yet</option>}
-          </select>
+          {events.length === 0 && (
+            <span className="text-sm text-muted-foreground">No hackathons yet</span>
+          )}
           <Button variant="primary" tone="teal" onClick={startNew} disabled={!eventId}>
             <Plus className="h-4 w-4" /> Add entry
           </Button>
@@ -280,7 +271,14 @@ function SubmissionsAdmin() {
                 onChange={(e) => setForm({ ...form, deck_url: e.target.value })}
               />
               <Text
-                label="Live site link"
+                label="Video demo link"
+                type="url"
+                placeholder="https://youtu.be/..."
+                value={form.video_url}
+                onChange={(e) => setForm({ ...form, video_url: e.target.value })}
+              />
+              <Text
+                label="Live prototype link"
                 type="url"
                 placeholder="https://..."
                 value={form.demo_url}

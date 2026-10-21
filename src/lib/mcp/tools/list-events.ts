@@ -6,7 +6,7 @@ export default defineTool({
   name: "list_events",
   title: "List hackathon events",
   description:
-    "List the hackathon events visible to the signed-in user, with status and dates. Admins see drafts too.",
+    "List the hackathon events the signed-in user works on, with status and dates: every event for platform admins, their own events for organisers, and the events they judge for judges.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
@@ -14,9 +14,8 @@ export default defineTool({
     if (!gate.ok) return gate.result;
 
     const { data, error } = await gate.supabase
-      .from("events")
-      .select("id, name, description, status, starts_on, ends_on")
-      .order("created_at", { ascending: false });
+      .rpc("workspace_events")
+      .select("id, name, description, status, starts_on, ends_on");
     if (error) {
       await gate.finish({ ok: false, code: "DATABASE_ERROR" });
       return databaseError(error, "read the events");

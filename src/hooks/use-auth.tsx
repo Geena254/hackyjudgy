@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type Role = "admin" | "judge";
+/** admin = platform owner (sees every hackathon); organiser = runs their own hackathons. */
+export type Role = "admin" | "organiser" | "judge";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -55,7 +56,10 @@ export function useAuth() {
     loading,
     rolesLoading,
     ready: !loading && !rolesLoading,
-    isAdmin: roles.includes("admin"),
+    // Can use the organiser workspace. The database limits organisers to their own hackathons.
+    isAdmin: roles.includes("admin") || roles.includes("organiser"),
+    isPlatformAdmin: roles.includes("admin"),
+    isOrganiser: roles.includes("organiser") && !roles.includes("admin"),
   };
 }
 

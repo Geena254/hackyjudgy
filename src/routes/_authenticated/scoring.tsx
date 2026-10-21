@@ -8,12 +8,14 @@ import {
   Github,
   Globe,
   Lock,
+  PlayCircle,
   Presentation,
   Search,
   Unlock,
 } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
+import { useSelectedEvent } from "@/hooks/use-selected-event";
 import { AiSummaryPanel } from "@/components/ai-summary-panel";
 import {
   useEvents,
@@ -56,7 +58,7 @@ function ScoringQueue() {
   const { id: initialId } = Route.useSearch();
   const { user } = useAuth();
   const { data: events = [] } = useEvents();
-  const event = events.find((e) => e.status === "active") ?? events[0];
+  const [event] = useSelectedEvent(events);
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
@@ -231,10 +233,13 @@ function ScoringQueue() {
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Project materials
                   </div>
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    <Material href={selected.concept_note_url} icon={FileText} label="Concept note" />
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    {selected.concept_note_url && (
+                      <Material href={selected.concept_note_url} icon={FileText} label="Concept note" />
+                    )}
+                    <Material href={selected.video_url} icon={PlayCircle} label="Video demo" />
                     <Material href={selected.deck_url} icon={Presentation} label="Pitch deck" />
-                    <Material href={selected.demo_url} icon={Globe} label="Live site" />
+                    <Material href={selected.demo_url} icon={Globe} label="Live prototype" />
                   </div>
                   {selected.repo_url && (
                     <div className="mt-3">
