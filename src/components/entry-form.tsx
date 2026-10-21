@@ -74,7 +74,7 @@ export function EntryForm({
         return;
       }
       if (emails.includes(lead)) {
-        setError("Your own email is already the team lead's — list only your teammates.");
+        setError("Your own email is already the team lead's - list only your teammates.");
         return;
       }
       if (new Set(emails).size !== emails.length) {

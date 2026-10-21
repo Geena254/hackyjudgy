@@ -21,13 +21,13 @@ export const Route = createFileRoute("/auth")({
 
   head: () => ({
     meta: [
-      { title: "Sign in — GavelLab" },
+      { title: "Sign in - GavelLab" },
       {
         name: "description",
         content:
           "Sign in or create your GavelLab account to manage hackathon events, submissions and judging.",
       },
-      { property: "og:title", content: "Sign in — GavelLab" },
+      { property: "og:title", content: "Sign in - GavelLab" },
       { property: "og:description", content: "Access the GavelLab judging and scoring platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -148,7 +148,7 @@ function AuthPage() {
     });
     setBusy(false);
     if (error) setErr(error.message);
-    else setMsg("Check your inbox — we've emailed you a sign-in link.");
+    else setMsg("Check your inbox - we've emailed you a sign-in link.");
   }
 
   async function submit(e: React.FormEvent) {

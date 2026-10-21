@@ -16,13 +16,13 @@ import {
 export const Route = createFileRoute("/_authenticated/integrations")({
   head: () => ({
     meta: [
-      { title: "Agent integrations — GavelLab" },
+      { title: "Agent integrations - GavelLab" },
       {
         name: "description",
         content:
           "Review connected AI assistants, revoke their access, and read the GavelLab tool documentation.",
       },
-      { property: "og:title", content: "Agent integrations — GavelLab" },
+      { property: "og:title", content: "Agent integrations - GavelLab" },
       {
         property: "og:description",
         content: "Manage assistant connections and GavelLab tool documentation.",
@@ -268,7 +268,7 @@ function IntegrationsPage() {
                           {t.inputs.map((i) => (
                             <li key={i.name}>
                               <code>{i.name}</code> ({i.type}
-                              {i.required ? ", required" : ", optional"}) — {i.description}
+                              {i.required ? ", required" : ", optional"}) - {i.description}
                             </li>
                           ))}
                         </ul>
@@ -286,7 +286,7 @@ function IntegrationsPage() {
               <ul className="mt-2 divide-y divide-border">
                 {MCP_ERROR_CODES.map((e) => (
                   <li key={e.code} className="py-2 text-xs text-muted-foreground">
-                    <code className="font-semibold text-foreground">{e.code}</code> — {e.meaning}
+                    <code className="font-semibold text-foreground">{e.code}</code> - {e.meaning}
                   </li>
                 ))}
               </ul>

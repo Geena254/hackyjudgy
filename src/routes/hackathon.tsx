@@ -20,13 +20,13 @@ export const Route = createFileRoute("/hackathon")({
     typeof s.event === "string" ? { event: s.event } : {},
   head: () => ({
     meta: [
-      { title: "Hackathons — Enter and Follow Live Standings | GavelLab" },
+      { title: "Hackathons - Enter and Follow Live Standings | GavelLab" },
       {
         name: "description",
         content:
           "Browse every live hackathon on GavelLab: read the brief, submit your project, and follow live standings ranked on a weighted judging rubric.",
       },
-      { property: "og:title", content: "Hackathons — Enter and Follow Live Standings" },
+      { property: "og:title", content: "Hackathons - Enter and Follow Live Standings" },
       {
         property: "og:description",
         content:
@@ -161,7 +161,7 @@ function HackathonPage() {
                           <h3 className="mt-3 text-base font-bold text-foreground">{e.name}</h3>
                           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                             <CalendarDays className="h-4 w-4 shrink-0" strokeWidth={2} />
-                            {formatDate(e.starts_on)} – {formatDate(e.ends_on)}
+                            {formatDate(e.starts_on)} - {formatDate(e.ends_on)}
                           </p>
                           {e.description && (
                             <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
@@ -185,7 +185,7 @@ function HackathonPage() {
                 {event.name}
               </h1>
               <p className="mt-2 text-sm font-medium" style={{ color: "var(--magenta)" }}>
-                {formatDate(event.starts_on)} – {formatDate(event.ends_on)}
+                {formatDate(event.starts_on)} - {formatDate(event.ends_on)}
               </p>
               {event.description && (
                 <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-relaxed text-muted-foreground">
@@ -255,7 +255,7 @@ function HackathonPage() {
                   What the judges score you on
                 </h2>
                 <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                  Every criterion carries its own weight. Your final position is a weighted total —
+                  Every criterion carries its own weight. Your final position is a weighted total - 
                   each criterion's average score is scaled by its weight, so heavier criteria move
                   the ranking more than lighter ones.
                 </p>
@@ -281,7 +281,7 @@ function HackathonPage() {
                           <ProgressBar value={share} tone="magenta" />
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          Scored 1–{c.max_score || 5} by each judge
+                          Scored 1-{c.max_score || 5} by each judge
                         </p>
                       </Card>
                     );
@@ -316,7 +316,7 @@ function HackathonPage() {
                 </Card>
               ) : standings.length === 0 ? (
                 <Card className="mt-6 p-6 text-sm text-muted-foreground">
-                  No projects entered yet — be the first on the board.
+                  No projects entered yet - be the first on the board.
                 </Card>
               ) : (
                 <div className="mt-6 space-y-3">
@@ -335,7 +335,7 @@ function HackathonPage() {
                               opacity: s.rank === null ? 0.4 : 1,
                             }}
                           >
-                            {s.rank ?? "–"}
+                            {s.rank ?? "-"}
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-base font-bold text-foreground">
@@ -366,7 +366,7 @@ function HackathonPage() {
                           <div className="border-t border-border p-4">
                             {s.simpleTotal !== null && (
                               <p className="text-xs text-muted-foreground">
-                                Unweighted average of the same scores: {s.simpleTotal}% — the
+                                Unweighted average of the same scores: {s.simpleTotal}% - the
                                 difference is the effect of the rubric weights.
                               </p>
                             )}

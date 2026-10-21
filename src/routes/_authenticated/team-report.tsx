@@ -26,18 +26,18 @@ export const Route = createFileRoute("/_authenticated/team-report")({
   validateSearch: (s: Record<string, unknown>) => ({
     id: typeof s.id === "string" ? s.id : undefined,
   }),
-  head: () => ({ meta: [{ title: "Team reports — GavelLab" }] }),
+  head: () => ({ meta: [{ title: "Team reports - GavelLab" }] }),
   component: TeamReports,
 });
 
 type Judge = { id: string; name: string; email: string };
 
 const fmt = (n: number | null | undefined, digits = 1) =>
-  n === null || n === undefined ? "—" : n.toFixed(digits).replace(/\.0$/, "");
+  n === null || n === undefined ? " - " : n.toFixed(digits).replace(/\.0$/, "");
 
 /** Rubric band for an average score out of 5. */
 function band(avg: number | null, max: number) {
-  if (avg === null) return "—";
+  if (avg === null) return " - ";
   const v = (avg / max) * 5;
   if (v >= 4.5) return "Excellent";
   if (v >= 3.5) return "Good";
@@ -75,7 +75,7 @@ function TeamReports() {
   useEffect(() => {
     const team = id ? standings.find((s) => s.submission.id === id)?.submission : undefined;
     const label = team ? `${team.title}${team.team_name ? ` (${team.team_name})` : ""}` : "All teams";
-    document.title = `${label} — ${event?.name ?? "Hackathon"} results`;
+    document.title = `${label} - ${event?.name ?? "Hackathon"} results`;
   }, [id, standings, event?.name]);
 
   if (ready && !isAdmin) {
@@ -222,7 +222,7 @@ function TeamReport({
         {showRank ? (
           <SummaryBox
             label="Final position"
-            value={st.rank === null ? "—" : `${st.rank} of ${total}${st.tied ? " (tied)" : ""}`}
+            value={st.rank === null ? " - " : `${st.rank} of ${total}${st.tied ? " (tied)" : ""}`}
           />
         ) : (
           <SummaryBox label="Rating" value={band(st.weightedTotal === null ? null : st.weightedTotal / 20, 5)} />
@@ -300,10 +300,10 @@ function TeamReport({
                   <td className="py-2 pr-2 font-semibold">{p.label}</td>
                   {rubric.map((c) => (
                     <td key={c.id} className="py-2 pr-2 text-right tabular-nums">
-                      {p.values[c.id] ?? "—"}
+                      {p.values[c.id] ?? " - "}
                     </td>
                   ))}
-                  <td className="py-2 text-right tabular-nums">{p.percent ?? "—"}</td>
+                  <td className="py-2 text-right tabular-nums">{p.percent ?? " - "}</td>
                 </tr>
               ))}
             </tbody>
@@ -333,7 +333,7 @@ function TeamReport({
       </section>
 
       <footer className="mt-6 border-t border-neutral-200 pt-3 text-[11px] text-neutral-500">
-        Each criterion is scored 0–5 (half points allowed) by every judge. Points = (average ÷ 5) ×
+        Each criterion is scored 0-5 (half points allowed) by every judge. Points = (average ÷ 5) ×
         weight; the overall score is out of 100. Power Learn Project · {eventName}
       </footer>
     </article>

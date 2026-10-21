@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "GavelLab" },
-      { name: "description", content: "GavelLab helps organisers run hackathons, pitch competitions and innovation programmes end to end — from submissions and judging to live results." },
+      { name: "description", content: "GavelLab helps organisers run hackathons, pitch competitions and innovation programmes end to end - from submissions and judging to live results." },
       { name: "author", content: "Power Learn Project" },
       { property: "og:site_name", content: "GavelLab" },
       { property: "og:type", content: "website" },

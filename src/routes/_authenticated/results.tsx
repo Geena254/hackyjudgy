@@ -20,13 +20,13 @@ import {
 export const Route = createFileRoute("/_authenticated/results")({
   head: () => ({
     meta: [
-      { title: "My Results — GavelLab" },
+      { title: "My Results - GavelLab" },
       {
         name: "description",
         content:
           "Review the final score, rank and feedback you recorded for every submission you judged.",
       },
-      { property: "og:title", content: "My judging results — GavelLab" },
+      { property: "og:title", content: "My judging results - GavelLab" },
       {
         property: "og:description",
         content: "Final scores, ranks and feedback for the submissions you judged.",
@@ -83,7 +83,7 @@ function JudgeResults() {
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">My results</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {event
-              ? `${event.name} · ${formatDate(event.starts_on)} – ${formatDate(event.ends_on)}`
+              ? `${event.name} · ${formatDate(event.starts_on)} - ${formatDate(event.ends_on)}`
               : "No hackathon has been published yet."}
           </p>
         </div>
@@ -138,7 +138,7 @@ function JudgeResults() {
                   Final score
                 </div>
                 <div className="text-3xl font-bold text-foreground">
-                  {r.percent === null ? "—" : `${r.percent}%`}
+                  {r.percent === null ? " - " : `${r.percent}%`}
                 </div>
               </div>
             </div>
@@ -155,7 +155,7 @@ function JudgeResults() {
                       <span className="ml-1 text-xs">({c.weight}%)</span>
                     </span>
                     <span className="font-semibold text-foreground">
-                      {c.value === undefined ? "—" : `${c.value}/${c.max}`}
+                      {c.value === undefined ? " - " : `${c.value}/${c.max}`}
                     </span>
                   </li>
                 ))}

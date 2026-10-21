@@ -46,7 +46,7 @@ export function AiSummaryPanel({
         </h3>
       </div>
       <p className="mb-3 text-sm text-muted-foreground">
-        Paste the submission write-up, README or pitch text. The summary is a reading aid only — your scores stay yours.
+        Paste the submission write-up, README or pitch text. The summary is a reading aid only - your scores stay yours.
       </p>
       <textarea
         value={text}

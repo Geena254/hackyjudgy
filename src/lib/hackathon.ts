@@ -219,7 +219,7 @@ export function useAllReviews() {
 
 /**
  * Judges visible to the signed-in organiser. With an event, only that hackathon's
- * panel — so progress figures never count other organisers' judges.
+ * panel - so progress figures never count other organisers' judges.
  */
 export function useJudges(eventId?: string) {
   return useQuery({
@@ -582,7 +582,7 @@ export function useDeleteSubmission() {
 
 /* ------------------------------ public reads ------------------------------ */
 
-/** The currently active (published) event — readable without signing in. */
+/** The currently active (published) event - readable without signing in. */
 export function useActiveEvent() {
   return useQuery({
     queryKey: ["active-event"],
@@ -599,7 +599,7 @@ export function useActiveEvent() {
   });
 }
 
-/** Every published hackathon on the platform, soonest-ending first — readable without signing in. */
+/** Every published hackathon on the platform, soonest-ending first - readable without signing in. */
 export function usePublicEvents() {
   return useQuery({
     queryKey: ["public-events"],
@@ -712,7 +712,7 @@ export type PublicSubmission = Omit<
   "submitter_name" | "submitter_email" | "team_member_emails"
 >;
 
-/** Averaged criterion score for one submission — never an individual judge's mark. */
+/** Averaged criterion score for one submission - never an individual judge's mark. */
 export type PublicScore = {
   submission_id: string;
   criterion_id: string;
@@ -720,7 +720,7 @@ export type PublicScore = {
   judge_count: number;
 };
 
-/** Averaged public scores for a running event — individual judge marks stay private. */
+/** Averaged public scores for a running event - individual judge marks stay private. */
 export function usePublicScores(eventId: string | undefined) {
   return useQuery({
     queryKey: ["public-score-averages", eventId],
@@ -753,7 +753,7 @@ export type CriterionContribution = {
 
 export type Standing = {
   submission: PublicSubmission;
-  /** Weighted total out of 100 — every criterion scaled by its weight, not a plain sum. */
+  /** Weighted total out of 100 - every criterion scaled by its weight, not a plain sum. */
   weightedTotal: number | null;
   /** Plain unweighted mean of criterion percentages, for comparison. */
   simpleTotal: number | null;

@@ -40,12 +40,12 @@ export const Route = createFileRoute("/_authenticated/scoring")({
   }),
   head: () => ({
     meta: [
-      { title: "Scoring Queue — GavelLab" },
+      { title: "Scoring Queue - GavelLab" },
       {
         name: "description",
         content: "Score submissions against the rubric with autosaved feedback and Save & Next.",
       },
-      { property: "og:title", content: "Scoring Queue — GavelLab" },
+      { property: "og:title", content: "Scoring Queue - GavelLab" },
       { property: "og:description", content: "Work through your judging queue submission by submission." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -250,9 +250,9 @@ function ScoringQueue() {
 
                 {!blind && (
                   <div className="mt-4 text-xs text-muted-foreground">
-                    Team: <span className="text-foreground">{selected.team_name ?? "—"}</span> ·
+                    Team: <span className="text-foreground">{selected.team_name ?? " - "}</span> ·
                     Submitted by{" "}
-                    <span className="text-foreground">{selected.submitter_name ?? "—"}</span>
+                    <span className="text-foreground">{selected.submitter_name ?? " - "}</span>
                   </div>
                 )}
               </Card>
@@ -396,7 +396,7 @@ function Rubric({
             Rubric
           </h3>
           <p className="text-sm text-muted-foreground">
-            Score each criterion (half points allowed) — weights are applied automatically.
+            Score each criterion (half points allowed) - weights are applied automatically.
           </p>
         </div>
         <div className="rounded-md border border-border px-3 py-2 text-right">
@@ -407,7 +407,7 @@ function Rubric({
             className="text-lg font-bold"
             style={{ color: complete ? "var(--teal)" : "var(--foreground)" }}
           >
-            {percent === null ? "—" : `${percent}%`}
+            {percent === null ? " - " : `${percent}%`}
           </div>
           <div
             className="text-[10px] uppercase tracking-wider"
@@ -437,7 +437,7 @@ function Rubric({
                   )}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  <strong className="text-foreground">{v ?? "—"}</strong>/{max}
+                  <strong className="text-foreground">{v ?? " - "}</strong>/{max}
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">

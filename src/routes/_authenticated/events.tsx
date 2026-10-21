@@ -33,13 +33,13 @@ import {
 export const Route = createFileRoute("/_authenticated/events")({
   head: () => ({
     meta: [
-      { title: "Hackathon Setup — GavelLab" },
+      { title: "Hackathon Setup - GavelLab" },
       {
         name: "description",
         content:
           "Create hackathons, publish them for entries, and configure rounds with their own weighted rubric criteria.",
       },
-      { property: "og:title", content: "Hackathon Setup — GavelLab" },
+      { property: "og:title", content: "Hackathon Setup - GavelLab" },
       { property: "og:description", content: "Set up events, rounds and rubrics." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -235,7 +235,7 @@ function DetailsTab({
     setForm(next);
     const id = await save.mutateAsync({ id: event?.id, ...next });
     if (!event) onCreated(id);
-    setNotice(status === "active" ? "Hackathon published — it now accepts entries." : "Saved.");
+    setNotice(status === "active" ? "Hackathon published - it now accepts entries." : "Saved.");
   }
 
   return (
@@ -387,7 +387,7 @@ function RoundsTab({ event }: { event: EventRow }) {
             label="Round name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Round 1 — Screening"
+            placeholder="e.g. Round 1 - Screening"
           />
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-foreground">Phase</span>
@@ -460,7 +460,7 @@ function RoundsTab({ event }: { event: EventRow }) {
 
       {rounds.length === 0 && (
         <Card className="p-8 text-sm text-muted-foreground">
-          No rounds yet — add your first round above.
+          No rounds yet - add your first round above.
         </Card>
       )}
     </>
@@ -600,7 +600,7 @@ function CriteriaEditor({ roundId }: { roundId: string }) {
         ))}
         {criteria.length === 0 && (
           <li className="text-xs text-muted-foreground">
-            No criteria yet — judges cannot score this round until you add some.
+            No criteria yet - judges cannot score this round until you add some.
           </li>
         )}
       </ul>
@@ -659,7 +659,7 @@ function RubricTab({ event }: { event: EventRow }) {
     <Card className="p-6">
       <h2 className="text-lg font-bold text-foreground">Rubric overview</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Each round has its own criteria — edit them under Rounds.
+        Each round has its own criteria - edit them under Rounds.
       </p>
       <div className="mt-5 space-y-5">
         {rounds.map((r) => {
@@ -679,7 +679,7 @@ function RubricTab({ event }: { event: EventRow }) {
               <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                 {list.map((c) => (
                   <li key={c.id}>
-                    {c.name} — {c.weight}% (max {c.max_score})
+                    {c.name} - {c.weight}% (max {c.max_score})
                   </li>
                 ))}
                 {list.length === 0 && <li className="text-xs">No criteria yet.</li>}

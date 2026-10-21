@@ -101,7 +101,7 @@ async function run() {
       const info = await transporter.sendMail({
         from: fromEmail || "noreply@gavellab.com",
         to: targetEmail,
-        subject: "GavelLab — SendGrid SMTP Test Verification",
+        subject: "GavelLab - SendGrid SMTP Test Verification",
         text: "Hello! This is a verification email from GavelLab confirming that your SendGrid SMTP configuration is working properly.",
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px;">
@@ -111,7 +111,7 @@ async function run() {
               <p style="margin: 0; color: #0f172a; font-size: 14px;"><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
               <p style="margin: 4px 0 0; color: #0f172a; font-size: 14px;"><strong>Host:</strong> ${smtpHost}:${smtpPort}</p>
             </div>
-            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">GavelLab — Hackathon & Pitch Judging Platform</p>
+            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">GavelLab - Hackathon & Pitch Judging Platform</p>
           </div>
         `,
       });

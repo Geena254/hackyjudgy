@@ -18,7 +18,7 @@ import { TIE_BREAKERS, judgingRubric, rankStandings } from "@/lib/results";
 type Judge = { id: string; name: string; email: string };
 
 const fmt = (n: number | null | undefined, digits = 1) =>
-  n === null || n === undefined ? "—" : n.toFixed(digits).replace(/\.0$/, "");
+  n === null || n === undefined ? " - " : n.toFixed(digits).replace(/\.0$/, "");
 
 /** Admin view of the event results: leaderboard, per-judge breakdown and CSV export. */
 export function AdminResults({
@@ -118,7 +118,7 @@ export function AdminResults({
               Results leaderboard
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Average of all judges · score 0–5 per criterion, weighted
+              Average of all judges · score 0-5 per criterion, weighted
               {totalWeight !== 100 && totalWeight > 0 ? ` (weights total ${totalWeight}, scaled to 100)` : ""}
               {" · "}
               {judgesDone}/{judges.length} judges finished · click a team for each judge's scores
@@ -170,7 +170,7 @@ export function AdminResults({
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
                           {st.rank === null ? (
-                            <span className="text-muted-foreground">—</span>
+                            <span className="text-muted-foreground"> - </span>
                           ) : (
                             <Pill tone={st.rank <= 3 ? "teal" : "gray"}>#{st.rank}</Pill>
                           )}
@@ -240,7 +240,7 @@ export function AdminResults({
         </div>
         {standings.some((s) => s.tied) && (
           <p className="mt-3 text-xs text-muted-foreground">
-            Tie: still level after the rubric tie-breakers ({TIE_BREAKERS.join(", then ")}) — decide by
+            Tie: still level after the rubric tie-breakers ({TIE_BREAKERS.join(", then ")}) - decide by
             panel vote.
           </p>
         )}
@@ -249,7 +249,7 @@ export function AdminResults({
       <Card className="p-5">
         <h2 className="text-lg font-semibold text-foreground">Scores by judge</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Each judge's weighted score out of 100 for each team — useful for spotting outliers.
+          Each judge's weighted score out of 100 for each team - useful for spotting outliers.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
@@ -279,7 +279,7 @@ export function AdminResults({
                     return (
                       <td key={st.submission.id} className="py-2.5 pr-3 text-right tabular-nums">
                         {cell?.percent === null || cell?.percent === undefined ? (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground"> - </span>
                         ) : (
                           <span className={cell.complete ? "text-foreground" : "text-muted-foreground"}>
                             {cell.percent}
@@ -352,14 +352,14 @@ function JudgeBreakdown({
                 <td className="py-1.5 pr-3 font-medium text-foreground">{m.judge.name}</td>
                 {rubric.map((c) => (
                   <td key={c.id} className="py-1.5 pr-3 text-right tabular-nums">
-                    {cell?.values[c.id] ?? <span className="text-muted-foreground">—</span>}
+                    {cell?.values[c.id] ?? <span className="text-muted-foreground"> - </span>}
                   </td>
                 ))}
                 <td className="py-1.5 pr-3 text-right font-semibold tabular-nums">
-                  {cell?.percent ?? <span className="text-muted-foreground">—</span>}
+                  {cell?.percent ?? <span className="text-muted-foreground"> - </span>}
                 </td>
                 <td className="max-w-md whitespace-pre-line py-1.5 text-muted-foreground">
-                  {feedback || "—"}
+                  {feedback || " - "}
                 </td>
               </tr>
             );

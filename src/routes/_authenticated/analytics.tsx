@@ -21,13 +21,13 @@ import {
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
     meta: [
-      { title: "Analytics — GavelLab" },
+      { title: "Analytics - GavelLab" },
       {
         name: "description",
         content:
           "Track hackathon judging analytics: scoring progress per round, judge activity and weighted rubric results across submissions.",
       },
-      { property: "og:title", content: "Judging analytics — GavelLab" },
+      { property: "og:title", content: "Judging analytics - GavelLab" },
       {
         property: "og:description",
         content:
@@ -84,7 +84,7 @@ function AnalyticsPage() {
   const subIds = useMemo(() => new Set(submissions.map((s) => s.id)), [submissions]);
 
   // A judge has finished a submission once every criterion is scored, or they
-  // marked the review complete — scoring alone shouldn't depend on "Save & next".
+  // marked the review complete - scoring alone shouldn't depend on "Save & next".
   const done = useMemo(() => {
     const set = new Set<string>();
     for (const r of reviews) if (r.completed) set.add(`${r.judge_id}|${r.submission_id}`);
@@ -200,7 +200,7 @@ function AnalyticsPage() {
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {event
-            ? `${event.name} · ${formatDate(event.starts_on)} – ${formatDate(event.ends_on)}`
+            ? `${event.name} · ${formatDate(event.starts_on)} - ${formatDate(event.ends_on)}`
             : "Create a hackathon to start collecting judging data."}
         </p>
       </div>
@@ -228,7 +228,7 @@ function AnalyticsPage() {
         <Stat
           icon={<Award className="h-5 w-5" style={{ color: "var(--teal)" }} strokeWidth={2} />}
           label="Top weighted score"
-          value={leaderboard[0]?.percent === null || !leaderboard[0] ? "—" : `${leaderboard[0].percent}%`}
+          value={leaderboard[0]?.percent === null || !leaderboard[0] ? " - " : `${leaderboard[0].percent}%`}
           hint={leaderboard[0]?.submission.title ?? undefined}
         />
       </div>
@@ -333,7 +333,7 @@ function AnalyticsPage() {
                 </div>
               </div>
               <div className="text-xl font-bold text-foreground">
-                {row.percent === null ? "—" : `${row.percent}%`}
+                {row.percent === null ? " - " : `${row.percent}%`}
               </div>
             </div>
           ))}

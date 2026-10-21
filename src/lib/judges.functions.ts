@@ -80,8 +80,8 @@ export const inviteJudge = createServerFn({ method: "POST" })
       return {
         emailed: !linkError,
         message: linkError
-          ? `${email} is already on GavelLab and can judge ${event.name} now. We couldn't email them a sign-in link — let them know to sign in.`
-          : `${email} is already on GavelLab — added to ${event.name} and emailed a sign-in link to start judging.`,
+          ? `${email} is already on GavelLab and can judge ${event.name} now. We couldn't email them a sign-in link - let them know to sign in.`
+          : `${email} is already on GavelLab - added to ${event.name} and emailed a sign-in link to start judging.`,
       };
     }
 
@@ -150,7 +150,7 @@ export const revokeInvitation = createServerFn({ method: "POST" })
         .update({ status: "revoked", accepted_at: null })
         .eq("id", invite.id);
       if (error) throw new Error(error.message);
-      return { message: "Access withdrawn — this judge can no longer score this hackathon." };
+      return { message: "Access withdrawn - this judge can no longer score this hackathon." };
     }
 
     // Find the invited account (if any) so we can invalidate the invite link.
@@ -158,10 +158,10 @@ export const revokeInvitation = createServerFn({ method: "POST" })
 
     let message = "";
     if (account && !account.last_sign_in_at) {
-      // Never signed in — delete the pending account so the emailed link stops working.
+      // Never signed in - delete the pending account so the emailed link stops working.
       const { error } = await supabaseAdmin.auth.admin.deleteUser(account.id);
       if (error) throw new Error(error.message);
-      message = "Invitation withdrawn — the emailed link no longer works.";
+      message = "Invitation withdrawn - the emailed link no longer works.";
     } else if (account) {
       const { error } = await supabaseAdmin
         .from("user_roles")
@@ -169,7 +169,7 @@ export const revokeInvitation = createServerFn({ method: "POST" })
         .eq("user_id", account.id)
         .eq("role", "judge");
       if (error) throw new Error(error.message);
-      message = "Access withdrawn — this judge can no longer score submissions.";
+      message = "Access withdrawn - this judge can no longer score submissions.";
     } else {
       message = "Invitation withdrawn.";
     }

@@ -21,12 +21,12 @@ import {
 export const Route = createFileRoute("/_authenticated/judge")({
   head: () => ({
     meta: [
-      { title: "Judge Dashboard — GavelLab" },
+      { title: "Judge Dashboard - GavelLab" },
       {
         name: "description",
         content: "Track your judging progress and the submissions assigned to you.",
       },
-      { property: "og:title", content: "Judge Dashboard — GavelLab" },
+      { property: "og:title", content: "Judge Dashboard - GavelLab" },
       { property: "og:description", content: "Your judging progress at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -85,7 +85,7 @@ function JudgeHome() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {event
-              ? `${event.name} · ${formatDate(event.starts_on)} – ${formatDate(event.ends_on)}`
+              ? `${event.name} · ${formatDate(event.starts_on)} - ${formatDate(event.ends_on)}`
               : "No hackathon has been published yet."}
           </p>
         </div>
@@ -114,7 +114,7 @@ function JudgeHome() {
         <Stat
           icon={Clock}
           label="Days left"
-          value={left === null ? "—" : `${Math.max(0, left)}`}
+          value={left === null ? " - " : `${Math.max(0, left)}`}
         />
       </div>
 
@@ -145,7 +145,7 @@ function JudgeHome() {
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   {r.submission.category && <Pill tone="gray">{r.submission.category}</Pill>}
                   <span>
-                    {r.scored}/{r.total || "—"} criteria scored
+                    {r.scored}/{r.total || " - "} criteria scored
                   </span>
                 </div>
               </div>
@@ -165,7 +165,7 @@ function JudgeHome() {
           ))}
           {rows.length === 0 && (
             <li className="px-6 py-10 text-center text-sm text-muted-foreground">
-              Nothing to judge yet — submissions will appear here once the event opens.
+              Nothing to judge yet - submissions will appear here once the event opens.
             </li>
           )}
         </ul>

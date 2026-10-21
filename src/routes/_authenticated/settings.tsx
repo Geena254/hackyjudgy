@@ -8,13 +8,13 @@ import { useAuth, displayName } from "@/hooks/use-auth";
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — GavelLab" },
+      { title: "Settings - GavelLab" },
       {
         name: "description",
         content:
           "Manage your GavelLab account, hackathon preferences and judging panel settings in one place.",
       },
-      { property: "og:title", content: "Account & event settings — GavelLab" },
+      { property: "og:title", content: "Account & event settings - GavelLab" },
       {
         property: "og:description",
         content: "Manage your account details, hackathon preferences and judging panel settings.",

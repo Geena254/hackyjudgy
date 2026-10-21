@@ -16,7 +16,7 @@ export const Route = createFileRoute("/how-to-organize-a-hackathon")({
       {
         property: "og:description",
         content:
-          "Plan, run and judge a hackathon end to end — setup checklist, rubric design, blind judging and judge portal tips.",
+          "Plan, run and judge a hackathon end to end - setup checklist, rubric design, blind judging and judge portal tips.",
       },
       { property: "og:type", content: "article" },
       {
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/how-to-organize-a-hackathon")({
 const setupSteps = [
   {
     title: "1. Set the goal and theme",
-    body: "Decide what the hackathon should produce — prototypes for a specific problem, learning outcomes for a cohort, or recruitment signal. Write it in one sentence and use it to judge every later decision. A narrow theme makes submissions comparable and judging far quicker.",
+    body: "Decide what the hackathon should produce - prototypes for a specific problem, learning outcomes for a cohort, or recruitment signal. Write it in one sentence and use it to judge every later decision. A narrow theme makes submissions comparable and judging far quicker.",
   },
   {
     title: "2. Fix the format and dates",
@@ -64,11 +64,11 @@ const setupSteps = [
   },
   {
     title: "4. Budget, venue and prizes",
-    body: "Cost out venue or platform, connectivity, food, mentor time and prizes. Prizes should reward the outcomes named in your goal — a best-first-time-team prize signals something very different from a single grand prize.",
+    body: "Cost out venue or platform, connectivity, food, mentor time and prizes. Prizes should reward the outcomes named in your goal - a best-first-time-team prize signals something very different from a single grand prize.",
   },
   {
     title: "5. Recruit mentors and judges early",
-    body: "Invite judges before you promote the event, not after. Aim for a mix of technical and product perspectives, and confirm how many hours each judge can give — that number decides how many submissions each of them can realistically score.",
+    body: "Invite judges before you promote the event, not after. Aim for a mix of technical and product perspectives, and confirm how many hours each judge can give - that number decides how many submissions each of them can realistically score.",
   },
   {
     title: "6. Open a single submission channel",
@@ -83,7 +83,7 @@ const setupSteps = [
 const judgingSteps = [
   {
     title: "Design the rubric before judging opens",
-    body: "Four to six criteria is the sweet spot — for example originality, technical feasibility, user experience, and impact. Define each one in a sentence so two judges reading it reach the same conclusion.",
+    body: "Four to six criteria is the sweet spot - for example originality, technical feasibility, user experience, and impact. Define each one in a sentence so two judges reading it reach the same conclusion.",
   },
   {
     title: "Weight the criteria deliberately",
@@ -91,7 +91,7 @@ const judgingSteps = [
   },
   {
     title: "Use a fixed scale on every criterion",
-    body: "A 1–5 scale with short descriptions for each point reduces drift between judges. Avoid open-ended totals — they make scores impossible to compare across a panel.",
+    body: "A 1-5 scale with short descriptions for each point reduces drift between judges. Avoid open-ended totals - they make scores impossible to compare across a panel.",
   },
   {
     title: "Run rounds instead of one giant pass",
@@ -103,7 +103,7 @@ const judgingSteps = [
   },
   {
     title: "Require written feedback",
-    body: "A score without a comment teaches a team nothing. Ask each judge for a short note per submission — it also gives you a defensible record if a result is questioned.",
+    body: "A score without a comment teaches a team nothing. Ask each judge for a short note per submission - it also gives you a defensible record if a result is questioned.",
   },
   {
     title: "Agree how ties break",
@@ -113,11 +113,11 @@ const judgingSteps = [
 
 const portalTips = [
   "Give every judge their own account instead of a shared login, so scores and comments are attributable.",
-  "Let judges score from a queue with a Save & Next action — they should never hunt for the submission they have not reached.",
+  "Let judges score from a queue with a Save & Next action - they should never hunt for the submission they have not reached.",
   "Show progress per judge, so you can nudge the panel before the deadline rather than after it.",
   "Autosave feedback as judges type; judging sessions get interrupted.",
   "Keep private notes separate from feedback that participants may see.",
-  "Compute weighted totals and ranks automatically — manual spreadsheet maths is where results go wrong.",
+  "Compute weighted totals and ranks automatically - manual spreadsheet maths is where results go wrong.",
   "Share final scores, ranks and feedback back to each judge so the panel can sanity-check standings together.",
 ];
 
@@ -152,7 +152,7 @@ function GuidePage() {
             A hackathon is a time-boxed build event where teams ship a working prototype
             against a brief, then a panel judges it. Running one is two jobs: getting good projects built, and judging them
             fairly. This guide walks through the planning steps in order, then the judging
-            decisions that decide whether your results hold up — the same decisions GavelLab
+            decisions that decide whether your results hold up - the same decisions GavelLab
             was built around for hackathons, pitch competitions and innovation programmes.
           </p>
 

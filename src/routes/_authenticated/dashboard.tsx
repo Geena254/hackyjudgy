@@ -34,12 +34,12 @@ import { rankStandings } from "@/lib/results";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Organiser Dashboard — GavelLab" },
+      { title: "Organiser Dashboard - GavelLab" },
       {
         name: "description",
         content: "Live overview of entries, judge activity and scoring progress for your hackathon.",
       },
-      { property: "og:title", content: "Organiser Dashboard — GavelLab" },
+      { property: "og:title", content: "Organiser Dashboard - GavelLab" },
       {
         property: "og:description",
         content: "Track entries, judges and scoring progress in one place.",
@@ -230,7 +230,7 @@ function Dashboard() {
             )}
             {event && (
               <p className="mt-1 text-sm text-muted-foreground">
-                {formatDate(event.starts_on)} – {formatDate(event.ends_on)}
+                {formatDate(event.starts_on)} - {formatDate(event.ends_on)}
               </p>
             )}
           </div>
@@ -334,7 +334,7 @@ function Dashboard() {
                 <Trophy className="h-4 w-4" style={{ color: "var(--teal)" }} strokeWidth={2} /> Leading team
               </div>
               <div className="mt-2 truncate text-xl font-bold text-foreground">
-                {leader?.weightedTotal != null ? leader.submission.title : "—"}
+                {leader?.weightedTotal != null ? leader.submission.title : " - "}
               </div>
               <div className="text-sm text-muted-foreground">
                 {leader?.weightedTotal != null
@@ -344,7 +344,7 @@ function Dashboard() {
             </Card>
             <Metric
               label="Days left"
-              value={left === null ? "—" : `${Math.max(0, left)}`}
+              value={left === null ? " - " : `${Math.max(0, left)}`}
               tone="magenta"
             />
           </div>
@@ -368,7 +368,7 @@ function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium text-foreground">{s.title}</div>
                     <div className="truncate text-xs text-muted-foreground">
-                      {s.team_name ?? s.submitter_name ?? "—"}
+                      {s.team_name ?? s.submitter_name ?? " - "}
                       {s.category ? ` · ${s.category}` : ""}
                     </div>
                   </div>
@@ -380,7 +380,7 @@ function Dashboard() {
               ))}
               {subs.length === 0 && (
                 <li className="text-sm text-muted-foreground">
-                  No entries yet — publish the hackathon and share the entry page.
+                  No entries yet - publish the hackathon and share the entry page.
                 </li>
               )}
             </ul>
@@ -409,7 +409,7 @@ function Dashboard() {
               ))}
               {judges.length === 0 && (
                 <li className="text-sm text-muted-foreground">
-                  No judges yet — invite them from the Judges page.
+                  No judges yet - invite them from the Judges page.
                 </li>
               )}
             </ul>

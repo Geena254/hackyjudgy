@@ -187,7 +187,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="mt-2 text-sm text-muted-foreground">
               You're signed in as <strong className="text-foreground">{user?.email}</strong>, but this
               account hasn't been added to the judging panel. If you were invited with a different
-              email, sign out and use the link sent to that address — or ask the organiser to invite
+              email, sign out and use the link sent to that address - or ask the organiser to invite
               this email.
             </p>
             <div className="mt-5">

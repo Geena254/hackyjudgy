@@ -25,7 +25,7 @@ export const Route = createFileRoute("/for-organisers")({
       {
         property: "og:description",
         content:
-          "Rounds, weighted rubrics, blind judging, judge invitations and live standings — everything you need to judge a hackathon fairly.",
+          "Rounds, weighted rubrics, blind judging, judge invitations and live standings - everything you need to judge a hackathon fairly.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://gavellab.lovable.app/for-organisers" },
@@ -148,7 +148,7 @@ function OrganisersPage() {
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">
               GavelLab gives you rounds, a weighted judging rubric, blind judging, invited judges
-              and a public standings board — so scoring a hackathon takes an afternoon instead of a
+              and a public standings board - so scoring a hackathon takes an afternoon instead of a
               spreadsheet marathon.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">

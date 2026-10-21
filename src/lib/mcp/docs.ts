@@ -16,14 +16,14 @@ export const MCP_ENDPOINT_PATH = "/mcp";
 export const MCP_RATE_LIMIT_PER_MINUTE = 40;
 
 export const MCP_ERROR_CODES: { code: string; meaning: string }[] = [
-  { code: "UNAUTHENTICATED", meaning: "No valid GavelLab sign-in — reconnect the assistant." },
+  { code: "UNAUTHENTICATED", meaning: "No valid GavelLab sign-in - reconnect the assistant." },
   { code: "ACCESS_REVOKED", meaning: "An admin revoked this assistant's access." },
   { code: "RATE_LIMITED", meaning: `More than ${MCP_RATE_LIMIT_PER_MINUTE} calls in one minute.` },
   { code: "PERMISSION_DENIED", meaning: "The account may not read or change that data." },
   { code: "NOT_FOUND", meaning: "The event, submission or rubric does not exist or is not visible." },
   { code: "INVALID_INPUT", meaning: "An id or value was not accepted." },
   { code: "DATABASE_ERROR", meaning: "The database rejected the request; details are included." },
-  { code: "INTERNAL_ERROR", meaning: "Unexpected failure — retry, then contact an admin." },
+  { code: "INTERNAL_ERROR", meaning: "Unexpected failure - retry, then contact an admin." },
 ];
 
 export const MCP_TOOL_DOCS: ToolDoc[] = [

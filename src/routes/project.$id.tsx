@@ -29,8 +29,8 @@ export const Route = createFileRoute("/project/$id")({
   head: ({ params, loaderData }) => {
     const name = loaderData?.meta?.title;
     const title = name
-      ? `${name} — Hackathon project on GavelLab`
-      : "Hackathon Project Showcase — GavelLab";
+      ? `${name} - Hackathon project on GavelLab`
+      : "Hackathon Project Showcase - GavelLab";
     const description = loaderData?.meta?.summary
       ? loaderData.meta.summary.slice(0, 155)
       : "A shareable page for a hackathon project: what it does, who built it, and links to the code, demo and pitch deck.";

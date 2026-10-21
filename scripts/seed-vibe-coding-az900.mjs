@@ -53,20 +53,22 @@ const CONCEPT_NOTE_URL =
   "https://docs.google.com/document/d/1TvVPYB8HJ9lJCIBRlxd7aoC1Lo4TwvXZ/edit";
 const DEADLINE_TEXT = "Friday 23 October 2026, 11:59 PM EAT";
 
-const DESCRIPTION = `For the #1MillionDevs movement. You've prepared for Microsoft Azure Fundamentals (AZ-900) — now turn that experience into something that helps the next learner. Use AI-assisted and low-code tools to build an exam preparation tool that makes studying smarter, easier and more fun.
+const DESCRIPTION = `For the #1MillionDevs movement. 
+
+You've prepared for Microsoft Azure Fundamentals (AZ-900), now turn that experience into something that helps the next learner. Use AI-assisted and low-code tools to build an exam preparation tool that makes studying smarter, easier and more fun.
 
 Theme: "Building Smarter Exam Prep Tools from Our Own Learning Journey."
 
 Pick a challenge:
-• Practice & Assessment — Smart Quiz Builder: instant feedback and clear explanations for every answer, organised by AZ-900 topic.
-• Memory & Revision — Flashcard Coach: a flashcard or spaced-repetition tool that focuses on the concepts learners keep getting wrong.
-• Planning — Personal Study Planner: a study plan built from the learner's exam date, available hours and weak areas.
-• Support — AI Study Buddy: explains Azure concepts simply, with real-life African examples or in local languages.
-• Progress — Readiness Tracker: a dashboard of practice scores by topic that shows how ready a learner is.
+• Practice & Assessment - Smart Quiz Builder: instant feedback and clear explanations for every answer, organised by AZ-900 topic.
+• Memory & Revision - Flashcard Coach: a flashcard or spaced-repetition tool that focuses on the concepts learners keep getting wrong.
+• Planning - Personal Study Planner: a study plan built from the learner's exam date, available hours and weak areas.
+• Support - AI Study Buddy: explains Azure concepts simply, with real-life African examples or in local languages.
+• Progress - Readiness Tracker: a dashboard of practice scores by topic that shows how ready a learner is.
 
 Important: don't copy real exam questions or use Microsoft logos. Base your content on the public AZ-900 skills outline on Microsoft Learn, write your own questions, and label your tool as unofficial.
 
-Enter as a team or on your own — it's your choice.
+Enter as a team or on your own, it's your choice.
 
 What to submit by ${DEADLINE_TEXT}:
 • Video demo link
@@ -98,7 +100,7 @@ const ROUNDS = [
   },
 ];
 
-// Scored 1–5 by each judge (half points allowed); weights are percentages.
+// Scored 1-5 by each judge (half points allowed); weights are percentages.
 const PROJECT_CRITERIA = [
   {
     name: "Learning Value",

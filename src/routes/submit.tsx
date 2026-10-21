@@ -9,13 +9,13 @@ import { useActiveEvent, useRounds, formatDate } from "@/lib/hackathon";
 export const Route = createFileRoute("/submit")({
   head: () => ({
     meta: [
-      { title: "Submit Your Project — GavelLab Hackathon Entry" },
+      { title: "Submit Your Project - GavelLab Hackathon Entry" },
       {
         name: "description",
         content:
           "Enter your team's project into the current Power Learn Project hackathon: title, description, repository, demo and pitch deck.",
       },
-      { property: "og:title", content: "Submit Your Project — GavelLab" },
+      { property: "og:title", content: "Submit Your Project - GavelLab" },
       {
         property: "og:description",
         content: "Send your hackathon entry to the judging panel in a couple of minutes.",
@@ -66,13 +66,13 @@ function SubmitPage() {
             <CheckCircle2 className="h-10 w-10" style={{ color: "var(--teal)" }} strokeWidth={2} />
             <h1 className="mt-4 text-2xl font-bold text-foreground">Submission received</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Thanks — your project is now with the judging panel for {event.name}. We will be in
+              Thanks - your project is now with the judging panel for {event.name}. We will be in
               touch by email with the results.
             </p>
             <div className="mt-6 rounded-md border border-border p-4">
               <h2 className="text-sm font-bold text-foreground">Your project page</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Share this link to show what you built — it has your project description and your
+                Share this link to show what you built - it has your project description and your
                 code, demo and pitch deck links.
               </p>
               <p className="mt-3 break-all text-sm font-semibold" style={{ color: "var(--teal)" }}>

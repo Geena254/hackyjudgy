@@ -22,12 +22,12 @@ import { useSelectedEvent } from "@/hooks/use-selected-event";
 export const Route = createFileRoute("/_authenticated/judges")({
   head: () => ({
     meta: [
-      { title: "Judges — GavelLab" },
+      { title: "Judges - GavelLab" },
       {
         name: "description",
         content: "Invite judges by email and track who has joined your judging panel.",
       },
-      { property: "og:title", content: "Judges — GavelLab" },
+      { property: "og:title", content: "Judges - GavelLab" },
       { property: "og:description", content: "Manage your hackathon judging panel." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -138,7 +138,7 @@ function JudgesPage() {
                 strokeWidth={2}
               />
               <p className="text-sm text-muted-foreground">
-                Only event admins can invite judges. You're signed in as a judge — head to
+                Only event admins can invite judges. You're signed in as a judge - head to
                 Submissions to start scoring.
               </p>
             </div>
@@ -331,7 +331,7 @@ function PanelActivity({ event }: { event: EventRow }) {
         ))}
         {!isLoading && rows.length === 0 && (
           <li className="py-3 text-sm text-muted-foreground">
-            No judges yet — invited judges appear here once they join.
+            No judges yet - invited judges appear here once they join.
           </li>
         )}
       </ul>

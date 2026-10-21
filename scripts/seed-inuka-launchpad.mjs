@@ -53,7 +53,7 @@ const ROUNDS = [
   { name: "Round 3: Results", phase: "results", sort_order: 3 },
 ];
 
-// Venture Hackathon grading rubric (100 pts). Score 0–5, half points allowed;
+// Venture Hackathon grading rubric (100 pts). Score 0-5, half points allowed;
 // points = (score ÷ 5) × weight.
 const rubric = (summary, levels) =>
   [summary, "", ...levels.map(([label, text]) => `${label}: ${text}`)].join("\n");
@@ -69,7 +69,7 @@ const CRITERIA = [
       ["4 Good", "Clear pain with mixed primary + secondary evidence. Quantification mostly solid; segment defined. Minor gaps in sample size or recency."],
       ["3 Adequate", "Problem plausible but leans on secondary research or anecdotes. Size, frequency or cost fuzzy; segment too broad."],
       ["2 Weak", "Asserted problem with thin evidence. Unclear who actually suffers or pays. Validates a symptom at best."],
-      ["0–1 Missing", "No meaningful validation; a solution in search of a problem."],
+      ["0-1 Missing", "No meaningful validation; a solution in search of a problem."],
     ]),
   },
   {
@@ -82,7 +82,7 @@ const CRITERIA = [
       ["4 Good", "Strong fit with clear differentiators; main edge cases covered; technically feasible. Impressive but not breathtaking."],
       ["3 Adequate", "Sound but conventional; incremental improvement on what exists. Gaps in edge cases, compliance or usability."],
       ["2 Weak", "Generic or mismatched to the stated pain; feasibility doubts raised in Q&A."],
-      ["0–1 Missing", "Unclear, infeasible, or assembled with no insight of its own."],
+      ["0-1 Missing", "Unclear, infeasible, or assembled with no insight of its own."],
     ]),
   },
   {
@@ -95,7 +95,7 @@ const CRITERIA = [
       ["4 Good", "End-to-end works but partly sandboxed or scripted; minor mocks disclosed up front. Solid and believable."],
       ["3 Adequate", "Core flow partially works; key steps mocked or skipped; team recovers from hiccups but scope is visibly reduced."],
       ["2 Weak", "Click-through prototype or slides only; core flow never actually executes live."],
-      ["0–1 Missing", "Demo fails, is absent, or is clearly vapourware."],
+      ["0-1 Missing", "Demo fails, is absent, or is clearly vapourware."],
     ]),
   },
   {
@@ -108,7 +108,7 @@ const CRITERIA = [
       ["4 Good", "Clear value for both sides; economics directional but credible; some defensibility (data, network, distribution)."],
       ["3 Adequate", "Value prop tells only one side (customer or vendor); economics hand-wavy; little separation from existing players."],
       ["2 Weak", "Revenue model vague; no compelling reason for customers to switch or vendors to care."],
-      ["0–1 Missing", "No coherent business logic."],
+      ["0-1 Missing", "No coherent business logic."],
     ]),
   },
   {
@@ -121,7 +121,7 @@ const CRITERIA = [
       ["4 Good", "Clear ask and next steps; slightly generic or rushed in delivery."],
       ["3 Adequate", "Generic CTA ('support us', 'follow us'); no timeline, no concrete ask."],
       ["2 Weak", "Abrupt ending; ask implied at best."],
-      ["0–1 Missing", "No call to action."],
+      ["0-1 Missing", "No call to action."],
     ]),
   },
 ];
