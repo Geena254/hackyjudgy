@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Search, Trash2, X } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,12 +9,10 @@ import {
   useEvents,
   useRounds,
   useSubmissions,
-  useSaveSubmission,
   useDeleteSubmission,
   STATUS_LABELS,
   formatDate,
   type SubmissionRow,
-  type SubmissionStatus,
 } from "@/lib/hackathon";
 
 export const Route = createFileRoute("/_authenticated/submissions")({
@@ -34,42 +32,6 @@ export const Route = createFileRoute("/_authenticated/submissions")({
   component: SubmissionsAdmin,
 });
 
-const STATUSES: SubmissionStatus[] = [
-  "submitted",
-  "under_review",
-  "scored",
-  "ranked",
-  "disqualified",
-];
-
-const empty = {
-  title: "",
-  team_name: "",
-  category: "",
-  description: "",
-  submitter_name: "",
-  submitter_email: "",
-  teammates: "",
-  repo_url: "",
-  demo_url: "",
-  deck_url: "",
-  video_url: "",
-  concept_note_url: "",
-  round_id: "",
-  status: "submitted" as SubmissionStatus,
-};
-
-function Text({ label, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
-      <input
-        {...rest}
-        className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
-      />
-    </label>
-  );
-}
 
 function SubmissionsAdmin() {
   const { isAdmin, ready } = useAuth();
@@ -79,12 +41,10 @@ function SubmissionsAdmin() {
 
   const { data: rounds = [] } = useRounds(eventId);
   const { data: subs = [] } = useSubmissions(eventId);
-  const save = useSaveSubmission();
   const remove = useDeleteSubmission();
 
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<SubmissionRow | null>(null);
-  const [form, setForm] = useState(empty);
   const [open, setOpen] = useState(false);
 
   const filtered = useMemo(
@@ -97,45 +57,12 @@ function SubmissionsAdmin() {
 
   function startNew() {
     setEditing(null);
-    setForm(empty);
     setOpen(true);
   }
 
   function startEdit(s: SubmissionRow) {
     setEditing(s);
-    setForm({
-      title: s.title,
-      team_name: s.team_name ?? "",
-      category: s.category ?? "",
-      description: s.description ?? "",
-      submitter_name: s.submitter_name ?? "",
-      submitter_email: s.submitter_email ?? "",
-      teammates: (s.team_member_emails ?? []).join("\n"),
-      repo_url: s.repo_url ?? "",
-      demo_url: s.demo_url ?? "",
-      deck_url: s.deck_url ?? "",
-      video_url: s.video_url ?? "",
-      concept_note_url: s.concept_note_url ?? "",
-      round_id: s.round_id ?? "",
-      status: s.status,
-    });
     setOpen(true);
-  }
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!eventId) return;
-    const { teammates, ...rest } = form;
-    await save.mutateAsync({
-      id: editing?.id,
-      event_id: eventId,
-      ...rest,
-      team_member_emails: teammates
-        .split(/[\s,;]+/)
-        .map((t) => t.trim().toLowerCase())
-        .filter(Boolean),
-    });
-    setOpen(false);
   }
 
   if (ready && !isAdmin) {
@@ -189,147 +116,17 @@ function SubmissionsAdmin() {
               <X className="h-4 w-4" />
             </button>
           </div>
-          {editing ? (
-            <form onSubmit={submit} className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Text
-                  label="Project title"
-                  required
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                />
-                <Text
-                  label="Team name"
-                  value={form.team_name}
-                  onChange={(e) => setForm({ ...form, team_name: e.target.value })}
-                />
-                <Text
-                  label="Category"
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                />
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-foreground">Round</span>
-                  <select
-                    value={form.round_id}
-                    onChange={(e) => setForm({ ...form, round_id: e.target.value })}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm"
-                  >
-                    <option value="">No round</option>
-                    {rounds.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-foreground">Description</span>
-                <textarea
-                  rows={4}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[color:var(--teal)]"
-                />
-              </label>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Text
-                  label="Submitter name"
-                  value={form.submitter_name}
-                  onChange={(e) => setForm({ ...form, submitter_name: e.target.value })}
-                />
-                <Text
-                  label="Submitter email"
-                  type="email"
-                  value={form.submitter_email}
-                  onChange={(e) => setForm({ ...form, submitter_email: e.target.value })}
-                />
-                <label className="block sm:col-span-2">
-                  <span className="mb-1.5 block text-sm font-medium text-foreground">
-                    Teammates&apos; emails
-                  </span>
-                  <textarea
-                    rows={3}
-                    value={form.teammates}
-                    onChange={(e) => setForm({ ...form, teammates: e.target.value })}
-                    placeholder="One email per line. Leave empty for a solo entry."
-                    className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[color:var(--teal)]"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-foreground">Status</span>
-                  <select
-                    value={form.status}
-                    onChange={(e) =>
-                      setForm({ ...form, status: e.target.value as SubmissionStatus })
-                    }
-                    className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm"
-                  >
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {STATUS_LABELS[s]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div>
-                <h3 className="mb-1 text-sm font-semibold text-foreground">Project links</h3>
-                <p className="mb-3 text-xs text-muted-foreground">
-                  Judges see these links on the Scoring page.
-                </p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Text
-                  label="Concept note link"
-                  type="url"
-                  placeholder="https://docs.google.com/..."
-                  value={form.concept_note_url}
-                  onChange={(e) => setForm({ ...form, concept_note_url: e.target.value })}
-                />
-                <Text
-                  label="Pitch deck link"
-                  type="url"
-                  placeholder="https://..."
-                  value={form.deck_url}
-                  onChange={(e) => setForm({ ...form, deck_url: e.target.value })}
-                />
-                <Text
-                  label="Video demo link"
-                  type="url"
-                  placeholder="https://youtu.be/..."
-                  value={form.video_url}
-                  onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-                />
-                <Text
-                  label="Live prototype link"
-                  type="url"
-                  placeholder="https://..."
-                  value={form.demo_url}
-                  onChange={(e) => setForm({ ...form, demo_url: e.target.value })}
-                />
-                <Text
-                  label="Repository link"
-                  type="url"
-                  placeholder="https://github.com/..."
-                  value={form.repo_url}
-                  onChange={(e) => setForm({ ...form, repo_url: e.target.value })}
-                />
-              </div>
-              <Button type="submit" variant="primary" tone="teal" disabled={save.isPending}>
-                {save.isPending ? "Saving…" : editing ? "Save entry" : "Add entry"}
-              </Button>
-            </form>
-          ) : event ? (
-            // New entries use the same form as participants: team or solo, teammates, LMS emails.
+          {event && (
+            // Adding and editing both use the participant form: team or solo, teammates, LMS emails.
             <EntryForm
+              key={editing?.id ?? "new"}
               event={event}
               rounds={rounds}
+              entry={editing ?? undefined}
               onDone={() => setOpen(false)}
               linksRequired={false}
             />
-          ) : null}
+          )}
         </Card>
       )}
 

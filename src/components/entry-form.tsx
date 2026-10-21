@@ -1,7 +1,23 @@
 import { useState } from "react";
 import { Plus, User, Users, X } from "lucide-react";
 import { Button } from "@/components/app-shell";
-import { useSubmitProject, type EventRow, type RoundRow } from "@/lib/hackathon";
+import {
+  useSaveSubmission,
+  useSubmitProject,
+  STATUS_LABELS,
+  type EventRow,
+  type RoundRow,
+  type SubmissionRow,
+  type SubmissionStatus,
+} from "@/lib/hackathon";
+
+const STATUSES: SubmissionStatus[] = [
+  "submitted",
+  "under_review",
+  "scored",
+  "ranked",
+  "disqualified",
+];
 
 function Field({
   label,
@@ -45,24 +61,59 @@ const EMPTY = {
   repo_url: "",
 };
 
-/** Public hackathon entry form. Entrants choose to enter as a team or on their own. */
+function fromEntry(entry: SubmissionRow) {
+  return {
+    title: entry.title,
+    team_name: entry.team_name ?? "",
+    category: entry.category ?? "",
+    description: entry.description ?? "",
+    submitter_name: entry.submitter_name ?? "",
+    submitter_email: entry.submitter_email ?? "",
+    video_url: entry.video_url ?? "",
+    deck_url: entry.deck_url ?? "",
+    demo_url: entry.demo_url ?? "",
+    repo_url: entry.repo_url ?? "",
+  };
+}
+
+/**
+ * Hackathon entry form, used by participants and by organisers. Entrants choose
+ * to enter as a team or on their own. Given an `entry`, organisers edit it and
+ * also get its round, status and concept note link.
+ */
 export function EntryForm({
   event,
   rounds,
   onDone,
   linksRequired = true,
+  entry,
 }: {
   event: EventRow;
   rounds: RoundRow[];
   onDone: (submissionId: string) => void;
   /** Participants must give all four links; organisers adding an entry may leave them out. */
   linksRequired?: boolean;
+  /** An existing entry for an organiser to edit. */
+  entry?: SubmissionRow;
 }) {
   const submit = useSubmitProject();
-  const [entryAs, setEntryAs] = useState<"team" | "individual" | null>(null);
-  const [form, setForm] = useState(EMPTY);
-  const [teammates, setTeammates] = useState<string[]>([""]);
+  const save = useSaveSubmission();
+  // Organisers (adding or editing) may leave contact details and teammates incomplete.
+  const organiser = !linksRequired || !!entry;
+  const [entryAs, setEntryAs] = useState<"team" | "individual" | null>(
+    entry ? (entry.team_name || entry.team_member_emails?.length ? "team" : "individual") : null,
+  );
+  const [form, setForm] = useState(entry ? fromEntry(entry) : EMPTY);
+  const [teammates, setTeammates] = useState<string[]>(
+    entry?.team_member_emails?.length ? entry.team_member_emails : [""],
+  );
+  const [extras, setExtras] = useState({
+    round_id: entry?.round_id ?? "",
+    status: entry?.status ?? ("submitted" as SubmissionStatus),
+    concept_note_url: entry?.concept_note_url ?? "",
+  });
   const [error, setError] = useState<string | null>(null);
+  const pending = submit.isPending || save.isPending;
 
   const set =
     (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -81,11 +132,11 @@ export function EntryForm({
     const lead = form.submitter_email.trim().toLowerCase();
     const emails = teammates.map((t) => t.trim().toLowerCase()).filter(Boolean);
     if (entryAs === "team") {
-      if (emails.length === 0) {
+      if (emails.length === 0 && !organiser) {
         setError("Add at least one teammate's email, or choose “Just me”.");
         return;
       }
-      if (emails.includes(lead)) {
+      if (lead && emails.includes(lead)) {
         setError("Your own email is already the team lead's - list only your teammates.");
         return;
       }
@@ -96,6 +147,20 @@ export function EntryForm({
     }
     const submissionRound = rounds.find((r) => r.phase === "submissions") ?? rounds[0];
     try {
+      if (entry) {
+        await save.mutateAsync({
+          id: entry.id,
+          event_id: event.id,
+          ...form,
+          team_name: entryAs === "team" ? form.team_name : "",
+          team_member_emails: entryAs === "team" ? emails : [],
+          round_id: extras.round_id,
+          status: extras.status,
+          concept_note_url: extras.concept_note_url,
+        });
+        onDone(entry.id);
+        return;
+      }
       const id = await submit.mutateAsync({
         event_id: event.id,
         round_id: submissionRound?.id ?? null,
@@ -186,7 +251,7 @@ export function EntryForm({
           Project description
         </span>
         <textarea
-          required
+          required={!entry}
           rows={5}
           value={form.description}
           onChange={set("description")}
@@ -197,7 +262,7 @@ export function EntryForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label={entryAs === "team" ? "Team lead's name" : "Your name"}
-          required
+          required={!entry}
           value={form.submitter_name}
           onChange={set("submitter_name")}
         />
@@ -205,7 +270,7 @@ export function EntryForm({
           label={entryAs === "team" ? "Team lead's email" : "Your email"}
           note="Email used on LMS"
           type="email"
-          required
+          required={!entry}
           value={form.submitter_email}
           onChange={set("submitter_email")}
           hint="Each email can only be used for one entry. Only the organisers and judges can see it."
@@ -227,7 +292,7 @@ export function EntryForm({
               <div key={i} className="flex items-center gap-2">
                 <input
                   type="email"
-                  required={i === 0}
+                  required={i === 0 && !organiser}
                   value={t}
                   onChange={(e) => setTeammate(i, e.target.value)}
                   placeholder={`teammate${i + 1}@example.com`}
@@ -303,13 +368,61 @@ export function EntryForm({
         />
       </div>
 
+      {entry && (
+        <div className="rounded-md border border-border p-4">
+          <h3 className="text-sm font-semibold text-foreground">Organiser settings</h3>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-foreground">Round</span>
+              <select
+                value={extras.round_id}
+                onChange={(e) => setExtras({ ...extras, round_id: e.target.value })}
+                className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm"
+              >
+                <option value="">No round</option>
+                {rounds.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-foreground">Status</span>
+              <select
+                value={extras.status}
+                onChange={(e) =>
+                  setExtras({ ...extras, status: e.target.value as SubmissionStatus })
+                }
+                className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm"
+              >
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="sm:col-span-2">
+              <Field
+                label="Concept note link"
+                type="url"
+                value={extras.concept_note_url}
+                onChange={(e) => setExtras({ ...extras, concept_note_url: e.target.value })}
+                placeholder="https://docs.google.com/..."
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && (
         <p className="text-sm" style={{ color: "var(--magenta)" }}>
           {error}
         </p>
       )}
-      <Button type="submit" variant="primary" tone="teal" disabled={submit.isPending}>
-        {submit.isPending ? "Sending…" : "Submit project"}
+      <Button type="submit" variant="primary" tone="teal" disabled={pending}>
+        {pending ? (entry ? "Saving…" : "Sending…") : entry ? "Save entry" : "Submit project"}
       </Button>
     </form>
   );
