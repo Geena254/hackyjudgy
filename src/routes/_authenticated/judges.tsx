@@ -12,10 +12,13 @@ import {
   useSubmissions,
   useAllScores,
   useJudges,
+  useAssignments,
+  panelFor,
   criteriaForSubmission,
   scoreMap,
   type EventRow,
 } from "@/lib/hackathon";
+import { ShareOutCard } from "@/components/share-out-card";
 import { useAuth, initials } from "@/hooks/use-auth";
 import { useSelectedEvent } from "@/hooks/use-selected-event";
 
@@ -267,6 +270,7 @@ function JudgesPage() {
           </div>
         )}
 
+        {isAdmin && event && <ShareOutCard event={event} />}
         {isAdmin && event && <PanelActivity event={event} />}
       </div>
     </AppShell>
@@ -280,14 +284,18 @@ function PanelActivity({ event }: { event: EventRow }) {
   const { data: subs = [] } = useSubmissions(event?.id);
   const { data: scores = [] } = useAllScores();
   const { data: judges = [], isLoading } = useJudges(event?.id);
+  const { data: assignments = [] } = useAssignments(event?.id);
+  const panel = useMemo(() => panelFor(assignments), [assignments]);
 
   const rows = useMemo(
     () =>
       judges
         .map((j) => {
+          // Once shared out, each judge is measured against their own share.
+          const mine = subs.filter((s) => panel.expects(j.id, s.id));
           let scored = 0;
           let inProgress = 0;
-          for (const s of subs) {
+          for (const s of mine) {
             const crit = criteriaForSubmission(s, rounds, criteria);
             if (crit.length === 0) continue;
             const vals = scoreMap(scores, s.id, j.id);
@@ -295,16 +303,27 @@ function PanelActivity({ event }: { event: EventRow }) {
             if (n === crit.length) scored += 1;
             else if (n > 0) inProgress += 1;
           }
-          return { ...j, scored, inProgress, pending: subs.length - scored - inProgress };
+          return {
+            ...j,
+            share: mine.length,
+            scored,
+            inProgress,
+            pending: mine.length - scored - inProgress,
+          };
         })
         .sort((a, b) => b.scored - a.scored || a.name.localeCompare(b.name)),
-    [judges, subs, rounds, criteria, scores],
+    [judges, subs, rounds, criteria, scores, panel],
   );
 
   return (
     <Card className="p-5">
       <h2 className="text-lg font-semibold text-foreground">Panel activity</h2>
-      {event && <p className="mt-1 text-xs text-muted-foreground">{event.name}</p>}
+      {event && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          {event.name}
+          {panel.sharedOut ? " · entries shared out, each judge scores their own share" : ""}
+        </p>
+      )}
       <ul className="mt-4 divide-y divide-border">
         {rows.map((j) => (
           <li key={j.id} className="flex flex-wrap items-center gap-3 py-3">
@@ -324,8 +343,8 @@ function PanelActivity({ event }: { event: EventRow }) {
                 {j.inProgress > 0 && <> · {j.inProgress} in progress</>} · {j.pending} pending
               </div>
             </div>
-            <Pill tone={subs.length > 0 && j.scored === subs.length ? "teal" : "gray"} variant="outline">
-              {j.scored}/{subs.length}
+            <Pill tone={j.share > 0 && j.scored === j.share ? "teal" : "gray"} variant="outline">
+              {j.scored}/{j.share}
             </Pill>
           </li>
         ))}

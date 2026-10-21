@@ -100,6 +100,30 @@ export type Database = {
         }
         Relationships: []
       }
+      judge_assignments: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          judge_id: string
+          submission_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          judge_id: string
+          submission_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          judge_id?: string
+          submission_id?: string
+        }
+        Relationships: []
+      }
       judge_invitations: {
         Row: {
           accepted_at: string | null
@@ -509,6 +533,14 @@ export type Database = {
           full_name: string | null
           id: string
         }[]
+      }
+      share_out_entries: {
+        Args: { _event_id: string }
+        Returns: number
+      }
+      undo_share_out: {
+        Args: { _event_id: string }
+        Returns: undefined
       }
       submit_entry: {
         Args: {

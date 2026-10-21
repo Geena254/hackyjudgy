@@ -203,6 +203,70 @@ export function useAllScores() {
   });
 }
 
+/* ----------------------- sharing entries out to judges --------------------- */
+
+export type AssignmentRow = { submission_id: string; judge_id: string };
+
+/** Hackathons with more than this many entries can be shared out between judges. */
+export const SHARE_OUT_THRESHOLD = 10;
+
+/** Which judge each entry was given to, for a shared-out hackathon (empty = not shared out). */
+export function useAssignments(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ["assignments", eventId],
+    enabled: !!eventId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("judge_assignments")
+        .select("submission_id, judge_id")
+        .eq("event_id", eventId!);
+      if (error) throw error;
+      return (data ?? []) as AssignmentRow[];
+    },
+  });
+}
+
+/**
+ * Who is expected to score each entry: every panel judge, or once the
+ * hackathon is shared out, only the judge(s) it was given to.
+ */
+export function panelFor(assignments: AssignmentRow[]) {
+  const byEntry = new Map<string, Set<string>>();
+  for (const a of assignments) {
+    if (!byEntry.has(a.submission_id)) byEntry.set(a.submission_id, new Set());
+    byEntry.get(a.submission_id)!.add(a.judge_id);
+  }
+  const sharedOut = assignments.length > 0;
+  return {
+    sharedOut,
+    /** Should this judge score this entry? */
+    expects: (judgeId: string, submissionId: string) =>
+      !sharedOut || (byEntry.get(submissionId)?.has(judgeId) ?? false),
+    judgesOf: <J extends { id: string }>(submissionId: string, judges: J[]) =>
+      sharedOut ? judges.filter((j) => byEntry.get(submissionId)?.has(j.id)) : judges,
+  };
+}
+
+function useShareOutMutation(fn: "share_out_entries" | "undo_share_out") {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (eventId: string) => {
+      const { data, error } = await supabase.rpc(fn, { _event_id: eventId });
+      if (error) throw error;
+      return typeof data === "number" ? data : null;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assignments"] });
+      qc.invalidateQueries({ queryKey: ["submissions"] });
+    },
+  });
+}
+
+/** Share entries out evenly (or rebalance work nobody has started). */
+export const useShareOut = () => useShareOutMutation("share_out_entries");
+/** Back to every judge scoring every entry. */
+export const useUndoShareOut = () => useShareOutMutation("undo_share_out");
+
 /** Admin-only: every judge's review progress. */
 export function useAllReviews() {
   return useQuery({

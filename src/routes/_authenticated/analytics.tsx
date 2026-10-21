@@ -12,6 +12,8 @@ import {
   useAllScores,
   useAllReviews,
   useJudges,
+  useAssignments,
+  panelFor,
   criteriaForSubmission,
   weightedPercent,
   scoreMap,
@@ -80,6 +82,8 @@ function AnalyticsPage() {
   const { data: scores = [] } = useAllScores();
   const { data: reviews = [] } = useAllReviews();
   const { data: judges = [] } = useJudges(event?.id);
+  const { data: assignments = [] } = useAssignments(event?.id);
+  const panel = useMemo(() => panelFor(assignments), [assignments]);
 
   const subIds = useMemo(() => new Set(submissions.map((s) => s.id)), [submissions]);
 
@@ -100,22 +104,25 @@ function AnalyticsPage() {
   }, [reviews, submissions, rounds, criteria, judges, scores]);
   const isDone = (judgeId: string, submissionId: string) => done.has(`${judgeId}|${submissionId}`);
 
-  const expected = submissions.length * Math.max(judges.length, 1);
-  const completedReviews = judges.reduce(
-    (sum, j) => sum + submissions.filter((s) => isDone(j.id, s.id)).length,
-    0,
-  );
+  // Once entries are shared out, each entry only expects the judge it was given to.
+  const expectedFor = (subs: typeof submissions) =>
+    subs.reduce((sum, s) => sum + Math.max(panel.judgesOf(s.id, judges).length, 1), 0);
+  const doneFor = (subs: typeof submissions) =>
+    judges.reduce(
+      (sum, j) => sum + subs.filter((s) => panel.expects(j.id, s.id) && isDone(j.id, s.id)).length,
+      0,
+    );
+
+  const expected = expectedFor(submissions);
+  const completedReviews = doneFor(submissions);
   const completion = expected === 0 ? 0 : Math.round((completedReviews / expected) * 100);
 
   const roundProgress = useMemo(
     () =>
       rounds.map((round) => {
         const subs = submissions.filter((s) => s.round_id === round.id);
-        const target = subs.length * Math.max(judges.length, 1);
-        const done = judges.reduce(
-          (sum, j) => sum + subs.filter((s) => isDone(j.id, s.id)).length,
-          0,
-        );
+        const target = expectedFor(subs);
+        const done = doneFor(subs);
         return {
           round,
           submissions: subs.length,
@@ -124,7 +131,8 @@ function AnalyticsPage() {
           percent: target === 0 ? 0 : Math.round((done / target) * 100),
         };
       }),
-    [rounds, submissions, judges, done],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rounds, submissions, judges, done, panel],
   );
 
   const judgeActivity = useMemo(
@@ -134,9 +142,9 @@ function AnalyticsPage() {
           const mine = reviews.filter(
             (r) => r.judge_id === judge.id && subIds.has(r.submission_id),
           );
-          const done = submissions.filter((s) => isDone(judge.id, s.id)).length;
-          const percent =
-            submissions.length === 0 ? 0 : Math.round((done / submissions.length) * 100);
+          const share = submissions.filter((s) => panel.expects(judge.id, s.id));
+          const done = share.filter((s) => isDone(judge.id, s.id)).length;
+          const percent = share.length === 0 ? 0 : Math.round((done / share.length) * 100);
           const marks = scores.filter(
             (s) => s.judge_id === judge.id && subIds.has(s.submission_id),
           ).length;
@@ -147,7 +155,8 @@ function AnalyticsPage() {
           return { judge, done, percent, marks, last };
         })
         .sort((a, b) => b.percent - a.percent),
-    [judges, reviews, scores, submissions, subIds, done],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [judges, reviews, scores, submissions, subIds, done, panel],
   );
 
   const leaderboard = useMemo(() => {

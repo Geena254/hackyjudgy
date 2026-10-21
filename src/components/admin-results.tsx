@@ -4,6 +4,8 @@ import { ChevronDown, ChevronRight, Download, FileText, Trophy } from "lucide-re
 import { Card, Button, Pill } from "@/components/app-shell";
 import {
   useAllReviews,
+  useAssignments,
+  panelFor,
   criteriaForSubmission,
   scoreMap,
   weightedPercent,
@@ -37,6 +39,8 @@ export function AdminResults({
   judges: Judge[];
 }) {
   const { data: reviews = [] } = useAllReviews();
+  const { data: assignments = [] } = useAssignments(event?.id);
+  const panel = useMemo(() => panelFor(assignments), [assignments]);
   const [open, setOpen] = useState<string | null>(null);
 
   // Only count scores from judges currently on the panel.
@@ -72,12 +76,14 @@ export function AdminResults({
         const avg = done.length
           ? done.reduce((sum, c) => sum + (c.percent ?? 0), 0) / done.length
           : null;
-        return { judge: j, cells, completed: done.length, avg };
+        // Shared out: a judge is finished once their own share is scored.
+        const share = subs.filter((s) => panel.expects(j.id, s.id)).length;
+        return { judge: j, cells, completed: done.length, share, avg };
       }),
-    [judges, subs, rounds, criteria, panelScores],
+    [judges, subs, rounds, criteria, panelScores, panel],
   );
 
-  const judgesDone = matrix.filter((m) => subs.length > 0 && m.completed === subs.length).length;
+  const judgesDone = matrix.filter((m) => m.share > 0 && m.completed >= m.share).length;
 
   function exportCsv() {
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
@@ -118,7 +124,10 @@ export function AdminResults({
               Results leaderboard
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Average of all judges · score 0-5 per criterion, weighted
+              {panel.sharedOut
+                ? "Score from the judge each entry was given to"
+                : "Average of all judges"}{" "}
+              · score 0-5 per criterion, weighted
               {totalWeight !== 100 && totalWeight > 0 ? ` (weights total ${totalWeight}, scaled to 100)` : ""}
               {" · "}
               {judgesDone}/{judges.length} judges finished · click a team for each judge's scores

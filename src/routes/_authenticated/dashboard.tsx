@@ -22,6 +22,8 @@ import {
   useSubmissions,
   useAllScores,
   useJudges,
+  useAssignments,
+  panelFor,
   useOrganisers,
   criteriaForSubmission,
   scoreMap,
@@ -132,35 +134,39 @@ function Dashboard() {
   const { data: subs = [] } = useSubmissions(event?.id);
   const { data: scores = [] } = useAllScores();
   const { data: judges = [] } = useJudges(event?.id);
+  // Once entries are shared out, each entry only expects the judge it was given to.
+  const { data: assignments = [] } = useAssignments(event?.id);
+  const panel = useMemo(() => panelFor(assignments), [assignments]);
 
   const progress = useMemo(() => {
-    if (subs.length === 0 || judges.length === 0) return 0;
+    let expected = 0;
     let done = 0;
     for (const s of subs) {
       const crit = criteriaForSubmission(s, rounds, criteria);
-      if (crit.length === 0) continue;
-      for (const j of judges) {
+      for (const j of panel.judgesOf(s.id, judges)) {
+        expected += 1;
         const vals = scoreMap(scores, s.id, j.id);
-        if (crit.every((c) => vals[c.id] !== undefined)) done += 1;
+        if (crit.length > 0 && crit.every((c) => vals[c.id] !== undefined)) done += 1;
       }
     }
-    return Math.round((done / (subs.length * judges.length)) * 100);
-  }, [subs, judges, rounds, criteria, scores]);
+    return expected === 0 ? 0 : Math.round((done / expected) * 100);
+  }, [subs, judges, rounds, criteria, scores, panel]);
 
   const judgeProgress = useMemo(
     () =>
       judges
         .map((j) => {
-          const scored = subs.filter((s) => {
+          const share = subs.filter((s) => panel.expects(j.id, s.id));
+          const scored = share.filter((s) => {
             const crit = criteriaForSubmission(s, rounds, criteria);
             if (crit.length === 0) return false;
             const vals = scoreMap(scores, s.id, j.id);
             return crit.every((c) => vals[c.id] !== undefined);
           }).length;
-          return { ...j, scored };
+          return { ...j, scored, share: share.length };
         })
         .sort((a, b) => b.scored - a.scored),
-    [judges, subs, rounds, criteria, scores],
+    [judges, subs, rounds, criteria, scores, panel],
   );
 
   const left = daysLeft(event?.ends_on);
@@ -172,19 +178,22 @@ function Dashboard() {
     let fullyScored = 0;
     for (const s of subs) {
       const crit = criteriaForSubmission(s, rounds, criteria);
-      const anyScore = scores.some((x) => x.submission_id === s.id && judges.some((j) => j.id === x.judge_id));
-      const finished = judges.filter((j) => {
+      const expected = panel.judgesOf(s.id, judges);
+      const anyScore = scores.some(
+        (x) => x.submission_id === s.id && expected.some((j) => j.id === x.judge_id),
+      );
+      const finished = expected.filter((j) => {
         const vals = scoreMap(scores, s.id, j.id);
         return crit.length > 0 && crit.every((c) => vals[c.id] !== undefined);
       }).length;
-      if (judges.length > 0 && finished === judges.length) fullyScored += 1;
+      if (expected.length > 0 && finished === expected.length) fullyScored += 1;
       else if (anyScore) underReview += 1;
       else notStarted += 1;
     }
     return { notStarted, underReview, fullyScored };
-  }, [subs, rounds, criteria, scores, judges]);
+  }, [subs, rounds, criteria, scores, judges, panel]);
 
-  const judgesFinished = judgeProgress.filter((j) => subs.length > 0 && j.scored === subs.length).length;
+  const judgesFinished = judgeProgress.filter((j) => j.share > 0 && j.scored === j.share).length;
   const leader = useMemo(
     () => rankStandings(subs, criteria, rounds, scores, judges.map((j) => j.id))[0],
     [subs, criteria, rounds, scores, judges],
@@ -399,7 +408,8 @@ function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium text-foreground">{j.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {j.scored} of {subs.length} scored
+                      {j.scored} of {j.share} scored
+                      {panel.sharedOut ? " (their share)" : ""}
                     </div>
                   </div>
                   <Pill tone="teal" variant="outline">
