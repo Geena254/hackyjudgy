@@ -45,6 +45,16 @@ function Field({
   );
 }
 
+/** Video demos are hosted on YouTube or Google Drive. */
+function isAllowedVideoLink(url: string) {
+  try {
+    const host = new URL(url.trim()).hostname.toLowerCase().replace(/^www\.|^m\./, "");
+    return ["youtube.com", "youtu.be", "drive.google.com", "docs.google.com"].includes(host);
+  } catch {
+    return false;
+  }
+}
+
 // Teammates besides the team lead (the database allows up to 20).
 const MAX_TEAMMATES = 9;
 
@@ -131,6 +141,10 @@ export function EntryForm({
     }
     const lead = form.submitter_email.trim().toLowerCase();
     const emails = teammates.map((t) => t.trim().toLowerCase()).filter(Boolean);
+    if (!organiser && form.video_url.trim() && !isAllowedVideoLink(form.video_url)) {
+      setError("The video demo link should be a YouTube or Google Drive link.");
+      return;
+    }
     if (entryAs === "team") {
       if (emails.length === 0 && !organiser) {
         setError("Add at least one teammate's email, or choose “Just me”.");
@@ -336,11 +350,13 @@ export function EntryForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label="Video demo link"
+          note="YouTube or Google Drive"
           type="url"
           required={linksRequired}
           value={form.video_url}
           onChange={set("video_url")}
-          placeholder="https://youtu.be/..."
+          placeholder="https://youtu.be/... or https://drive.google.com/..."
+          hint="On Google Drive, set sharing to “Anyone with the link” so judges can watch it."
         />
         <Field
           label="Pitch deck link"
