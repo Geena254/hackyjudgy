@@ -48,6 +48,7 @@ const empty = {
   description: "",
   submitter_name: "",
   submitter_email: "",
+  teammates: "",
   repo_url: "",
   demo_url: "",
   deck_url: "",
@@ -108,6 +109,7 @@ function SubmissionsAdmin() {
       description: s.description ?? "",
       submitter_name: s.submitter_name ?? "",
       submitter_email: s.submitter_email ?? "",
+      teammates: (s.team_member_emails ?? []).join("\n"),
       repo_url: s.repo_url ?? "",
       demo_url: s.demo_url ?? "",
       deck_url: s.deck_url ?? "",
@@ -122,7 +124,16 @@ function SubmissionsAdmin() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!eventId) return;
-    await save.mutateAsync({ id: editing?.id, event_id: eventId, ...form });
+    const { teammates, ...rest } = form;
+    await save.mutateAsync({
+      id: editing?.id,
+      event_id: eventId,
+      ...rest,
+      team_member_emails: teammates
+        .split(/[\s,;]+/)
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean),
+    });
     setOpen(false);
   }
 
@@ -232,6 +243,18 @@ function SubmissionsAdmin() {
                 value={form.submitter_email}
                 onChange={(e) => setForm({ ...form, submitter_email: e.target.value })}
               />
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-sm font-medium text-foreground">
+                  Teammates&apos; emails
+                </span>
+                <textarea
+                  rows={3}
+                  value={form.teammates}
+                  onChange={(e) => setForm({ ...form, teammates: e.target.value })}
+                  placeholder="One email per line. Leave empty for a solo entry."
+                  className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[color:var(--teal)]"
+                />
+              </label>
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-foreground">Status</span>
                 <select
@@ -312,6 +335,11 @@ function SubmissionsAdmin() {
                 </button>
                 <div className="mt-1 truncate text-xs text-muted-foreground">
                   {s.team_name ?? s.submitter_name ?? "—"}
+                  {(s.team_member_emails ?? []).length > 0
+                    ? ` · team of ${s.team_member_emails.length + 1}`
+                    : s.team_name
+                      ? ""
+                      : " · solo"}
                   {s.category ? ` · ${s.category}` : ""} · {formatDate(s.created_at.slice(0, 10))}
                 </div>
               </div>

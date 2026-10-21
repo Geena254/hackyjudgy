@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Users } from "lucide-react";
+import { Plus, User, Users, X } from "lucide-react";
 import { Button } from "@/components/app-shell";
 import { useSubmitProject, type EventRow, type RoundRow } from "@/lib/hackathon";
 
@@ -19,6 +19,9 @@ function Field({
     </label>
   );
 }
+
+// Teammates besides the team lead (the database allows up to 20).
+const MAX_TEAMMATES = 9;
 
 const EMPTY = {
   title: "",
@@ -44,17 +47,41 @@ export function EntryForm({
   onDone: (submissionId: string) => void;
 }) {
   const submit = useSubmitProject();
-  const [entryAs, setEntryAs] = useState<"team" | "individual">("team");
+  const [entryAs, setEntryAs] = useState<"team" | "individual" | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const [teammates, setTeammates] = useState<string[]>([""]);
   const [error, setError] = useState<string | null>(null);
 
   const set =
     (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
+  const setTeammate = (i: number, value: string) =>
+    setTeammates((prev) => prev.map((t, j) => (j === i ? value : t)));
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!entryAs) {
+      setError("Choose whether you're entering as a team or on your own.");
+      return;
+    }
+    const lead = form.submitter_email.trim().toLowerCase();
+    const emails = teammates.map((t) => t.trim().toLowerCase()).filter(Boolean);
+    if (entryAs === "team") {
+      if (emails.length === 0) {
+        setError("Add at least one teammate's email, or choose “Just me”.");
+        return;
+      }
+      if (emails.includes(lead)) {
+        setError("Your own email is already the team lead's — list only your teammates.");
+        return;
+      }
+      if (new Set(emails).size !== emails.length) {
+        setError("Each teammate's email should appear only once.");
+        return;
+      }
+    }
     const submissionRound = rounds.find((r) => r.phase === "submissions") ?? rounds[0];
     try {
       const id = await submit.mutateAsync({
@@ -63,8 +90,11 @@ export function EntryForm({
         ...form,
         // Solo entrants have no team; standings show them as an independent entry.
         team_name: entryAs === "team" ? form.team_name : "",
+        team_member_emails: entryAs === "team" ? emails : [],
       });
       setForm(EMPTY);
+      setTeammates([""]);
+      setEntryAs(null);
       onDone(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -103,6 +133,7 @@ export function EntryForm({
                   value={o.value}
                   checked={selected}
                   onChange={() => setEntryAs(o.value)}
+                  required
                   className="sr-only"
                 />
                 <o.icon
@@ -167,6 +198,52 @@ export function EntryForm({
           hint="Only the organisers and judges can see this."
         />
       </div>
+
+      {entryAs === "team" && (
+        <fieldset className="rounded-md border border-border p-4">
+          <legend className="px-1 text-sm font-semibold text-foreground">
+            Your teammates&apos; emails
+          </legend>
+          <p className="text-xs text-muted-foreground">
+            Add everyone else on your team. Only the organisers and judges can see these.
+          </p>
+          <div className="mt-3 space-y-2">
+            {teammates.map((t, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="email"
+                  required={i === 0}
+                  value={t}
+                  onChange={(e) => setTeammate(i, e.target.value)}
+                  placeholder={`teammate${i + 1}@example.com`}
+                  aria-label={`Teammate ${i + 1} email`}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
+                />
+                {teammates.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setTeammates((prev) => prev.filter((_, j) => j !== i))}
+                    aria-label={`Remove teammate ${i + 1}`}
+                    className="shrink-0 rounded-md p-2 text-muted-foreground hover:bg-muted"
+                  >
+                    <X className="h-4 w-4" strokeWidth={2} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          {teammates.length < MAX_TEAMMATES && (
+            <button
+              type="button"
+              onClick={() => setTeammates((prev) => [...prev, ""])}
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold"
+              style={{ color: "var(--teal)" }}
+            >
+              <Plus className="h-4 w-4" strokeWidth={2} /> Add teammate
+            </button>
+          )}
+        </fieldset>
+      )}
 
       <div>
         <h3 className="text-sm font-semibold text-foreground">Project links</h3>

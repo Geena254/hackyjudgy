@@ -367,6 +367,7 @@ export type Database = {
           round_id: string | null
           status: string
           submitter_email: string | null
+          team_member_emails: string[]
           submitter_name: string | null
           team_name: string | null
           title: string
@@ -386,6 +387,7 @@ export type Database = {
           round_id?: string | null
           status?: string
           submitter_email?: string | null
+          team_member_emails?: string[]
           submitter_name?: string | null
           team_name?: string | null
           title: string
@@ -405,6 +407,7 @@ export type Database = {
           round_id?: string | null
           status?: string
           submitter_email?: string | null
+          team_member_emails?: string[]
           submitter_name?: string | null
           team_name?: string | null
           title?: string
@@ -506,6 +509,24 @@ export type Database = {
           full_name: string | null
           id: string
         }[]
+      }
+      submit_entry: {
+        Args: {
+          _category?: string
+          _deck_url?: string
+          _demo_url?: string
+          _description: string
+          _event_id: string
+          _repo_url?: string
+          _round_id?: string
+          _submitter_email: string
+          _submitter_name: string
+          _team_member_emails?: string[]
+          _team_name?: string
+          _title: string
+          _video_url?: string
+        }
+        Returns: string
       }
       workspace_events: {
         Args: never

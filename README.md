@@ -89,7 +89,7 @@ You don't need an account to take part.
 
 1. **Find a hackathon.** Go to `/hackathon` to see every hackathon that's open on the platform. Pick one to see its details.
 2. **Read the brief.** The hackathon page shows the dates, the rounds and their deadlines, and the rubric. The rubric tells you exactly what judges score and how much each criterion counts towards your total.
-3. **Enter your project.** Fill in the entry form at the bottom of the hackathon's page. First choose whether you're entering as a team or on your own; teams also give a team name. You'll need a project title, a description, your name and your email, and four links: a video demo, your pitch deck, your live prototype and your GitHub repository. Only the organisers and judges can see your email address.
+3. **Enter your project.** Fill in the entry form at the bottom of the hackathon's page. First choose whether you're entering as a team or on your own. Teams also give a team name and their teammates' email addresses (add as many as you need). You'll need a project title, a description, your name and your email, and four links: a video demo, your pitch deck, your live prototype and your GitHub repository. Only the organisers and judges can see your email address.
 4. **Get your project page.** After you submit, you get a public project page at `/project/<id>`. Share it with your team or anyone else.
 5. **Follow the standings.** The **Live standings** on the hackathon page refresh as judges score. Open any project to see how many points each criterion contributed to its weighted total. Only averaged scores are shown, never individual judges' marks.
 

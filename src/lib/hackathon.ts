@@ -55,6 +55,8 @@ export type SubmissionRow = {
   description: string | null;
   submitter_name: string | null;
   submitter_email: string | null;
+  /** Teammates' emails for team entries (private, like submitter_email). */
+  team_member_emails: string[];
   repo_url: string | null;
   /** Live prototype / site. */
   demo_url: string | null;
@@ -542,6 +544,7 @@ export function useSaveSubmission() {
         description: input.description || null,
         submitter_name: input.submitter_name || null,
         submitter_email: input.submitter_email || null,
+        team_member_emails: input.team_member_emails ?? [],
         repo_url: input.repo_url || null,
         demo_url: input.demo_url || null,
         deck_url: input.deck_url || null,
@@ -630,24 +633,27 @@ export function useSubmitProject() {
       demo_url?: string;
       deck_url?: string;
       video_url?: string;
+      team_member_emails?: string[];
     }) => {
-      const { data, error } = await supabase.from("submissions").insert({
-        event_id: input.event_id,
-        round_id: input.round_id || null,
-        title: input.title,
-        team_name: input.team_name || null,
-        category: input.category || null,
-        description: input.description || null,
-        submitter_name: input.submitter_name || null,
-        submitter_email: input.submitter_email || null,
-        repo_url: input.repo_url || null,
-        demo_url: input.demo_url || null,
-        deck_url: input.deck_url || null,
-        video_url: input.video_url || null,
-        status: "submitted",
-      }).select("id").single();
+      // Signed-out entrants can't write to or read submissions directly; the
+      // submit_entry function checks the hackathon is open and returns the new id.
+      const { data, error } = await supabase.rpc("submit_entry", {
+        _event_id: input.event_id,
+        _round_id: input.round_id || undefined,
+        _title: input.title,
+        _team_name: input.team_name || undefined,
+        _category: input.category || undefined,
+        _description: input.description ?? "",
+        _submitter_name: input.submitter_name ?? "",
+        _submitter_email: input.submitter_email ?? "",
+        _repo_url: input.repo_url || undefined,
+        _demo_url: input.demo_url || undefined,
+        _deck_url: input.deck_url || undefined,
+        _video_url: input.video_url || undefined,
+        _team_member_emails: input.team_member_emails ?? [],
+      });
       if (error) throw error;
-      return (data as { id: string }).id;
+      return data;
     },
   });
 }
@@ -701,7 +707,10 @@ export function usePublicSubmissions(eventId: string | undefined) {
   });
 }
 
-export type PublicSubmission = Omit<SubmissionRow, "submitter_name" | "submitter_email">;
+export type PublicSubmission = Omit<
+  SubmissionRow,
+  "submitter_name" | "submitter_email" | "team_member_emails"
+>;
 
 /** Averaged criterion score for one submission — never an individual judge's mark. */
 export type PublicScore = {
