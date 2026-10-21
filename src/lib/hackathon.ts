@@ -619,7 +619,12 @@ export function usePublicEvents() {
 
 /** Insert a participant's own submission into the active event. */
 export function useSubmitProject() {
+  const qc = useQueryClient();
   return useMutation({
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["submissions"] });
+      qc.invalidateQueries({ queryKey: ["public-submissions"] });
+    },
     mutationFn: async (input: {
       event_id: string;
       round_id?: string | null;

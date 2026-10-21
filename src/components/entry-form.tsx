@@ -50,10 +50,13 @@ export function EntryForm({
   event,
   rounds,
   onDone,
+  linksRequired = true,
 }: {
   event: EventRow;
   rounds: RoundRow[];
   onDone: (submissionId: string) => void;
+  /** Participants must give all four links; organisers adding an entry may leave them out. */
+  linksRequired?: boolean;
 }) {
   const submit = useSubmitProject();
   const [entryAs, setEntryAs] = useState<"team" | "individual" | null>(null);
@@ -260,14 +263,16 @@ export function EntryForm({
       <div>
         <h3 className="text-sm font-semibold text-foreground">Project links</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          All four links are required. Make sure each one is public or shared so judges can open it.
+          {linksRequired
+            ? "All four links are required. Make sure each one is public or shared so judges can open it."
+            : "Optional. Add any links the team has shared; you can fill in the rest later by editing the entry."}
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label="Video demo link"
           type="url"
-          required
+          required={linksRequired}
           value={form.video_url}
           onChange={set("video_url")}
           placeholder="https://youtu.be/..."
@@ -275,7 +280,7 @@ export function EntryForm({
         <Field
           label="Pitch deck link"
           type="url"
-          required
+          required={linksRequired}
           value={form.deck_url}
           onChange={set("deck_url")}
           placeholder="https://canva.com/..."
@@ -283,7 +288,7 @@ export function EntryForm({
         <Field
           label="Live prototype link"
           type="url"
-          required
+          required={linksRequired}
           value={form.demo_url}
           onChange={set("demo_url")}
           placeholder="https://your-app.lovable.app"
@@ -291,7 +296,7 @@ export function EntryForm({
         <Field
           label="GitHub repository link"
           type="url"
-          required
+          required={linksRequired}
           value={form.repo_url}
           onChange={set("repo_url")}
           placeholder="https://github.com/..."
