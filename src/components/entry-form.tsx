@@ -5,12 +5,21 @@ import { useSubmitProject, type EventRow, type RoundRow } from "@/lib/hackathon"
 
 function Field({
   label,
+  note,
   hint,
   ...rest
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  /** Shown in italics beside the label. */
+  note?: string;
+  hint?: string;
+}) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-foreground">
+        {label}
+        {note && <em className="ml-1.5 font-normal text-muted-foreground">({note})</em>}
+      </span>
       <input
         {...rest}
         className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
@@ -191,11 +200,12 @@ export function EntryForm({
         />
         <Field
           label={entryAs === "team" ? "Team lead's email" : "Your email"}
+          note="Email used on LMS"
           type="email"
           required
           value={form.submitter_email}
           onChange={set("submitter_email")}
-          hint="Only the organisers and judges can see this."
+          hint="Each email can only be used for one entry. Only the organisers and judges can see it."
         />
       </div>
 
@@ -203,9 +213,11 @@ export function EntryForm({
         <fieldset className="rounded-md border border-border p-4">
           <legend className="px-1 text-sm font-semibold text-foreground">
             Your teammates&apos; emails
+            <em className="ml-1.5 font-normal text-muted-foreground">(Email used on LMS)</em>
           </legend>
           <p className="text-xs text-muted-foreground">
-            Add everyone else on your team. Only the organisers and judges can see these.
+            Add everyone else on your team. Someone already on another entry can&apos;t be added.
+            Only the organisers and judges can see these.
           </p>
           <div className="mt-3 space-y-2">
             {teammates.map((t, i) => (
