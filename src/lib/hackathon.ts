@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,8 @@ export type EventRow = {
   show_live_rankings: boolean;
   /** Concept note / brief for entrants. */
   brief_url: string | null;
+  /** When the public entry form stops taking entries; null keeps it open while published. */
+  submissions_close_at: string | null;
   created_by: string | null;
   created_at: string;
 };
@@ -457,6 +460,47 @@ export function formatDate(value: string | null | undefined) {
   });
 }
 
+/** e.g. "23 Oct 2026, 11:59 PM", in the viewer's own time zone. */
+export function formatDateTime(value: string | null | undefined) {
+  if (!value) return "No date set";
+  return new Date(value).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
+/** True once the hackathon's submission period is over. */
+export function submissionsClosed(event: Pick<EventRow, "submissions_close_at">, now = Date.now()) {
+  return !!event.submissions_close_at && new Date(event.submissions_close_at).getTime() <= now;
+}
+
+/** The current time, refreshed every `everyMs`, so deadlines lapse on an open page. */
+export function useNow(everyMs = 30_000) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), everyMs);
+    return () => window.clearInterval(id);
+  }, [everyMs]);
+  return now;
+}
+
+/** "1d 14h", "3h 20m" or "12m" until `value`; null once it has passed. */
+export function timeUntil(value: string | null | undefined, now = Date.now()) {
+  if (!value) return null;
+  const mins = Math.floor((new Date(value).getTime() - now) / 60_000);
+  if (mins <= 0) return null;
+  const d = Math.floor(mins / 1440);
+  const h = Math.floor((mins % 1440) / 60);
+  const m = mins % 60;
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
 /* ----------------------------- admin mutations ---------------------------- */
 
 export function useSaveEvent() {
@@ -471,6 +515,7 @@ export function useSaveEvent() {
         status: input.status ?? "draft",
         show_live_rankings: input.show_live_rankings ?? true,
         brief_url: input.brief_url || null,
+        submissions_close_at: input.submissions_close_at || null,
       };
       if (input.id) {
         const { error } = await supabase.from("events").update(payload).eq("id", input.id);

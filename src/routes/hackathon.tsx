@@ -3,8 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CalendarDays, CheckCircle2, EyeOff, FileText, Trophy } from "lucide-react";
 import { Card, Pill, ProgressBar } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
-import { EntryForm } from "@/components/entry-form";
+import { EntryForm, SubmissionsClosedNotice } from "@/components/entry-form";
 import {
+  useNow,
+  submissionsClosed,
+  timeUntil,
   usePublicEvents,
   useRounds,
   useCriteria,
@@ -71,6 +74,9 @@ function HackathonPage() {
   );
   const scored = standings.filter((s) => s.weightedTotal !== null);
   const left = daysLeft(event?.ends_on);
+  const now = useNow();
+  const closed = !!event && submissionsClosed(event, now);
+  const closesIn = timeUntil(event?.submissions_close_at, now);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -96,13 +102,15 @@ function HackathonPage() {
                 Live standings
               </a>
             )}
-            <a
-              href="#enter"
-              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white"
-              style={{ background: "var(--teal)" }}
-            >
-              Enter now <ArrowRight className="h-4 w-4" strokeWidth={2} />
-            </a>
+            {!closed && (
+              <a
+                href="#enter"
+                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white"
+                style={{ background: "var(--teal)" }}
+              >
+                Enter now <ArrowRight className="h-4 w-4" strokeWidth={2} />
+              </a>
+            )}
           </div>
         </div>
       </header>
@@ -154,9 +162,11 @@ function HackathonPage() {
                           }}
                         >
                           <Pill tone={selected ? "teal" : "gray"}>
-                            {remaining !== null && remaining >= 0
-                              ? `${remaining} days left`
-                              : "Judging in progress"}
+                            {submissionsClosed(e, now)
+                              ? "Submissions closed"
+                              : remaining !== null && remaining >= 0
+                                ? `${remaining} days left`
+                                : "Judging in progress"}
                           </Pill>
                           <h3 className="mt-3 text-base font-bold text-foreground">{e.name}</h3>
                           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -178,8 +188,14 @@ function HackathonPage() {
 
             {/* Hero */}
             <section className="border-l-4 pl-5 sm:pl-7" style={{ borderColor: "var(--magenta)" }}>
-              <Pill tone="teal" variant="outline">
-                {left !== null && left >= 0 ? `${left} days left to enter` : "Judging in progress"}
+              <Pill tone={closed ? "gray" : "teal"} variant="outline">
+                {closed
+                  ? "Submission round closed"
+                  : closesIn
+                    ? `Submissions close in ${closesIn}`
+                    : left !== null && left >= 0
+                      ? `${left} days left to enter`
+                      : "Judging in progress"}
               </Pill>
               <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
                 {event.name}
@@ -416,7 +432,11 @@ function HackathonPage() {
             {/* Entry form */}
             <section id="enter" className="mt-14 scroll-mt-20">
               <h2 className="text-2xl font-bold text-foreground">Enter your project</h2>
-              {doneId ? (
+              {closed && !doneId ? (
+                <Card className="mt-6 p-6">
+                  <SubmissionsClosedNotice event={event} />
+                </Card>
+              ) : doneId ? (
                 <Card className="mt-6 p-6">
                   <CheckCircle2
                     className="h-9 w-9"

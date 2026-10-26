@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Plus, User, Users, X } from "lucide-react";
+import { Lock, Plus, User, Users, X } from "lucide-react";
 import { Button } from "@/components/app-shell";
 import {
   useSaveSubmission,
   useSubmitProject,
+  formatDateTime,
   STATUS_LABELS,
   type EventRow,
   type RoundRow,
@@ -53,6 +54,27 @@ function isAllowedVideoLink(url: string) {
   } catch {
     return false;
   }
+}
+
+/** Shown to participants in place of the entry form once the submission period is over. */
+export function SubmissionsClosedNotice({ event }: { event: EventRow }) {
+  return (
+    <div>
+      <div
+        className="grid h-10 w-10 place-items-center rounded-md"
+        style={{ background: "var(--magenta-soft)", color: "var(--magenta)" }}
+      >
+        <Lock className="h-5 w-5" strokeWidth={2} />
+      </div>
+      <h3 className="mt-4 text-xl font-bold text-foreground">Submission round closed</h3>
+      <p className="mt-2 text-sm text-muted-foreground">
+        The submission period for {event.name} ended on{" "}
+        <strong className="text-foreground">{formatDateTime(event.submissions_close_at)}</strong>,
+        so new entries are no longer accepted. Projects already submitted are now with the judging
+        panel.
+      </p>
+    </div>
+  );
 }
 
 // Teammates besides the team lead (the database allows up to 20).

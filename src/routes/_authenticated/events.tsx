@@ -25,6 +25,9 @@ import {
   useOrganisers,
   PHASES,
   formatDate,
+  formatDateTime,
+  submissionsClosed,
+  timeUntil,
   type EventRow,
   type Phase,
   type RoundRow,
@@ -55,6 +58,14 @@ const tabs: { id: Tab; label: string; icon: React.ComponentType<{ className?: st
   { id: "rounds", label: "Rounds", icon: ClipboardList },
   { id: "rubric", label: "Rubric", icon: SettingsIcon },
 ];
+
+/** ISO timestamp -> the "YYYY-MM-DDTHH:mm" a datetime-local input shows, in local time. */
+function toLocalInput(iso: string | null | undefined) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const statusTone = (s: string) => (s === "active" ? "teal" : s === "closed" ? "gray" : "magenta");
 
@@ -206,6 +217,7 @@ function DetailsTab({
     status: "draft" as EventRow["status"],
     brief_url: "",
     show_live_rankings: true,
+    submissions_close_at: "",
   });
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -218,6 +230,7 @@ function DetailsTab({
       status: event?.status ?? "draft",
       brief_url: event?.brief_url ?? "",
       show_live_rankings: event?.show_live_rankings ?? true,
+      submissions_close_at: toLocalInput(event?.submissions_close_at),
     });
   }, [
     event?.id,
@@ -228,12 +241,20 @@ function DetailsTab({
     event?.status,
     event?.brief_url,
     event?.show_live_rankings,
+    event?.submissions_close_at,
   ]);
 
   async function submit(status?: EventRow["status"]) {
     const next = { ...form, status: status ?? form.status };
     setForm(next);
-    const id = await save.mutateAsync({ id: event?.id, ...next });
+    const id = await save.mutateAsync({
+      id: event?.id,
+      ...next,
+      // The input is in the organiser's local time; store the exact moment.
+      submissions_close_at: next.submissions_close_at
+        ? new Date(next.submissions_close_at).toISOString()
+        : null,
+    });
     if (!event) onCreated(id);
     setNotice(status === "active" ? "Hackathon published - it now accepts entries." : "Saved.");
   }
@@ -277,6 +298,53 @@ function DetailsTab({
             value={form.ends_on}
             onChange={(e) => setForm({ ...form, ends_on: e.target.value })}
           />
+        </div>
+        <div className="rounded-md border border-border p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm font-medium text-foreground">Submission period</span>
+            {event?.submissions_close_at &&
+              (submissionsClosed(event) ? (
+                <Pill tone="gray">Closed {formatDateTime(event.submissions_close_at)}</Pill>
+              ) : (
+                <Pill tone="teal" variant="outline">
+                  Open - closes in {timeUntil(event.submissions_close_at)}
+                </Pill>
+              ))}
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Participants can submit until this date and time (your local time). After it passes,
+            the entry form shows that the submission round is closed. To extend the submission
+            period, set a later time and save. Leave it empty to keep entries open while the
+            hackathon is published.
+          </p>
+          <div className="mt-3 flex flex-wrap items-end gap-2">
+            <div className="w-full sm:w-64">
+              <Text
+                label="Submissions close"
+                type="datetime-local"
+                value={form.submissions_close_at}
+                onChange={(e) => setForm({ ...form, submissions_close_at: e.target.value })}
+              />
+            </div>
+            {form.ends_on && (
+              <Button
+                variant="ghost"
+                tone="teal"
+                onClick={() => setForm({ ...form, submissions_close_at: `${form.ends_on}T23:59` })}
+              >
+                Use end date, 11:59 PM
+              </Button>
+            )}
+            {form.submissions_close_at && (
+              <Button
+                variant="ghost"
+                tone="magenta"
+                onClick={() => setForm({ ...form, submissions_close_at: "" })}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
         <label className="block sm:max-w-xs">
           <span className="mb-1.5 block text-sm font-medium text-foreground">Status</span>

@@ -3,8 +3,15 @@ import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Card, Pill } from "@/components/app-shell";
 import { PlpLogo, SiteFooter } from "@/components/brand";
-import { EntryForm } from "@/components/entry-form";
-import { useActiveEvent, useRounds, formatDate } from "@/lib/hackathon";
+import { EntryForm, SubmissionsClosedNotice } from "@/components/entry-form";
+import {
+  useActiveEvent,
+  useRounds,
+  useNow,
+  formatDate,
+  formatDateTime,
+  submissionsClosed,
+} from "@/lib/hackathon";
 
 export const Route = createFileRoute("/submit")({
   head: () => ({
@@ -31,6 +38,8 @@ function SubmitPage() {
   const { data: event, isLoading } = useActiveEvent();
   const { data: rounds = [] } = useRounds(event?.id);
   const [doneId, setDoneId] = useState<string | null>(null);
+  const now = useNow();
+  const closed = !!event && submissionsClosed(event, now);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -100,14 +109,30 @@ function SubmitPage() {
           </Card>
         )}
 
-        {!isLoading && event && !doneId && (
+        {!isLoading && event && !doneId && closed && (
+          <Card className="p-8">
+            <SubmissionsClosedNotice event={event} />
+            <Link
+              to="/hackathon"
+              search={{ event: event.id }}
+              className="mt-6 inline-flex items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              View the hackathon page
+            </Link>
+          </Card>
+        )}
+
+        {!isLoading && event && !doneId && !closed && (
           <>
             <Pill tone="teal" variant="outline">
               Open for entries
             </Pill>
             <h1 className="mt-4 text-3xl font-bold text-foreground">Submit your project</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {event.name} · closes {formatDate(event.ends_on)}
+              {event.name} · closes{" "}
+              {event.submissions_close_at
+                ? formatDateTime(event.submissions_close_at)
+                : formatDate(event.ends_on)}
             </p>
             {event.description && (
               <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">

@@ -70,6 +70,7 @@ export type Database = {
           show_live_rankings: boolean
           starts_on: string | null
           status: string
+          submissions_close_at: string | null
           updated_at: string
         }
         Insert: {
@@ -83,6 +84,7 @@ export type Database = {
           show_live_rankings?: boolean
           starts_on?: string | null
           status?: string
+          submissions_close_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -96,6 +98,7 @@ export type Database = {
           show_live_rankings?: boolean
           starts_on?: string | null
           status?: string
+          submissions_close_at?: string | null
           updated_at?: string
         }
         Relationships: []

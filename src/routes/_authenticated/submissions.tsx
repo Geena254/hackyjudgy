@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Trash2, X } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +16,9 @@ import {
 } from "@/lib/hackathon";
 
 export const Route = createFileRoute("/_authenticated/submissions")({
+  // `q` arrives from the workspace search bar.
+  validateSearch: (s: Record<string, unknown>): { q?: string } =>
+    typeof s.q === "string" && s.q ? { q: s.q } : {},
   head: () => ({
     meta: [
       { title: "Entries - GavelLab" },
@@ -43,7 +46,9 @@ function SubmissionsAdmin() {
   const { data: subs = [] } = useSubmissions(eventId);
   const remove = useDeleteSubmission();
 
-  const [query, setQuery] = useState("");
+  const { q } = Route.useSearch();
+  const [query, setQuery] = useState(q ?? "");
+  useEffect(() => setQuery(q ?? ""), [q]);
   const [editing, setEditing] = useState<SubmissionRow | null>(null);
   const [open, setOpen] = useState(false);
 
