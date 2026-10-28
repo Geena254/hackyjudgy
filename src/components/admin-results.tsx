@@ -1,8 +1,19 @@
 import { Fragment, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, Download, FileText, Trophy } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  FileText,
+  Trophy,
+} from "lucide-react";
 import { Card, Button, Pill } from "@/components/app-shell";
 import {
+  AI_JUDGE,
+  aiJudgeMarks,
+  useAiReviews,
   useAllReviews,
   useAssignments,
   panelFor,
@@ -22,6 +33,65 @@ type Judge = { id: string; name: string; email: string };
 const fmt = (n: number | null | undefined, digits = 1) =>
   n === null || n === undefined ? " - " : n.toFixed(digits).replace(/\.0$/, "");
 
+// Projects shown at a time in each results table.
+const PAGE_SIZE = 10;
+
+/** One page of `items`, kept in range when the list shrinks. */
+function usePage<T>(items: T[]) {
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const current = Math.min(page, pages - 1);
+  return {
+    rows: items.slice(current * PAGE_SIZE, (current + 1) * PAGE_SIZE),
+    page: current,
+    pages,
+    total: items.length,
+    setPage,
+  };
+}
+
+/** "11-20 of 125" with back and forward arrows; hidden when everything fits on one page. */
+function Pager({
+  page,
+  pages,
+  total,
+  setPage,
+  noun,
+}: {
+  page: number;
+  pages: number;
+  total: number;
+  setPage: (page: number) => void;
+  noun: string;
+}) {
+  if (pages <= 1) return null;
+  const arrow =
+    "grid h-8 w-8 place-items-center rounded-md border border-border text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-40";
+  return (
+    <div className="mt-4 flex items-center justify-end gap-3">
+      <span className="text-xs text-muted-foreground">
+        {page * PAGE_SIZE + 1}-{Math.min(total, (page + 1) * PAGE_SIZE)} of {total} {noun}
+      </span>
+      <button
+        className={arrow}
+        onClick={() => setPage(page - 1)}
+        disabled={page === 0}
+        aria-label={`Previous ${PAGE_SIZE} ${noun}`}
+      >
+        <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+      </button>
+      <button
+        className={arrow}
+        onClick={() => setPage(page + 1)}
+        disabled={page >= pages - 1}
+        aria-label={`Next ${PAGE_SIZE} ${noun}`}
+      >
+        <ArrowRight className="h-4 w-4" strokeWidth={2} />
+      </button>
+    </div>
+  );
+}
+
 /** Admin view of the event results: leaderboard, per-judge breakdown and CSV export. */
 export function AdminResults({
   event,
@@ -38,29 +108,43 @@ export function AdminResults({
   scores: ScoreRow[];
   judges: Judge[];
 }) {
-  const { data: reviews = [] } = useAllReviews();
+  const { data: panelReviews = [] } = useAllReviews();
   const { data: assignments = [] } = useAssignments(event?.id);
+  const { data: aiReviews = [] } = useAiReviews(event?.id);
   const panel = useMemo(() => panelFor(assignments), [assignments]);
   const [open, setOpen] = useState<string | null>(null);
 
+  // Approved AI results count as one more judge on entries the panel hasn't covered;
+  // drafts never reach the results.
+  const { resultJudges, resultScores, reviews } = useMemo(() => {
+    const ai = aiJudgeMarks(aiReviews, { subs, rounds, criteria, scores, judgeIds: judges.map((j) => j.id) });
+    return ai.active
+      ? {
+          resultJudges: [...judges, AI_JUDGE],
+          resultScores: [...scores, ...ai.scores],
+          reviews: [...panelReviews, ...ai.reviews],
+        }
+      : { resultJudges: judges, resultScores: scores, reviews: panelReviews };
+  }, [aiReviews, subs, rounds, criteria, judges, scores, panelReviews]);
+
   // Only count scores from judges currently on the panel.
   const panelScores = useMemo(() => {
-    const ids = new Set(judges.map((j) => j.id));
-    return scores.filter((s) => ids.has(s.judge_id));
-  }, [scores, judges]);
+    const ids = new Set(resultJudges.map((j) => j.id));
+    return resultScores.filter((s) => ids.has(s.judge_id));
+  }, [resultScores, resultJudges]);
 
   const rubric = useMemo(() => judgingRubric(rounds, criteria), [rounds, criteria]);
   const totalWeight = rubric.reduce((sum, c) => sum + (c.weight || 0), 0);
 
   const standings = useMemo(
-    () => rankStandings(subs, criteria, rounds, scores, judges.map((j) => j.id)),
-    [subs, criteria, rounds, scores, judges],
+    () => rankStandings(subs, criteria, rounds, resultScores, resultJudges.map((j) => j.id)),
+    [subs, criteria, rounds, resultScores, resultJudges],
   );
 
   // Each judge's own weighted score for each team.
   const matrix = useMemo(
     () =>
-      judges.map((j) => {
+      resultJudges.map((j) => {
         const cells = subs.map((s) => {
           const crit = criteriaForSubmission(s, rounds, criteria);
           const vals = scoreMap(panelScores, s.id, j.id);
@@ -77,13 +161,18 @@ export function AdminResults({
           ? done.reduce((sum, c) => sum + (c.percent ?? 0), 0) / done.length
           : null;
         // Shared out: a judge is finished once their own share is scored.
-        const share = subs.filter((s) => panel.expects(j.id, s.id)).length;
+        // The AI judge has no share of its own, so it never counts as a judge to wait for.
+        const share = j.id === AI_JUDGE.id ? 0 : subs.filter((s) => panel.expects(j.id, s.id)).length;
         return { judge: j, cells, completed: done.length, share, avg };
       }),
-    [judges, subs, rounds, criteria, panelScores, panel],
+    [resultJudges, subs, rounds, criteria, panelScores, panel],
   );
 
   const judgesDone = matrix.filter((m) => m.share > 0 && m.completed >= m.share).length;
+
+  // Each table pages through the projects separately; the CSV still has them all.
+  const leaderboardPage = usePage(standings);
+  const judgePage = usePage(standings);
 
   function exportCsv() {
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
@@ -94,7 +183,7 @@ export function AdminResults({
       ...rubric.map((c) => `${c.name} (avg /${c.max_score || 5}, weight ${c.weight})`),
       "Weighted total /100",
       "Judges scored",
-      ...judges.map((j) => `${j.name} (/100)`),
+      ...resultJudges.map((j) => `${j.name} (/100)`),
     ];
     const lines = standings.map((st) => [
       st.rank ?? "",
@@ -163,7 +252,7 @@ export function AdminResults({
               </tr>
             </thead>
             <tbody>
-              {standings.map((st) => {
+              {leaderboardPage.rows.map((st) => {
                 const isOpen = open === st.submission.id;
                 return (
                   <Fragment key={st.submission.id}>
@@ -208,7 +297,7 @@ export function AdminResults({
                         {fmt(st.weightedTotal)}
                       </td>
                       <td className="py-3 pr-3 text-right tabular-nums text-muted-foreground">
-                        {st.judgeCount}/{judges.length}
+                        {st.judgeCount}/{resultJudges.length}
                       </td>
                       <td className="py-3 text-right">
                         <Link
@@ -247,6 +336,7 @@ export function AdminResults({
             </tbody>
           </table>
         </div>
+        <Pager {...leaderboardPage} noun="projects" />
         {standings.some((s) => s.tied) && (
           <p className="mt-3 text-xs text-muted-foreground">
             Tie: still level after the rubric tie-breakers ({TIE_BREAKERS.join(", then ")}) - decide by
@@ -265,7 +355,7 @@ export function AdminResults({
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <th className="py-2 pr-3">Judge</th>
-                {standings.map((st) => (
+                {judgePage.rows.map((st) => (
                   <th key={st.submission.id} className="py-2 pr-3 text-right normal-case tracking-normal">
                     {st.submission.title}
                   </th>
@@ -283,7 +373,7 @@ export function AdminResults({
                       <div className="text-xs text-muted-foreground">{m.judge.email}</div>
                     )}
                   </td>
-                  {standings.map((st) => {
+                  {judgePage.rows.map((st) => {
                     const cell = m.cells.find((c) => c.submissionId === st.submission.id);
                     return (
                       <td key={st.submission.id} className="py-2.5 pr-3 text-right tabular-nums">
@@ -308,7 +398,7 @@ export function AdminResults({
               ))}
               {matrix.length === 0 && (
                 <tr>
-                  <td colSpan={standings.length + 3} className="py-6 text-center text-muted-foreground">
+                  <td colSpan={judgePage.rows.length + 3} className="py-6 text-center text-muted-foreground">
                     No judges on the panel yet.
                   </td>
                 </tr>
@@ -316,6 +406,7 @@ export function AdminResults({
             </tbody>
           </table>
         </div>
+        {matrix.length > 0 && <Pager {...judgePage} noun="projects" />}
       </Card>
     </div>
   );

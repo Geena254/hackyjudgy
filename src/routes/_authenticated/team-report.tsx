@@ -13,6 +13,9 @@ import {
   useAllScores,
   useAllReviews,
   useJudges,
+  useAiReviews,
+  aiJudgeMarks,
+  AI_JUDGE,
   criteriaForSubmission,
   scoreMap,
   weightedPercent,
@@ -55,15 +58,35 @@ function TeamReports() {
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
-  const { data: scores = [] } = useAllScores();
-  const { data: reviews = [] } = useAllReviews();
+  const { data: panelScores = [] } = useAllScores();
+  const { data: panelReviews = [] } = useAllReviews();
   const { data: roster = [] } = useJudges(event?.id);
+  const { data: aiReviews = [] } = useAiReviews(event?.id);
 
   const [showNames, setShowNames] = useState(false);
   const [showRank, setShowRank] = useState(true);
 
+  // Approved AI results count as one more judge on entries the panel hasn't
+  // covered, listed after the panel.
+  const ai = useMemo(
+    () =>
+      aiJudgeMarks(aiReviews, {
+        subs,
+        rounds,
+        criteria,
+        scores: panelScores,
+        judgeIds: roster.map((j) => j.id),
+      }),
+    [aiReviews, subs, rounds, criteria, panelScores, roster],
+  );
+  const scores = useMemo(() => [...panelScores, ...ai.scores], [panelScores, ai]);
+  const reviews = useMemo(() => [...panelReviews, ...ai.reviews], [panelReviews, ai]);
+
   // Stable judge numbering (Judge 1, 2, …) across every team's report.
-  const judges = useMemo(() => [...roster].sort((a, b) => a.name.localeCompare(b.name)), [roster]);
+  const judges = useMemo(
+    () => [...[...roster].sort((a, b) => a.name.localeCompare(b.name)), ...(ai.active ? [AI_JUDGE] : [])],
+    [roster, ai],
+  );
   const rubric = useMemo(() => judgingRubric(rounds, criteria), [rounds, criteria]);
   const standings = useMemo(
     () => rankStandings(subs, criteria, rounds, scores, judges.map((j) => j.id)),

@@ -206,6 +206,113 @@ export function useAllScores() {
   });
 }
 
+/* ------------------------------- AI grading ------------------------------- */
+
+export type AiReviewStatus = "draft" | "approved" | "rejected" | "failed";
+
+export type AiReviewRow = {
+  id: string;
+  submission_id: string;
+  status: AiReviewStatus;
+  feedback: string | null;
+  error: string | null;
+  model: string | null;
+  reviewed_at: string | null;
+  updated_at: string;
+  /** What the AI read (README, deck...) and which links it couldn't; empty before it was recorded. */
+  sources: string[];
+  scores: { criterion_id: string; value: number }[];
+};
+
+/** Organiser-only: Claude's draft and approved results for a hackathon (RLS hides them from judges). */
+export function useAiReviews(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ["ai-reviews", eventId],
+    enabled: !!eventId,
+    queryFn: async () => {
+      // "*" so this keeps working on a database without the newer sources column.
+      const { data, error } = await supabase
+        .from("ai_reviews")
+        .select("*, ai_scores(criterion_id, value)")
+        .eq("event_id", eventId!);
+      if (error) throw error;
+      return (data ?? []).map(({ ai_scores, ...row }) => ({
+        ...row,
+        sources: row.sources ?? [],
+        status: row.status as AiReviewStatus,
+        scores: (ai_scores ?? []).map((s) => ({ criterion_id: s.criterion_id, value: Number(s.value) })),
+      })) as AiReviewRow[];
+    },
+  });
+}
+
+/** Stands in for a judge id wherever approved AI results are counted. */
+export const AI_JUDGE_ID = "ai-judge";
+export const AI_JUDGE = { id: AI_JUDGE_ID, name: "AI judge", email: "" };
+
+/**
+ * AI is a fallback for entries the panel hasn't covered: its approved result
+ * counts while at most this many judges have finished scoring the entry.
+ */
+export const AI_FALLBACK_MAX_JUDGES = 2;
+
+type PanelContext = {
+  subs: SubmissionRow[];
+  rounds: RoundRow[];
+  criteria: CriterionRow[];
+  /** Panel judges' scores (no AI scores). */
+  scores: ScoreRow[];
+  judgeIds: string[];
+};
+
+/** How many panel judges have scored every criterion of each entry. */
+export function finishedJudgeCounts({ subs, rounds, criteria, scores, judgeIds }: PanelContext) {
+  const counts = new Map<string, number>();
+  for (const s of subs) {
+    const crit = criteriaForSubmission(s, rounds, criteria);
+    const finished = judgeIds.filter((j) => {
+      const vals = scoreMap(scores, s.id, j);
+      return crit.length > 0 && crit.every((c) => vals[c.id] !== undefined);
+    }).length;
+    counts.set(s.id, finished);
+  }
+  return counts;
+}
+
+/** Does this entry's approved AI result count, given how many judges finished it? */
+export const aiCounts = (finishedJudges: number) => finishedJudges <= AI_FALLBACK_MAX_JUDGES;
+
+/**
+ * Approved AI results as one more judge: their scores and feedback in the same
+ * shape as a panel judge's. Drafts and rejected results are left out, and so are
+ * entries already finished by more than AI_FALLBACK_MAX_JUDGES judges.
+ */
+export function aiJudgeMarks(aiReviews: AiReviewRow[], panel: PanelContext) {
+  const finished = finishedJudgeCounts(panel);
+  const approved = aiReviews.filter(
+    (r) => r.status === "approved" && aiCounts(finished.get(r.submission_id) ?? 0),
+  );
+  const scores: ScoreRow[] = approved.flatMap((r) =>
+    r.scores.map((s) => ({
+      id: `ai-${r.id}-${s.criterion_id}`,
+      submission_id: r.submission_id,
+      criterion_id: s.criterion_id,
+      judge_id: AI_JUDGE_ID,
+      value: s.value,
+    })),
+  );
+  const reviews: ReviewRow[] = approved.map((r) => ({
+    id: `ai-${r.id}`,
+    submission_id: r.submission_id,
+    judge_id: AI_JUDGE_ID,
+    feedback: r.feedback,
+    private_notes: null,
+    completed: true,
+    updated_at: r.reviewed_at ?? r.updated_at,
+  }));
+  return { active: approved.length > 0, scores, reviews };
+}
+
 /* ----------------------- sharing entries out to judges --------------------- */
 
 export type AssignmentRow = { submission_id: string; judge_id: string };
