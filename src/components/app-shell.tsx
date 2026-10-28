@@ -11,6 +11,7 @@ import {
   Plug,
   Scale,
   Search,
+  Sparkles,
   Settings,
   Trophy,
   X,
@@ -44,6 +45,7 @@ const adminNav = [
   { to: "/events", label: "Events", icon: CalendarDays },
   { to: "/submissions", label: "Submissions", icon: FolderOpen },
   { to: "/judges", label: "Judges", icon: Scale },
+  { to: "/ai-grading", label: "AI grading", icon: Sparkles },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/integrations", label: "Integrations", icon: Plug },
 ] as const;

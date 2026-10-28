@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_reviews: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error: string | null
+          event_id: string
+          feedback: string | null
+          id: string
+          model: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sources: string[]
+          status: string
+          submission_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          event_id: string
+          feedback?: string | null
+          id?: string
+          model?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sources?: string[]
+          status?: string
+          submission_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          event_id?: string
+          feedback?: string | null
+          id?: string
+          model?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sources?: string[]
+          status?: string
+          submission_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_reviews_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_reviews_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_scores: {
+        Row: {
+          ai_review_id: string
+          criterion_id: string
+          id: string
+          value: number
+        }
+        Insert: {
+          ai_review_id: string
+          criterion_id: string
+          id?: string
+          value: number
+        }
+        Update: {
+          ai_review_id?: string
+          criterion_id?: string
+          id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_scores_ai_review_id_fkey"
+            columns: ["ai_review_id"]
+            isOneToOne: false
+            referencedRelation: "ai_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_scores_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "criteria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       criteria: {
         Row: {
           created_at: string

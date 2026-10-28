@@ -30,6 +30,9 @@ import {
   useAllScores,
   useJudges,
   useAssignments,
+  useAiReviews,
+  aiJudgeMarks,
+  AI_JUDGE,
   useNow,
   panelFor,
   useOrganisers,
@@ -309,26 +312,30 @@ function Dashboard() {
   }, [entryProgress]);
 
   const judgesFinished = judgeProgress.filter((j) => j.share > 0 && j.scored === j.share).length;
+
+  // Final scores: the panel plus approved AI results, counted as one more judge.
+  const { data: aiReviews = [] } = useAiReviews(event?.id);
+  const { resultScores, resultJudgeIds } = useMemo(() => {
+    const judgeIds = judges.map((j) => j.id);
+    const ai = aiJudgeMarks(aiReviews, { subs, rounds, criteria, scores, judgeIds });
+    return {
+      resultScores: [...scores, ...ai.scores],
+      resultJudgeIds: [...judgeIds, ...(ai.active ? [AI_JUDGE.id] : [])],
+    };
+  }, [aiReviews, subs, rounds, criteria, scores, judges]);
   const standings = useMemo(
-    () =>
-      rankStandings(
-        subs,
-        criteria,
-        rounds,
-        scores,
-        judges.map((j) => j.id),
-      ),
-    [subs, criteria, rounds, scores, judges],
+    () => rankStandings(subs, criteria, rounds, resultScores, resultJudgeIds),
+    [subs, criteria, rounds, resultScores, resultJudgeIds],
   );
   const leaders = standings.filter((s) => s.weightedTotal != null).slice(0, 5);
 
   // Panel average for each rubric criterion, across every scored entry.
   const rubric = useMemo(() => {
     const list = judgingRubric(rounds, criteria);
-    const panelIds = new Set(judges.map((j) => j.id));
+    const panelIds = new Set(resultJudgeIds);
     const totalWeight = list.reduce((sum, c) => sum + (c.weight || 0), 0);
     return list.map((c) => {
-      const values = scores
+      const values = resultScores
         .filter((s) => s.criterion_id === c.id && panelIds.has(s.judge_id))
         .map((s) => Number(s.value));
       const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
@@ -338,7 +345,7 @@ function Dashboard() {
         avg,
       };
     });
-  }, [rounds, criteria, scores, judges]);
+  }, [rounds, criteria, resultScores, resultJudgeIds]);
 
   const closeAt = event?.submissions_close_at;
   const closed = !!event && submissionsClosed(event, now);
