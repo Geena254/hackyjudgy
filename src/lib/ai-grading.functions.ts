@@ -9,21 +9,43 @@ const MAX_STYLE_EXAMPLES = 8;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type UserClient = any;
+type AdminClient = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
 
 export type AiGradeResult =
   | { status: "drafted"; submissionId: string }
   | { status: "skipped"; submissionId: string; reason: string }
   | { status: "failed"; submissionId: string; error: string };
 
-async function assertOrganiser(supabase: UserClient, userId: string) {
-  const { data, error } = await supabase
+/**
+ * AI results are read and saved with the server's own database client, so the
+ * permission check happens here, with the same rule as private.can_manage_event:
+ * platform admins manage every hackathon, organisers only the ones they created.
+ */
+async function canManageEvent(db: AdminClient, userId: string, eventId: string) {
+  const { data: roles, error } = await db
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
     .in("role", ["admin", "organiser"]);
   if (error) throw new Error(error.message);
-  if (!data?.length) throw new Error("Only organisers can use AI grading.");
+  if (roles?.some((r) => r.role === "admin")) return true;
+  if (!roles?.some((r) => r.role === "organiser")) return false;
+  const { data: event, error: eventError } = await db
+    .from("events")
+    .select("created_by")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (eventError) throw new Error(eventError.message);
+  return event?.created_by === userId;
 }
+
+async function assertCanManageEvent(db: AdminClient, userId: string, eventId: string) {
+  if (!(await canManageEvent(db, userId, eventId))) {
+    throw new Error("Only this hackathon's organisers can use AI grading.");
+  }
+}
+
+const serverDb = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 
 /** The rubric an entry is scored on (same rule as criteriaForSubmission in hackathon.ts). */
 function rubricFor(
@@ -78,16 +100,9 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<AiGradeResult> => {
     const { supabase, userId } = context;
     const submissionId = data.submissionId;
-    await assertOrganiser(supabase, userId);
-    if (!process.env["ANTHROPIC_API_KEY"]) {
-      return {
-        status: "failed",
-        submissionId,
-        error: "AI grading is not set up: ANTHROPIC_API_KEY is missing.",
-      };
-    }
+    const db = await serverDb();
 
-    const { data: sub, error: subError } = await supabase
+    const { data: sub, error: subError } = await db
       .from("submissions")
       .select(
         "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, video_url, concept_note_url, status",
@@ -96,9 +111,16 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
       .maybeSingle();
     if (subError) throw new Error(subError.message);
     if (!sub) throw new Error("Entry not found.");
+    await assertCanManageEvent(db, userId, sub.event_id);
+    if (!process.env["ANTHROPIC_API_KEY"]) {
+      return {
+        status: "failed",
+        submissionId,
+        error: "AI grading is not set up: ANTHROPIC_API_KEY is missing.",
+      };
+    }
 
-    // Only this hackathon's organisers can read or write its AI results (RLS).
-    const { data: existing, error: existingError } = await supabase
+    const { data: existing, error: existingError } = await db
       .from("ai_reviews")
       .select("id, status")
       .eq("submission_id", sub.id)
@@ -114,7 +136,7 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
       return { status: "skipped", submissionId, reason: "Disqualified" };
     }
 
-    const { data: event, error: eventError } = await supabase
+    const { data: event, error: eventError } = await db
       .from("events")
       .select("id, name")
       .eq("id", sub.event_id)
@@ -122,14 +144,14 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
     if (eventError) throw new Error(eventError.message);
     if (!event) throw new Error("Hackathon not found.");
 
-    const { data: rounds, error: roundsError } = await supabase
+    const { data: rounds, error: roundsError } = await db
       .from("rounds")
       .select("id, phase, sort_order")
       .eq("event_id", event.id);
     if (roundsError) throw new Error(roundsError.message);
     const roundIds = (rounds ?? []).map((r) => r.id);
     const { data: criteria, error: criteriaError } = roundIds.length
-      ? await supabase
+      ? await db
           .from("criteria")
           .select("id, round_id, name, description, weight, max_score, sort_order")
           .in("round_id", roundIds)
@@ -165,7 +187,7 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
       console.error("gradeSubmissionWithAi failed", submissionId, e);
       // Keep an existing draft as it was; otherwise record the failure so a re-run retries it.
       if (existing?.status !== "draft") {
-        await supabase.from("ai_reviews").upsert(
+        await db.from("ai_reviews").upsert(
           {
             event_id: event.id,
             submission_id: sub.id,
@@ -195,7 +217,7 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
       console.warn("gradeSubmissionWithAi: Claude skipped some criteria", submissionId);
     }
 
-    const { data: saved, error: saveError } = await supabase
+    const { data: saved, error: saveError } = await db
       .from("ai_reviews")
       .upsert(
         {
@@ -215,19 +237,16 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
       .single();
     if (saveError) throw new Error(saveError.message);
 
-    const { error: clearError } = await supabase
-      .from("ai_scores")
-      .delete()
-      .eq("ai_review_id", saved.id);
+    const { error: clearError } = await db.from("ai_scores").delete().eq("ai_review_id", saved.id);
     if (clearError) throw new Error(clearError.message);
-    const { error: scoresError } = await supabase
+    const { error: scoresError } = await db
       .from("ai_scores")
       .insert(values.map((v) => ({ ...v, ai_review_id: saved.id })));
     if (scoresError) throw new Error(scoresError.message);
 
     // What the AI read, for the organiser. Saved separately so grading still works
     // on a database that doesn't have the sources column yet.
-    const { error: sourcesError } = await supabase
+    const { error: sourcesError } = await db
       .from("ai_reviews")
       .update({
         sources: [...materials.read, ...materials.unread.map((u) => `Not read: ${u}`)],
@@ -257,16 +276,17 @@ export const reviewAiResult = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await assertOrganiser(supabase, userId);
+    const { userId } = context;
+    const db = await serverDb();
 
-    const { data: review, error } = await supabase
+    const { data: review, error } = await db
       .from("ai_reviews")
-      .select("id, status")
+      .select("id, event_id, status")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!review) throw new Error("AI result not found.");
+    await assertCanManageEvent(db, userId, review.event_id);
     if (review.status === "failed")
       throw new Error("This entry has no AI result yet. Run AI grading again.");
 
@@ -277,7 +297,7 @@ export const reviewAiResult = createServerFn({ method: "POST" })
 
     if (data.scores?.length) {
       const ids = data.scores.map((s) => s.criterion_id);
-      const { data: crit, error: critError } = await supabase
+      const { data: crit, error: critError } = await db
         .from("criteria")
         .select("id, name, max_score")
         .in("id", ids);
@@ -290,7 +310,7 @@ export const reviewAiResult = createServerFn({ method: "POST" })
           throw new Error(`${c.name} must be between 0 and ${max}, in steps of 0.5.`);
         }
       }
-      const { error: upsertError } = await supabase.from("ai_scores").upsert(
+      const { error: upsertError } = await db.from("ai_scores").upsert(
         data.scores.map((s) => ({
           ai_review_id: review.id,
           criterion_id: s.criterion_id,
@@ -311,7 +331,7 @@ export const reviewAiResult = createServerFn({ method: "POST" })
             : review.status;
     const decided = data.action === "approve" || data.action === "reject";
     const { plainDashes } = await import("@/lib/ai-grading.server");
-    const { error: updateError } = await supabase
+    const { error: updateError } = await db
       .from("ai_reviews")
       .update({
         status,
@@ -322,4 +342,35 @@ export const reviewAiResult = createServerFn({ method: "POST" })
       .eq("id", review.id);
     if (updateError) throw new Error(updateError.message);
     return { ok: true as const, status };
+  });
+
+/** A hackathon's AI results (drafts and decisions), for its organisers only; empty for anyone else. */
+export const listAiReviews = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ eventId: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const db = await serverDb();
+    // Judges' pages load this too: they get nothing, as RLS gave them before.
+    if (!(await canManageEvent(db, context.userId, data.eventId))) return [];
+    // "*" so this keeps working on a database without the newer sources column.
+    const { data: rows, error } = await db
+      .from("ai_reviews")
+      .select("*, ai_scores(criterion_id, value)")
+      .eq("event_id", data.eventId);
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map(({ ai_scores, ...row }) => ({
+      id: row.id,
+      submission_id: row.submission_id,
+      status: row.status,
+      feedback: row.feedback,
+      error: row.error,
+      model: row.model,
+      reviewed_at: row.reviewed_at,
+      updated_at: row.updated_at,
+      sources: row.sources ?? [],
+      scores: (ai_scores ?? []).map((sc) => ({
+        criterion_id: sc.criterion_id,
+        value: Number(sc.value),
+      })),
+    }));
   });

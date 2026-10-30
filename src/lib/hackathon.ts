@@ -230,18 +230,9 @@ export function useAiReviews(eventId: string | undefined) {
     queryKey: ["ai-reviews", eventId],
     enabled: !!eventId,
     queryFn: async () => {
-      // "*" so this keeps working on a database without the newer sources column.
-      const { data, error } = await supabase
-        .from("ai_reviews")
-        .select("*, ai_scores(criterion_id, value)")
-        .eq("event_id", eventId!);
-      if (error) throw error;
-      return (data ?? []).map(({ ai_scores, ...row }) => ({
-        ...row,
-        sources: row.sources ?? [],
-        status: row.status as AiReviewStatus,
-        scores: (ai_scores ?? []).map((s) => ({ criterion_id: s.criterion_id, value: Number(s.value) })),
-      })) as AiReviewRow[];
+      // Loaded through the server, which checks the viewer organises this hackathon.
+      const { listAiReviews } = await import("@/lib/ai-grading.functions");
+      return (await listAiReviews({ data: { eventId: eventId! } })) as AiReviewRow[];
     },
   });
 }
@@ -1015,7 +1006,7 @@ export function buildStandings(
     });
 
 
-    const scoredParts = breakdown.filter((b) => b.average !== null);
+    const scoredParts =breakdown.filter((b) => b.average !== null);
     const weightedTotal =
       scoredParts.length === 0
         ? null
