@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   BarChart3,
   CalendarDays,
@@ -8,6 +8,8 @@ import {
   FolderOpen,
   LayoutDashboard,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plug,
   Scale,
   Search,
@@ -150,19 +152,25 @@ function SideLink({
   icon: Icon,
   active,
   onClick,
+  iconOnly = false,
 }: {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   active: boolean;
   onClick?: () => void;
+  /** Collapsed sidebar: just the icon, with the name as a tooltip. */
+  iconOnly?: boolean;
 }) {
   return (
     <Link
       to={to}
       onClick={onClick}
+      title={iconOnly ? label : undefined}
+      aria-label={iconOnly ? label : undefined}
       className={
-        "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors " +
+        "flex items-center rounded-lg border py-2.5 text-sm font-medium transition-colors " +
+        (iconOnly ? "justify-center px-0 " : "gap-3 px-3 ") +
         (active
           ? "border-[color:var(--teal)] bg-teal-soft"
           : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground")
@@ -170,9 +178,33 @@ function SideLink({
       style={active ? { color: "var(--teal)" } : undefined}
     >
       <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
-      {label}
+      {!iconOnly && label}
     </Link>
   );
+}
+
+const SIDEBAR_KEY = "gavellab.sidebar-collapsed";
+
+/** Whether the organiser sidebar is minimised, remembered in this browser. */
+function useSidebarCollapsed() {
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(SIDEBAR_KEY) === "1");
+    } catch {
+      // Storage can be blocked; the sidebar just starts open.
+    }
+  }, []);
+  const toggle = () =>
+    setCollapsed((v) => {
+      try {
+        window.localStorage.setItem(SIDEBAR_KEY, v ? "0" : "1");
+      } catch {
+        // Not remembered, but still toggles.
+      }
+      return !v;
+    });
+  return [collapsed, toggle] as const;
 }
 
 /** The selected hackathon, pinned to the foot of the organiser sidebar. */
@@ -219,8 +251,9 @@ function OrganiserLayout({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [collapsed, toggleCollapsed] = useSidebarCollapsed();
 
-  const links = (close?: () => void) => (
+  const links = (close?: () => void, iconOnly = false) => (
     <>
       {adminNav.map((n) => (
         <SideLink
@@ -230,6 +263,7 @@ function OrganiserLayout({
           icon={n.icon}
           active={pathname.startsWith(n.to)}
           onClick={close}
+          iconOnly={iconOnly}
         />
       ))}
       <SideLink
@@ -238,20 +272,50 @@ function OrganiserLayout({
         icon={Settings}
         active={pathname.startsWith("/settings")}
         onClick={close}
+        iconOnly={iconOnly}
       />
     </>
   );
 
+  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+
   return (
     <div className="flex min-h-screen bg-surface">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-background lg:flex">
-        <div className="flex h-16 items-center border-b border-border px-5">
-          <BrandLink />
+      <aside
+        className={
+          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-background transition-[width] duration-200 lg:flex " +
+          (collapsed ? "w-20" : "w-64")
+        }
+      >
+        <div
+          className={
+            "flex h-16 items-center border-b border-border " +
+            (collapsed ? "flex-col justify-center gap-1 px-2" : "justify-between gap-2 px-5")
+          }
+        >
+          <BrandLink showName={false} logoClassName={collapsed ? "h-7" : "h-10 sm:h-11"} />
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Minimise sidebar"}
+            aria-expanded={!collapsed}
+            title={collapsed ? "Expand sidebar" : "Minimise sidebar"}
+            className={
+              "shrink-0 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground " +
+              (collapsed ? "p-0.5" : "p-1.5")
+            }
+          >
+            <ToggleIcon className={collapsed ? "h-4 w-4" : "h-5 w-5"} strokeWidth={2} />
+          </button>
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">{links()}</nav>
-        <div className="p-3">
-          <SidebarEventCard />
-        </div>
+        <nav className={"flex-1 space-y-1 overflow-y-auto " + (collapsed ? "p-2" : "p-3")}>
+          {links(undefined, collapsed)}
+        </nav>
+        {!collapsed && (
+          <div className="p-3">
+            <SidebarEventCard />
+          </div>
+        )}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -267,6 +331,13 @@ function OrganiserLayout({
             <div className="lg:hidden">
               <BrandLink />
             </div>
+            {/* The sidebar shows the logo; the product name sits beside the search bar. */}
+            <Link
+              to="/"
+              className="hidden shrink-0 text-lg font-bold tracking-tight text-foreground lg:block"
+            >
+              GavelLab
+            </Link>
             <form
               className="relative hidden max-w-md flex-1 md:block"
               onSubmit={(e) => {
