@@ -13,13 +13,22 @@ export function PlpLogo({ className = "h-9" }: { className?: string }) {
   );
 }
 
-export function BrandLink() {
+export function BrandLink({
+  showName = true,
+  logoClassName = "h-10 sm:h-11",
+}: {
+  /** Show "GavelLab" beside the logo. */
+  showName?: boolean;
+  logoClassName?: string;
+}) {
   return (
     <Link to="/" className="flex shrink-0 items-center gap-3" aria-label="GavelLab home">
-      <PlpLogo className="h-10 sm:h-11" />
-      <span className="hidden border-l border-border pl-3 text-base font-bold tracking-tight text-foreground sm:inline">
-        GavelLab
-      </span>
+      <PlpLogo className={logoClassName} />
+      {showName && (
+        <span className="hidden border-l border-border pl-3 text-base font-bold tracking-tight text-foreground sm:inline">
+          GavelLab
+        </span>
+      )}
     </Link>
   );
 }
