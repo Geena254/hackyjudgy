@@ -7,6 +7,7 @@ import {
   FileText,
   Github,
   Globe,
+  Link2,
   Lock,
   PlayCircle,
   Presentation,
@@ -33,6 +34,14 @@ import {
   type CriterionRow,
   type SubmissionRow,
 } from "@/lib/hackathon";
+import {
+  FIELD_KINDS,
+  fieldValue,
+  formFor,
+  isCore,
+  type FieldKind,
+  type FormField,
+} from "@/lib/submission-form";
 
 export const Route = createFileRoute("/_authenticated/scoring")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -46,7 +55,10 @@ export const Route = createFileRoute("/_authenticated/scoring")({
         content: "Score submissions against the rubric with autosaved feedback and Save & Next.",
       },
       { property: "og:title", content: "Scoring Queue - GavelLab" },
-      { property: "og:description", content: "Work through your judging queue submission by submission." },
+      {
+        property: "og:description",
+        content: "Work through your judging queue submission by submission.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -229,24 +241,7 @@ function ScoringQueue() {
                   </p>
                 )}
 
-                <div className="mt-5">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Project materials
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                    {selected.concept_note_url && (
-                      <Material href={selected.concept_note_url} icon={FileText} label="Concept note" />
-                    )}
-                    <Material href={selected.video_url} icon={PlayCircle} label="Video demo" />
-                    <Material href={selected.deck_url} icon={Presentation} label="Pitch deck" />
-                    <Material href={selected.demo_url} icon={Globe} label="Live prototype" />
-                  </div>
-                  {selected.repo_url && (
-                    <div className="mt-3">
-                      <LinkOut href={selected.repo_url} icon={Github} label="Repository" />
-                    </div>
-                  )}
-                </div>
+                <EntryMaterials submission={selected} fields={formFor(event).fields} />
 
                 {!blind && (
                   <div className="mt-4 text-xs text-muted-foreground">
@@ -261,7 +256,11 @@ function ScoringQueue() {
                 key={`ai-${selected.id}`}
                 title={selected.title}
                 defaultText={selected.description ?? ""}
-                criteria={crit.map((c) => ({ name: c.name, description: c.description ?? null, weight: Number(c.weight) }))}
+                criteria={crit.map((c) => ({
+                  name: c.name,
+                  description: c.description ?? null,
+                  weight: Number(c.weight),
+                }))}
               />
 
               <Rubric
@@ -320,25 +319,67 @@ function Material({
   );
 }
 
-function LinkOut({
-  href,
-  icon: Icon,
-  label,
+const LINK_ICONS: Partial<Record<FieldKind, typeof Globe>> = {
+  concept_note_url: FileText,
+  video_url: PlayCircle,
+  deck_url: Presentation,
+  demo_url: Globe,
+  repo_url: Github,
+};
+
+/** What the entrant submitted, laid out by the hackathon's own submission form. */
+function EntryMaterials({
+  submission,
+  fields,
 }: {
-  href: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  label: string;
+  submission: SubmissionRow;
+  fields: FormField[];
 }) {
+  const shown = fields.filter((f) => !isCore(f.kind) && f.kind !== "category");
+  const links = shown.filter((f) => FIELD_KINDS[f.kind].isLink);
+  const answers = shown.filter((f) => !FIELD_KINDS[f.kind].isLink);
+  // An organiser may have added a concept note the form itself doesn't ask for.
+  const extraNote =
+    submission.concept_note_url && !links.some((f) => f.kind === "concept_note_url");
+  if (links.length === 0 && answers.length === 0 && !extraNote) return null;
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex items-center gap-2 text-sm font-semibold hover:underline"
-      style={{ color: "var(--teal)" }}
-    >
-      <Icon className="h-4 w-4" strokeWidth={2} /> {label}
-    </a>
+    <>
+      {(links.length > 0 || extraNote) && (
+        <div className="mt-5">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Project materials
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {extraNote && (
+              <Material href={submission.concept_note_url} icon={FileText} label="Concept note" />
+            )}
+            {links.map((f) => (
+              <Material
+                key={f.id}
+                href={fieldValue(submission, f) || null}
+                icon={LINK_ICONS[f.kind] ?? Link2}
+                label={f.label}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      {answers.map((f) => {
+        const value = fieldValue(submission, f);
+        return (
+          <div key={f.id} className="mt-4">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {f.label}
+            </div>
+            <p
+              className={`mt-1 whitespace-pre-line text-sm leading-relaxed ${value ? "text-foreground" : "text-muted-foreground"}`}
+            >
+              {value || "Not provided"}
+            </p>
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -433,7 +474,9 @@ function Rubric({
                     </span>
                   </div>
                   {c.description && (
-                    <div className="whitespace-pre-line text-xs text-muted-foreground">{c.description}</div>
+                    <div className="whitespace-pre-line text-xs text-muted-foreground">
+                      {c.description}
+                    </div>
                   )}
                 </div>
                 <div className="text-sm text-muted-foreground">

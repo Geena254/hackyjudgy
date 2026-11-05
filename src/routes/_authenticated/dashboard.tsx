@@ -313,16 +313,16 @@ function Dashboard() {
 
   const judgesFinished = judgeProgress.filter((j) => j.share > 0 && j.scored === j.share).length;
 
-  // Final scores: the panel plus approved AI results, counted as one more judge.
+  // Final scores: the panel plus approved AI results (when the judging mode uses AI).
   const { data: aiReviews = [] } = useAiReviews(event?.id);
   const { resultScores, resultJudgeIds } = useMemo(() => {
     const judgeIds = judges.map((j) => j.id);
-    const ai = aiJudgeMarks(aiReviews, { subs, rounds, criteria, scores, judgeIds });
+    const ai = aiJudgeMarks(aiReviews, event);
     return {
       resultScores: [...scores, ...ai.scores],
       resultJudgeIds: [...judgeIds, ...(ai.active ? [AI_JUDGE.id] : [])],
     };
-  }, [aiReviews, subs, rounds, criteria, scores, judges]);
+  }, [aiReviews, event, scores, judges]);
   const standings = useMemo(
     () => rankStandings(subs, criteria, rounds, resultScores, resultJudgeIds),
     [subs, criteria, rounds, resultScores, resultJudgeIds],

@@ -19,6 +19,8 @@ import {
   type EventRow,
 } from "@/lib/hackathon";
 import { ShareOutCard } from "@/components/share-out-card";
+import { JudgingSetupNotice } from "@/components/event-settings";
+import { JUDGING_MODES, judgingModeOf } from "@/lib/submission-form";
 import { useAuth, initials } from "@/hooks/use-auth";
 import { useSelectedEvent } from "@/hooks/use-selected-event";
 
@@ -270,7 +272,11 @@ function JudgesPage() {
           </div>
         )}
 
-        {isAdmin && event && <ShareOutCard event={event} />}
+        {isAdmin && event && <JudgingSetupNotice event={event} />}
+        {/* Sharing entries out only makes sense with a panel of judges. */}
+        {isAdmin && event && JUDGING_MODES[judgingModeOf(event)].maxJudges === null && (
+          <ShareOutCard event={event} />
+        )}
         {isAdmin && event && <PanelActivity event={event} />}
       </div>
     </AppShell>

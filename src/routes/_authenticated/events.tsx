@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ClipboardList,
   FileText,
+  ListChecks,
+  Scale,
   Plus,
   Settings as SettingsIcon,
   Trash2,
@@ -10,6 +12,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { AppShell, Card, Button, Pill } from "@/components/app-shell";
+import { JudgingTab, SubmissionFormTab } from "@/components/event-settings";
 import { useAuth } from "@/hooks/use-auth";
 import { useSelectedEvent } from "@/hooks/use-selected-event";
 import {
@@ -51,10 +54,12 @@ export const Route = createFileRoute("/_authenticated/events")({
   component: EventSetup,
 });
 
-type Tab = "details" | "rounds" | "rubric";
+type Tab = "details" | "form" | "judging" | "rounds" | "rubric";
 
 const tabs: { id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "details", label: "Hackathon details", icon: FileText },
+  { id: "form", label: "Submission form", icon: ListChecks },
+  { id: "judging", label: "Judging", icon: Scale },
   { id: "rounds", label: "Rounds", icon: ClipboardList },
   { id: "rubric", label: "Rubric", icon: SettingsIcon },
 ];
@@ -151,7 +156,7 @@ function EventSetup() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <Card className="h-fit p-2">
-          <nav className="flex flex-row gap-1 lg:flex-col">
+          <nav className="flex flex-row flex-wrap gap-1 lg:flex-col">
             {tabs.map((t) => {
               const active = tab === t.id;
               return (
@@ -187,9 +192,12 @@ function EventSetup() {
           )}
           {tab !== "details" && !event && (
             <Card className="p-8 text-sm text-muted-foreground">
-              Create a hackathon first, then add its rounds and rubric.
+              Create a hackathon first, then set up its submission form, judging, rounds and
+              rubric.
             </Card>
           )}
+          {tab === "form" && event && <SubmissionFormTab event={event} />}
+          {tab === "judging" && event && <JudgingTab event={event} />}
           {tab === "rounds" && event && <RoundsTab event={event} />}
           {tab === "rubric" && event && <RubricTab event={event} />}
         </div>

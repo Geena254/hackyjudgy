@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles, Square, X } from "lucide-react";
 import { AppShell, Card, Button, Pill, ProgressBar } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,8 +17,6 @@ import {
   useJudges,
   criteriaForSubmission,
   finishedJudgeCounts,
-  aiCounts,
-  AI_FALLBACK_MAX_JUDGES,
   weightedPercent,
   type AiReviewRow,
   type AiReviewStatus,
@@ -25,6 +24,7 @@ import {
   type SubmissionRow,
 } from "@/lib/hackathon";
 import { gradeSubmissionWithAi, reviewAiResult } from "@/lib/ai-grading.functions";
+import { JUDGING_MODES, judgingModeOf } from "@/lib/submission-form";
 
 export const Route = createFileRoute("/_authenticated/ai-grading")({
   head: () => ({
@@ -76,6 +76,8 @@ function AiGrading() {
   const { data: events = [] } = useEvents();
   const [event] = useSelectedEvent(events);
   const eventId = event?.id;
+  const mode = judgingModeOf(event);
+  const usesAi = JUDGING_MODES[mode].usesAi;
   const { data: rounds = [] } = useRounds(eventId);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(eventId);
@@ -88,27 +90,24 @@ function AiGrading() {
 
   const byEntry = useMemo(() => new Map(aiReviews.map((r) => [r.submission_id, r])), [aiReviews]);
   const entries = useMemo(() => subs.filter((s) => s.status !== "disqualified"), [subs]);
-  // AI only counts on entries the panel hasn't covered, so we track how many judges finished each.
+  // How many judges finished each entry, shown beside its AI result.
   const finished = useMemo(
     () =>
       finishedJudgeCounts({ subs, rounds, criteria, scores, judgeIds: judges.map((j) => j.id) }),
     [subs, rounds, criteria, scores, judges],
   );
-  const covered = useMemo(
-    () => entries.filter((s) => !aiCounts(finished.get(s.id) ?? 0)).length,
-    [entries, finished],
-  );
 
   // A run grades entries with no AI result yet, plus rejected and failed ones.
-  // Approved results and drafts waiting for review are left alone, and so are
-  // entries enough judges have already finished, where an AI result wouldn't count.
+  // Approved results and drafts waiting for review are left alone.
   const queue = useMemo(
     () =>
-      entries.filter((s) => {
-        const status = byEntry.get(s.id)?.status;
-        return status !== "approved" && status !== "draft" && aiCounts(finished.get(s.id) ?? 0);
-      }),
-    [entries, byEntry, finished],
+      usesAi
+        ? entries.filter((s) => {
+            const status = byEntry.get(s.id)?.status;
+            return status !== "approved" && status !== "draft";
+          })
+        : [],
+    [entries, byEntry, usesAi],
   );
   const counts = useMemo(() => {
     const c: Record<Filter, number> = {
@@ -199,13 +198,29 @@ function AiGrading() {
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">AI grading</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             AI scores each entry against your rubric and drafts feedback in the style your judges
-            use. Nothing counts until you approve it. AI fills in where the panel is thin: on an
-            entry no judge has scored, the approved AI result is the score; with 1 or{" "}
-            {AI_FALLBACK_MAX_JUDGES} judges, it is averaged in with theirs as one more judge; with
-            more, only the judges count. This applies to the results, team reports and public
+            use. Nothing counts until you approve it. Once approved, the AI result counts as one
+            more judge: on an entry no judge has scored it is the score, otherwise it is averaged
+            in with the judges' scores. This applies to the results, team reports and public
             standings. Judges never see AI results.
           </p>
         </div>
+
+        {event && !usesAi && (
+          <Card className="p-5">
+            <h2 className="text-base font-semibold text-foreground">
+              AI grading is off for this hackathon
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {event.name} is set to &ldquo;{JUDGING_MODES[mode].label}&rdquo;, so AI results
+              don&apos;t count towards the scores. To use AI grading, choose a judging setup with
+              AI in{" "}
+              <Link to="/events" className="font-semibold" style={{ color: "var(--teal)" }}>
+                Hackathon setup
+              </Link>
+              .
+            </p>
+          </Card>
+        )}
 
         <Card className="p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -217,15 +232,14 @@ function AiGrading() {
               <p className="mt-1 text-sm text-muted-foreground">
                 {!aiLoaded
                   ? "Loading..."
-                  : (queue.length === 0
+                  : !usesAi
+                    ? "Turned off by this hackathon's judging setup."
+                    : queue.length === 0
                       ? "Nothing left to grade. Regenerate a draft from the list below if you need to."
                       : `${queue.length} of ${entries.length} entries to grade.` +
                         (counts.approved + counts.draft > 0
                           ? ` ${counts.approved} approved and ${counts.draft} waiting for review are skipped.`
-                          : "")) +
-                    (covered > 0
-                      ? ` ${covered} ${covered === 1 ? "entry has" : "entries have"} more than ${AI_FALLBACK_MAX_JUDGES} judges' scores, so AI is not needed there.`
-                      : "")}
+                          : "")}
               </p>
             </div>
             {running ? (
@@ -311,6 +325,7 @@ function AiGrading() {
               review={byEntry.get(s.id)}
               busy={running}
               finishedJudges={finished.get(s.id) ?? 0}
+              usesAi={usesAi}
             />
           ))}
           {rows.length === 0 && (
@@ -354,6 +369,7 @@ function EntryResult({
   review,
   busy,
   finishedJudges,
+  usesAi,
 }: {
   submission: SubmissionRow;
   rubric: CriterionRow[];
@@ -361,6 +377,7 @@ function EntryResult({
   busy: boolean;
   /** Panel judges who have scored every criterion of this entry. */
   finishedJudges: number;
+  usesAi: boolean;
 }) {
   const queryClient = useQueryClient();
   const decide = useServerFn(reviewAiResult);
@@ -444,11 +461,11 @@ function EntryResult({
       </div>
 
       <p className="mt-2 text-xs text-muted-foreground">
-        {finishedJudges === 0
-          ? "No judge has scored this entry yet. Once approved, the AI result is its score."
-          : aiCounts(finishedJudges)
-            ? `${finishedJudges} ${finishedJudges === 1 ? "judge has" : "judges have"} scored this entry. Once approved, the AI result is averaged in with theirs.`
-            : `${finishedJudges} judges have scored this entry, so the AI result doesn't count.`}
+        {!usesAi
+          ? "AI grading is off for this hackathon, so this result doesn't count."
+          : finishedJudges === 0
+            ? "No judge has scored this entry yet. Once approved, the AI result is its score."
+            : `${finishedJudges} ${finishedJudges === 1 ? "judge has" : "judges have"} scored this entry. Once approved, the AI result is averaged in with theirs.`}
       </p>
 
       {review && review.status !== "failed" && review.sources.length > 0 && (
