@@ -319,6 +319,81 @@ function Material({
   );
 }
 
+/**
+ * Score entry for criteria marked out of more than 10, where a button per half
+ * point would be too many: a slider plus a number box, saved when the judge
+ * lets go of the slider or leaves the box.
+ */
+function ScoreEntry({
+  name,
+  max,
+  value,
+  onScore,
+}: {
+  name: string;
+  max: number;
+  value: number | undefined;
+  onScore: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState(value === undefined ? "" : String(value));
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => setDraft(value === undefined ? "" : String(value)), [value]);
+
+  function commit(text: string) {
+    if (text.trim() === "") return;
+    const n = Number(text);
+    if (!Number.isFinite(n) || n < 0 || n > max || n * 2 !== Math.round(n * 2)) {
+      setError(`Enter a score from 0 to ${max}, in steps of 0.5.`);
+      return;
+    }
+    setError(null);
+    if (n !== value) onScore(n);
+  }
+
+  return (
+    <div className="mt-3">
+      <div className="flex items-center gap-3">
+        <input
+          type="range"
+          min={0}
+          max={max}
+          step={0.5}
+          value={draft === "" ? 0 : Number(draft) || 0}
+          onChange={(e) => setDraft(e.target.value)}
+          onPointerUp={(e) => commit((e.target as HTMLInputElement).value)}
+          onKeyUp={(e) => commit((e.target as HTMLInputElement).value)}
+          aria-label={`${name} score slider`}
+          className="h-2 min-w-0 flex-1 accent-[color:var(--teal)]"
+        />
+        <input
+          type="number"
+          min={0}
+          max={max}
+          step={0.5}
+          value={draft}
+          placeholder="-"
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commit((e.target as HTMLInputElement).value);
+            }
+          }}
+          aria-label={`${name} score, out of ${max}`}
+          className="w-20 rounded-md border border-border bg-background px-2 py-2 text-sm font-semibold"
+        />
+        <span className="text-sm text-muted-foreground">/ {max}</span>
+      </div>
+      {error && (
+        <p className="mt-1 text-xs" style={{ color: "var(--magenta)" }}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 const LINK_ICONS: Partial<Record<FieldKind, typeof Globe>> = {
   concept_note_url: FileText,
   video_url: PlayCircle,
@@ -483,31 +558,45 @@ function Rubric({
                   <strong className="text-foreground">{v ?? " - "}</strong>/{max}
                 </div>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {Array.from({ length: max * 2 + 1 }, (_, i) => i / 2).map((n) => {
-                  const active = v === n;
-                  return (
-                    <label
-                      key={n}
-                      className="grid h-10 w-10 cursor-pointer place-items-center rounded-md border text-sm font-semibold transition-colors"
-                      style={
-                        active
-                          ? { background: "var(--teal)", borderColor: "var(--teal)", color: "#fff" }
-                          : { borderColor: "var(--border)", color: "var(--foreground)" }
-                      }
-                    >
-                      <input
-                        type="radio"
-                        name={`${submission.id}-${c.id}`}
-                        checked={active}
-                        onChange={() => onScore(c.id, n)}
-                        className="sr-only"
-                      />
-                      {n}
-                    </label>
-                  );
-                })}
-              </div>
+              {max > 10 ? (
+                <ScoreEntry
+                  key={`${submission.id}-${c.id}`}
+                  name={c.name}
+                  max={max}
+                  value={v}
+                  onScore={(n) => onScore(c.id, n)}
+                />
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {Array.from({ length: max * 2 + 1 }, (_, i) => i / 2).map((n) => {
+                    const active = v === n;
+                    return (
+                      <label
+                        key={n}
+                        className="grid h-10 w-10 cursor-pointer place-items-center rounded-md border text-sm font-semibold transition-colors"
+                        style={
+                          active
+                            ? {
+                                background: "var(--teal)",
+                                borderColor: "var(--teal)",
+                                color: "#fff",
+                              }
+                            : { borderColor: "var(--border)", color: "var(--foreground)" }
+                        }
+                      >
+                        <input
+                          type="radio"
+                          name={`${submission.id}-${c.id}`}
+                          checked={active}
+                          onChange={() => onScore(c.id, n)}
+                          className="sr-only"
+                        />
+                        {n}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </li>
           );
         })}

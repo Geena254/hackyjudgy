@@ -33,6 +33,7 @@ import {
   timeUntil,
   type EventRow,
   type Phase,
+  type CriterionRow,
   type RoundRow,
 } from "@/lib/hackathon";
 
@@ -74,10 +75,7 @@ function toLocalInput(iso: string | null | undefined) {
 
 const statusTone = (s: string) => (s === "active" ? "teal" : s === "closed" ? "gray" : "magenta");
 
-function Text({
-  label,
-  ...rest
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+function Text({ label, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
@@ -130,9 +128,7 @@ function EventSetup() {
           </div>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Hackathon setup</h1>
           {event && organiserOf(event) && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Organised by {organiserOf(event)}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Organised by {organiserOf(event)}</p>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -192,8 +188,7 @@ function EventSetup() {
           )}
           {tab !== "details" && !event && (
             <Card className="p-8 text-sm text-muted-foreground">
-              Create a hackathon first, then set up its submission form, judging, rounds and
-              rubric.
+              Create a hackathon first, then set up its submission form, judging, rounds and rubric.
             </Card>
           )}
           {tab === "form" && event && <SubmissionFormTab event={event} />}
@@ -320,10 +315,10 @@ function DetailsTab({
               ))}
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Participants can submit until this date and time (your local time). After it passes,
-            the entry form shows that the submission round is closed. To extend the submission
-            period, set a later time and save. Leave it empty to keep entries open while the
-            hackathon is published.
+            Participants can submit until this date and time (your local time). After it passes, the
+            entry form shows that the submission round is closed. To extend the submission period,
+            set a later time and save. Leave it empty to keep entries open while the hackathon is
+            published.
           </p>
           <div className="mt-3 flex flex-wrap items-end gap-2">
             <div className="w-full sm:w-64">
@@ -493,7 +488,12 @@ function RoundsTab({ event }: { event: EventRow }) {
           />
         </div>
         <div className="mt-4">
-          <Button variant="primary" tone="teal" onClick={add} disabled={!name || saveRound.isPending}>
+          <Button
+            variant="primary"
+            tone="teal"
+            onClick={add}
+            disabled={!name || saveRound.isPending}
+          >
             <Plus className="h-4 w-4" /> Add round
           </Button>
         </div>
@@ -516,7 +516,11 @@ function RoundsTab({ event }: { event: EventRow }) {
                 tone="teal"
                 onClick={() => setOpenId(openId === r.id ? null : r.id)}
               >
-                {openId === r.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {openId === r.id ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
                 Edit
               </Button>
               <Button
@@ -609,6 +613,157 @@ function RoundEditor({ round }: { round: RoundRow }) {
   );
 }
 
+/** Highest max score a criterion can have (the database allows scores up to 100). */
+const MAX_SCORE_LIMIT = 100;
+
+/** One rubric criterion, edited in place: name, guidance, weight and max score. */
+function CriterionEditor({
+  criterion: c,
+  onRemove,
+}: {
+  criterion: CriterionRow;
+  onRemove: () => void;
+}) {
+  const save = useSaveCriterion();
+  const initial = {
+    name: c.name,
+    description: c.description ?? "",
+    weight: String(c.weight),
+    max_score: String(c.max_score),
+  };
+  const [form, setForm] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const initialJson = JSON.stringify(initial);
+  useEffect(() => {
+    setForm(JSON.parse(initialJson) as typeof initial);
+  }, [initialJson]);
+  const dirty = JSON.stringify(form) !== initialJson;
+
+  async function onSave() {
+    setError(null);
+    const weight = Number(form.weight);
+    const max = Number(form.max_score);
+    if (!form.name.trim()) return setError("Give the criterion a name.");
+    if (!Number.isInteger(weight) || weight < 1 || weight > 100)
+      return setError("Weight must be a whole number from 1 to 100.");
+    if (!Number.isInteger(max) || max < 1 || max > MAX_SCORE_LIMIT)
+      return setError(`Max score must be a whole number from 1 to ${MAX_SCORE_LIMIT}.`);
+    try {
+      await save.mutateAsync({
+        id: c.id,
+        round_id: c.round_id,
+        name: form.name.trim(),
+        description: form.description.trim() || null,
+        weight,
+        max_score: max,
+        sort_order: c.sort_order,
+      });
+      setSaved(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save the criterion.");
+    }
+  }
+
+  const small = "rounded-md border border-border bg-background px-2 py-1.5 text-sm";
+  return (
+    <li className="rounded-md border border-border p-3">
+      <div className="flex flex-wrap items-start gap-2">
+        <input
+          value={form.name}
+          onChange={(e) => {
+            setForm({ ...form, name: e.target.value });
+            setSaved(false);
+          }}
+          aria-label="Criterion name"
+          className={`${small} min-w-0 flex-1 font-semibold`}
+        />
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
+          Weight
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={form.weight}
+            onChange={(e) => {
+              setForm({ ...form, weight: e.target.value });
+              setSaved(false);
+            }}
+            aria-label={`Weight for ${c.name}`}
+            className={`${small} w-16`}
+          />
+          %
+        </label>
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
+          Max score
+          <input
+            type="number"
+            min={1}
+            max={MAX_SCORE_LIMIT}
+            step={1}
+            value={form.max_score}
+            onChange={(e) => {
+              setForm({ ...form, max_score: e.target.value });
+              setSaved(false);
+            }}
+            aria-label={`Max score for ${c.name}`}
+            className={`${small} w-16`}
+          />
+        </label>
+        <button
+          onClick={onRemove}
+          aria-label={`Remove ${c.name}`}
+          className="rounded-md p-1.5 hover:bg-muted"
+          style={{ color: "var(--magenta)" }}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+      <textarea
+        rows={2}
+        value={form.description}
+        onChange={(e) => {
+          setForm({ ...form, description: e.target.value });
+          setSaved(false);
+        }}
+        placeholder="Guidance for judges (what earns the marks)"
+        aria-label={`Guidance for ${c.name}`}
+        className={`${small} mt-2 w-full text-xs`}
+      />
+      {(dirty || error || saved) && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {dirty && (
+            <>
+              <Button variant="outline" tone="teal" disabled={save.isPending} onClick={onSave}>
+                {save.isPending ? "Saving…" : "Save criterion"}
+              </Button>
+              <Button variant="ghost" tone="magenta" onClick={() => setForm(initial)}>
+                Discard
+              </Button>
+            </>
+          )}
+          {error && (
+            <span className="text-xs" style={{ color: "var(--magenta)" }}>
+              {error}
+            </span>
+          )}
+          {!dirty && !error && saved && (
+            <span className="text-xs" style={{ color: "var(--teal)" }}>
+              Saved
+            </span>
+          )}
+        </div>
+      )}
+      {dirty && form.max_score !== String(c.max_score) && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Scores already given on this criterion are not rescaled, so change the max score before
+          judging starts.
+        </p>
+      )}
+    </li>
+  );
+}
+
 function CriteriaEditor({ roundId }: { roundId: string }) {
   const { data: criteria = [] } = useCriteria([roundId]);
   const save = useSaveCriterion();
@@ -634,45 +789,7 @@ function CriteriaEditor({ roundId }: { roundId: string }) {
 
       <ul className="mt-3 space-y-2">
         {criteria.map((c) => (
-          <li
-            key={c.id}
-            className="flex flex-wrap items-center gap-2 rounded-md border border-border px-3 py-2"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-semibold text-foreground">{c.name}</div>
-              {c.description && (
-                <div className="truncate text-xs text-muted-foreground">{c.description}</div>
-              )}
-            </div>
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={c.weight}
-              onChange={(e) =>
-                save.mutate({
-                  id: c.id,
-                  round_id: roundId,
-                  name: c.name,
-                  description: c.description,
-                  weight: Number(e.target.value) || 0,
-                  max_score: c.max_score,
-                  sort_order: c.sort_order,
-                })
-              }
-              className="w-16 rounded-md border border-border bg-background px-2 py-1 text-sm"
-              aria-label={`Weight for ${c.name}`}
-            />
-            <span className="text-xs text-muted-foreground">% · max {c.max_score}</span>
-            <button
-              onClick={() => remove.mutate(c.id)}
-              aria-label={`Remove ${c.name}`}
-              className="rounded-md p-1.5 hover:bg-muted"
-              style={{ color: "var(--magenta)" }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </li>
+          <CriterionEditor key={c.id} criterion={c} onRemove={() => remove.mutate(c.id)} />
         ))}
         {criteria.length === 0 && (
           <li className="text-xs text-muted-foreground">
@@ -682,7 +799,12 @@ function CriteriaEditor({ roundId }: { roundId: string }) {
       </ul>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <Text label="Criterion" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Originality" />
+        <Text
+          label="Criterion"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Originality"
+        />
         <Text
           label="Guidance for judges"
           value={description}
@@ -699,7 +821,11 @@ function CriteriaEditor({ roundId }: { roundId: string }) {
           label="Max score"
           type="number"
           value={maxScore}
-          onChange={(e) => setMaxScore(Number(e.target.value) || 5)}
+          onChange={(e) =>
+            setMaxScore(
+              Math.min(MAX_SCORE_LIMIT, Math.max(1, Math.round(Number(e.target.value)))) || 5,
+            )
+          }
         />
       </div>
       <div className="mt-3">
