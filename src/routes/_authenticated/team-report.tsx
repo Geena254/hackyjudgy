@@ -66,19 +66,9 @@ function TeamReports() {
   const [showNames, setShowNames] = useState(false);
   const [showRank, setShowRank] = useState(true);
 
-  // Approved AI results count as one more judge on entries the panel hasn't
-  // covered, listed after the panel.
-  const ai = useMemo(
-    () =>
-      aiJudgeMarks(aiReviews, {
-        subs,
-        rounds,
-        criteria,
-        scores: panelScores,
-        judgeIds: roster.map((j) => j.id),
-      }),
-    [aiReviews, subs, rounds, criteria, panelScores, roster],
-  );
+  // Approved AI results count as one more judge (when the judging mode uses AI),
+  // listed after the panel.
+  const ai = useMemo(() => aiJudgeMarks(aiReviews, event), [aiReviews, event]);
   const scores = useMemo(() => [...panelScores, ...ai.scores], [panelScores, ai]);
   const reviews = useMemo(() => [...panelReviews, ...ai.reviews], [panelReviews, ai]);
 

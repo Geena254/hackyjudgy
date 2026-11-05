@@ -105,7 +105,7 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
     const { data: sub, error: subError } = await db
       .from("submissions")
       .select(
-        "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, video_url, concept_note_url, status",
+        "id, event_id, round_id, title, team_name, category, description, repo_url, demo_url, deck_url, video_url, concept_note_url, answers, status",
       )
       .eq("id", submissionId)
       .maybeSingle();
@@ -138,11 +138,19 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
 
     const { data: event, error: eventError } = await db
       .from("events")
-      .select("id, name")
+      .select("id, name, judging_mode, submission_form")
       .eq("id", sub.event_id)
       .maybeSingle();
     if (eventError) throw new Error(eventError.message);
     if (!event) throw new Error("Hackathon not found.");
+    const { JUDGING_MODES, judgingModeOf, formFor } = await import("@/lib/submission-form");
+    if (!JUDGING_MODES[judgingModeOf(event)].usesAi) {
+      return {
+        status: "failed",
+        submissionId,
+        error: "AI grading is off in this hackathon's judging setup.",
+      };
+    }
 
     const { data: rounds, error: roundsError } = await db
       .from("rounds")
@@ -180,7 +188,7 @@ export const gradeSubmissionWithAi = createServerFn({ method: "POST" })
       materials = read;
       ({ grade, model } = await ai.askClaude(
         ai.systemPrompt(event.name, rubric, examples),
-        ai.entryPrompt(sub, materials),
+        ai.entryPrompt(sub, materials, formFor(event)),
       ));
     } catch (e) {
       const message = e instanceof Error ? e.message : "AI grading failed.";

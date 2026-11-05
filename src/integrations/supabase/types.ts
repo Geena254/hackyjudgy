@@ -164,11 +164,13 @@ export type Database = {
           created_by: string | null
           description: string | null
           ends_on: string | null
+          judging_mode: string
           id: string
           name: string
           show_live_rankings: boolean
           starts_on: string | null
           status: string
+          submission_form: Json | null
           submissions_close_at: string | null
           updated_at: string
         }
@@ -178,11 +180,13 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           ends_on?: string | null
+          judging_mode?: string
           id?: string
           name: string
           show_live_rankings?: boolean
           starts_on?: string | null
           status?: string
+          submission_form?: Json | null
           submissions_close_at?: string | null
           updated_at?: string
         }
@@ -192,11 +196,13 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           ends_on?: string | null
+          judging_mode?: string
           id?: string
           name?: string
           show_live_rankings?: boolean
           starts_on?: string | null
           status?: string
+          submission_form?: Json | null
           submissions_close_at?: string | null
           updated_at?: string
         }
@@ -484,6 +490,7 @@ export type Database = {
           category: string | null
           concept_note_url: string | null
           created_at: string
+          answers: Json
           deck_url: string | null
           demo_url: string | null
           description: string | null
@@ -504,6 +511,7 @@ export type Database = {
           category?: string | null
           concept_note_url?: string | null
           created_at?: string
+          answers?: Json
           deck_url?: string | null
           demo_url?: string | null
           description?: string | null
@@ -524,6 +532,7 @@ export type Database = {
           category?: string | null
           concept_note_url?: string | null
           created_at?: string
+          answers?: Json
           deck_url?: string | null
           demo_url?: string | null
           description?: string | null
@@ -659,6 +668,8 @@ export type Database = {
           _team_name?: string
           _title: string
           _video_url?: string
+          _concept_note_url?: string
+          _answers?: Json
         }
         Returns: string
       }

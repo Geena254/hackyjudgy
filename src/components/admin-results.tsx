@@ -114,10 +114,10 @@ export function AdminResults({
   const panel = useMemo(() => panelFor(assignments), [assignments]);
   const [open, setOpen] = useState<string | null>(null);
 
-  // Approved AI results count as one more judge on entries the panel hasn't covered;
-  // drafts never reach the results.
+  // Approved AI results count as one more judge when the hackathon's judging mode
+  // uses AI; drafts never reach the results.
   const { resultJudges, resultScores, reviews } = useMemo(() => {
-    const ai = aiJudgeMarks(aiReviews, { subs, rounds, criteria, scores, judgeIds: judges.map((j) => j.id) });
+    const ai = aiJudgeMarks(aiReviews, event);
     return ai.active
       ? {
           resultJudges: [...judges, AI_JUDGE],
@@ -125,7 +125,7 @@ export function AdminResults({
           reviews: [...panelReviews, ...ai.reviews],
         }
       : { resultJudges: judges, resultScores: scores, reviews: panelReviews };
-  }, [aiReviews, subs, rounds, criteria, judges, scores, panelReviews]);
+  }, [aiReviews, event, judges, scores, panelReviews]);
 
   // Only count scores from judges currently on the panel.
   const panelScores = useMemo(() => {

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
+import { JUDGING_MODES, judgingModeOf, type JudgingMode } from "@/lib/submission-form";
 
 export type Phase = "submissions" | "judging" | "results";
 export type EventStatus = "draft" | "active" | "closed";
@@ -24,6 +26,10 @@ export type EventRow = {
   brief_url: string | null;
   /** When the public entry form stops taking entries; null keeps it open while published. */
   submissions_close_at: string | null;
+  /** What the entry form asks for; null keeps the default form (see formFor). */
+  submission_form: Json | null;
+  /** How entries are judged: 1 judge, panel, AI, or a mix (see JUDGING_MODES). */
+  judging_mode: JudgingMode;
   created_by: string | null;
   created_at: string;
 };
@@ -67,6 +73,8 @@ export type SubmissionRow = {
   /** Recorded video demo. */
   video_url: string | null;
   concept_note_url: string | null;
+  /** Answers to the organiser's own questions, keyed by field id. */
+  answers: Record<string, string>;
   status: SubmissionStatus;
   created_at: string;
 };
@@ -241,11 +249,6 @@ export function useAiReviews(eventId: string | undefined) {
 export const AI_JUDGE_ID = "ai-judge";
 export const AI_JUDGE = { id: AI_JUDGE_ID, name: "AI judge", email: "" };
 
-/**
- * AI is a fallback for entries the panel hasn't covered: its approved result
- * counts while at most this many judges have finished scoring the entry.
- */
-export const AI_FALLBACK_MAX_JUDGES = 2;
 
 type PanelContext = {
   subs: SubmissionRow[];
@@ -270,19 +273,21 @@ export function finishedJudgeCounts({ subs, rounds, criteria, scores, judgeIds }
   return counts;
 }
 
-/** Does this entry's approved AI result count, given how many judges finished it? */
-export const aiCounts = (finishedJudges: number) => finishedJudges <= AI_FALLBACK_MAX_JUDGES;
+/** Do approved AI results count for a hackathon? Only when its judging mode uses AI. */
+export const aiCounts = (mode: JudgingMode) => JUDGING_MODES[mode].usesAi;
 
 /**
  * Approved AI results as one more judge: their scores and feedback in the same
- * shape as a panel judge's. Drafts and rejected results are left out, and so are
- * entries already finished by more than AI_FALLBACK_MAX_JUDGES judges.
+ * shape as a panel judge's. Drafts and rejected results are left out, and so is
+ * everything when the hackathon's judging mode doesn't use AI.
  */
-export function aiJudgeMarks(aiReviews: AiReviewRow[], panel: PanelContext) {
-  const finished = finishedJudgeCounts(panel);
-  const approved = aiReviews.filter(
-    (r) => r.status === "approved" && aiCounts(finished.get(r.submission_id) ?? 0),
-  );
+export function aiJudgeMarks(
+  aiReviews: AiReviewRow[],
+  event: { judging_mode?: string | null } | null | undefined,
+) {
+  const approved = aiCounts(judgingModeOf(event))
+    ? aiReviews.filter((r) => r.status === "approved")
+    : [];
   const scores: ScoreRow[] = approved.flatMap((r) =>
     r.scores.map((s) => ({
       id: `ai-${r.id}-${s.criterion_id}`,
@@ -614,6 +619,9 @@ export function useSaveEvent() {
         show_live_rankings: input.show_live_rankings ?? true,
         brief_url: input.brief_url || null,
         submissions_close_at: input.submissions_close_at || null,
+        // Only sent when changed, so saving the details never resets them.
+        ...(input.submission_form !== undefined ? { submission_form: input.submission_form } : {}),
+        ...(input.judging_mode !== undefined ? { judging_mode: input.judging_mode } : {}),
       };
       if (input.id) {
         const { error } = await supabase.from("events").update(payload).eq("id", input.id);
@@ -757,6 +765,7 @@ export function useSaveSubmission() {
         deck_url: input.deck_url || null,
         video_url: input.video_url || null,
         concept_note_url: input.concept_note_url || null,
+        answers: input.answers ?? {},
         status: input.status ?? "submitted",
       };
       if (input.id) {
@@ -845,6 +854,8 @@ export function useSubmitProject() {
       demo_url?: string;
       deck_url?: string;
       video_url?: string;
+      concept_note_url?: string;
+      answers?: Record<string, string>;
       team_member_emails?: string[];
     }) => {
       // Signed-out entrants can't write to or read submissions directly; the
@@ -863,6 +874,8 @@ export function useSubmitProject() {
         _deck_url: input.deck_url || undefined,
         _video_url: input.video_url || undefined,
         _team_member_emails: input.team_member_emails ?? [],
+        _concept_note_url: input.concept_note_url || undefined,
+        _answers: input.answers ?? {},
       });
       if (error) throw error;
       return data;
@@ -921,7 +934,7 @@ export function usePublicSubmissions(eventId: string | undefined) {
 
 export type PublicSubmission = Omit<
   SubmissionRow,
-  "submitter_name" | "submitter_email" | "team_member_emails"
+  "submitter_name" | "submitter_email" | "team_member_emails" | "answers"
 >;
 
 /** Averaged criterion score for one submission - never an individual judge's mark. */

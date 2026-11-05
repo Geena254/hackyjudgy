@@ -11,6 +11,15 @@ import {
   type SubmissionRow,
   type SubmissionStatus,
 } from "@/lib/hackathon";
+import {
+  FIELD_KINDS,
+  formFor,
+  isBuiltIn,
+  activeFields,
+  isCore,
+  type FieldKind,
+  type FormField,
+} from "@/lib/submission-form";
 
 const STATUSES: SubmissionStatus[] = [
   "submitted",
@@ -77,8 +86,8 @@ export function SubmissionsClosedNotice({ event }: { event: EventRow }) {
   );
 }
 
-// Teammates besides the team lead (the database allows up to 20).
-const MAX_TEAMMATES = 9;
+// Teammates besides the person submitting (the database allows up to 20).
+const MAX_TEAMMATES = 19;
 
 const EMPTY = {
   title: "",
@@ -91,7 +100,10 @@ const EMPTY = {
   deck_url: "",
   demo_url: "",
   repo_url: "",
+  concept_note_url: "",
 };
+
+type TextKey = keyof typeof EMPTY;
 
 function fromEntry(entry: SubmissionRow) {
   return {
@@ -105,13 +117,14 @@ function fromEntry(entry: SubmissionRow) {
     deck_url: entry.deck_url ?? "",
     demo_url: entry.demo_url ?? "",
     repo_url: entry.repo_url ?? "",
+    concept_note_url: entry.concept_note_url ?? "",
   };
 }
 
 /**
- * Hackathon entry form, used by participants and by organisers. Entrants choose
- * to enter as a team or on their own. Given an `entry`, organisers edit it and
- * also get its round, status and concept note link.
+ * Hackathon entry form, used by participants and by organisers. It asks for the
+ * fields the organiser chose for this hackathon, in their order. Given an `entry`,
+ * organisers edit it and also get its round, status and concept note link.
  */
 export function EntryForm({
   event,
@@ -123,18 +136,37 @@ export function EntryForm({
   event: EventRow;
   rounds: RoundRow[];
   onDone: (submissionId: string) => void;
-  /** Participants must give all four links; organisers adding an entry may leave them out. */
+  /** Participants must fill the hackathon's required fields; organisers adding an entry may leave them out. */
   linksRequired?: boolean;
   /** An existing entry for an organiser to edit. */
   entry?: SubmissionRow;
 }) {
   const submit = useSubmitProject();
   const save = useSaveSubmission();
-  // Organisers (adding or editing) may leave contact details and teammates incomplete.
+  // Organisers (adding or editing) may leave fields empty.
   const organiser = !linksRequired || !!entry;
+  const config = formFor(event);
+  const fields = activeFields(config);
+  const has = (kind: FieldKind) => fields.some((f) => f.kind === kind);
+  const hasTeamFields = fields.some((f) => FIELD_KINDS[f.kind].teamOnly);
+  // Entrants only choose between a team and a solo entry when the hackathon allows both.
+  const askEntryType = config.entrants === "either" && hasTeamFields;
+  const fixedEntry: "team" | "individual" | null =
+    config.entrants === "individual" || !hasTeamFields
+      ? "individual"
+      : config.entrants === "either"
+        ? null
+        : "team";
+  const eachMember = config.entrants === "each_member";
+
   const [entryAs, setEntryAs] = useState<"team" | "individual" | null>(
-    entry ? (entry.team_name || entry.team_member_emails?.length ? "team" : "individual") : null,
+    entry && askEntryType
+      ? entry.team_name || entry.team_member_emails?.length
+        ? "team"
+        : "individual"
+      : fixedEntry,
   );
+  const [answers, setAnswers] = useState<Record<string, string>>(entry?.answers ?? {});
   const [form, setForm] = useState(entry ? fromEntry(entry) : EMPTY);
   const [teammates, setTeammates] = useState<string[]>(
     entry?.team_member_emails?.length ? entry.team_member_emails : [""],
@@ -142,17 +174,27 @@ export function EntryForm({
   const [extras, setExtras] = useState({
     round_id: entry?.round_id ?? "",
     status: entry?.status ?? ("submitted" as SubmissionStatus),
-    concept_note_url: entry?.concept_note_url ?? "",
   });
   const [error, setError] = useState<string | null>(null);
   const pending = submit.isPending || save.isPending;
 
-  const set =
-    (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setForm((prev) => ({ ...prev, [k]: e.target.value }));
-
+  const setText = (k: TextKey, v: string) => setForm((prev) => ({ ...prev, [k]: v }));
   const setTeammate = (i: number, value: string) =>
     setTeammates((prev) => prev.map((t, j) => (j === i ? value : t)));
+
+  const team = entryAs === "team";
+  const shown = fields.filter((f) => team || !FIELD_KINDS[f.kind].teamOnly);
+  const isRequired = (f: FormField) => !organiser && (f.required || !!FIELD_KINDS[f.kind].locked);
+
+  /** "Your name" reads "Team lead's name" when one person submits for a whole team. */
+  function labelOf(f: FormField) {
+    if (team && !eachMember && f.id === f.kind) {
+      if (f.label === "Your name") return "Team lead's name";
+      if (f.label.startsWith("Your email"))
+        return f.label.replace("Your email", "Team lead's email");
+    }
+    return f.label;
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -162,17 +204,16 @@ export function EntryForm({
       return;
     }
     const lead = form.submitter_email.trim().toLowerCase();
-    const emails = teammates.map((t) => t.trim().toLowerCase()).filter(Boolean);
-    if (!organiser && form.video_url.trim() && !isAllowedVideoLink(form.video_url)) {
-      setError("The video demo link should be a YouTube or Google Drive link.");
+    let emails = teammates.map((t) => t.trim().toLowerCase()).filter(Boolean);
+    const video = shown.find((f) => f.kind === "video_url");
+    if (!organiser && video && form.video_url.trim() && !isAllowedVideoLink(form.video_url)) {
+      setError(`The "${video.label}" link should be a YouTube or Google Drive link.`);
       return;
     }
-    if (entryAs === "team") {
-      if (emails.length === 0 && !organiser) {
-        setError("Add at least one teammate's email, or choose “Just me”.");
-        return;
-      }
-      if (lead && emails.includes(lead)) {
+    if (team && has("team_member_emails")) {
+      // Everyone on the team lists the same people, so listing yourself is fine.
+      if (eachMember) emails = emails.filter((m) => m !== lead);
+      else if (lead && emails.includes(lead)) {
         setError("Your own email is already the team lead's - list only your teammates.");
         return;
       }
@@ -181,18 +222,40 @@ export function EntryForm({
         return;
       }
     }
+    // Keep only what this hackathon's form asks for.
+    const asked = new Set(shown.map((f) => f.kind));
+    const values = Object.fromEntries(
+      (Object.keys(EMPTY) as TextKey[]).map((k) => [
+        k,
+        asked.has(k as FieldKind) || k === "concept_note_url" ? form[k] : "",
+      ]),
+    ) as typeof EMPTY;
+    // Every entry needs a name; without a project name, use the team's or the person's.
+    values.title =
+      values.title.trim() ||
+      values.team_name.trim() ||
+      values.submitter_name.trim() ||
+      values.submitter_email.trim();
+    const cleanAnswers = Object.fromEntries(
+      shown
+        .filter((f) => !isCore(f.kind) && !isBuiltIn(f.kind) && (answers[f.id] ?? "").trim())
+        .map((f) => [f.id, answers[f.id]!.trim()]),
+    );
+    const teamEmails = team && asked.has("team_member_emails") ? emails : [];
     const submissionRound = rounds.find((r) => r.phase === "submissions") ?? rounds[0];
     try {
       if (entry) {
+        // Organisers editing keep anything the current form doesn't show.
         await save.mutateAsync({
           id: entry.id,
           event_id: event.id,
           ...form,
-          team_name: entryAs === "team" ? form.team_name : "",
-          team_member_emails: entryAs === "team" ? emails : [],
+          title: values.title,
+          team_name: team ? form.team_name : "",
+          team_member_emails: team ? emails : [],
+          answers: { ...(entry.answers ?? {}), ...cleanAnswers },
           round_id: extras.round_id,
           status: extras.status,
-          concept_note_url: extras.concept_note_url,
         });
         onDone(entry.id);
         return;
@@ -200,135 +263,40 @@ export function EntryForm({
       const id = await submit.mutateAsync({
         event_id: event.id,
         round_id: submissionRound?.id ?? null,
-        ...form,
-        // Solo entrants have no team; standings show them as an independent entry.
-        team_name: entryAs === "team" ? form.team_name : "",
-        team_member_emails: entryAs === "team" ? emails : [],
+        ...values,
+        team_member_emails: teamEmails,
+        answers: cleanAnswers,
       });
       setForm(EMPTY);
+      setAnswers({});
       setTeammates([""]);
-      setEntryAs(null);
+      setEntryAs(fixedEntry);
       onDone(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     }
   }
 
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <fieldset>
-        <legend className="mb-1.5 block text-sm font-medium text-foreground">Entering as</legend>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(
-            [
-              { value: "team", label: "A team", hint: "You're entering with others", icon: Users },
-              {
-                value: "individual",
-                label: "Just me",
-                hint: "You're entering on your own",
-                icon: User,
-              },
-            ] as const
-          ).map((o) => {
-            const selected = entryAs === o.value;
-            return (
-              <label
-                key={o.value}
-                className="flex cursor-pointer items-start gap-3 rounded-md border bg-background p-3"
-                style={{
-                  borderColor: selected ? "var(--teal)" : "var(--border)",
-                  boxShadow: selected ? "inset 0 0 0 1px var(--teal)" : undefined,
-                }}
-              >
-                <input
-                  type="radio"
-                  name="entry-as"
-                  value={o.value}
-                  checked={selected}
-                  onChange={() => setEntryAs(o.value)}
-                  required
-                  className="sr-only"
-                />
-                <o.icon
-                  className="mt-0.5 h-5 w-5 shrink-0"
-                  style={{ color: selected ? "var(--teal)" : undefined }}
-                  strokeWidth={2}
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-foreground">{o.label}</span>
-                  <span className="block text-xs text-muted-foreground">{o.hint}</span>
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      </fieldset>
+  function renderField(f: FormField) {
+    const required = isRequired(f);
+    const info = FIELD_KINDS[f.kind];
+    const note = !required && !organiser ? "optional" : undefined;
+    const hint = f.help || info.help;
 
-      <Field
-        label="Project title"
-        required
-        value={form.title}
-        onChange={set("title")}
-        placeholder="e.g. AgriTrack"
-      />
-      <div className="grid gap-4 sm:grid-cols-2">
-        {entryAs === "team" && (
-          <Field label="Team name" required value={form.team_name} onChange={set("team_name")} />
-        )}
-        <Field
-          label="Category"
-          value={form.category}
-          onChange={set("category")}
-          placeholder="e.g. AgriTech"
-        />
-      </div>
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-foreground">
-          Project description
-        </span>
-        <textarea
-          required={!entry}
-          rows={5}
-          value={form.description}
-          onChange={set("description")}
-          placeholder="What problem does it solve, who is it for, and what did you build?"
-          className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
-        />
-      </label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label={entryAs === "team" ? "Team lead's name" : "Your name"}
-          required={!entry}
-          value={form.submitter_name}
-          onChange={set("submitter_name")}
-        />
-        <Field
-          label={entryAs === "team" ? "Team lead's email" : "Your email"}
-          note="Email used on LMS"
-          type="email"
-          required={!entry}
-          value={form.submitter_email}
-          onChange={set("submitter_email")}
-          hint="Each email can only be used for one entry. Only the organisers and judges can see it."
-        />
-      </div>
-
-      {entryAs === "team" && (
-        <fieldset className="rounded-md border border-border p-4">
+    if (f.kind === "team_member_emails") {
+      return (
+        <fieldset key={f.id} className="rounded-md border border-border p-4 sm:col-span-2">
           <legend className="px-1 text-sm font-semibold text-foreground">
-            Your teammates&apos; emails
-            <em className="ml-1.5 font-normal text-muted-foreground">(Email used on LMS)</em>
+            {f.label}
+            {note && <em className="ml-1.5 font-normal text-muted-foreground">({note})</em>}
           </legend>
-          <p className="text-xs text-muted-foreground">
-            Add everyone else on your team. Someone already on another entry can&apos;t be added.
-            Only the organisers and judges can see these.
-          </p>
+          {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
           <div className="mt-3 space-y-2">
             {teammates.map((t, i) => (
               <div key={i} className="flex items-center gap-2">
                 <input
                   type="email"
-                  required={i === 0 && !organiser}
+                  required={i === 0 && required}
                   value={t}
                   onChange={(e) => setTeammate(i, e.target.value)}
                   placeholder={`teammate${i + 1}@example.com`}
@@ -359,52 +327,130 @@ export function EntryForm({
             </button>
           )}
         </fieldset>
+      );
+    }
+
+    const isText = isCore(f.kind) || isBuiltIn(f.kind);
+    const value = isText ? form[f.kind as TextKey] : (answers[f.id] ?? "");
+    const onChange = (v: string) =>
+      isText ? setText(f.kind as TextKey, v) : setAnswers((prev) => ({ ...prev, [f.id]: v }));
+    const label = labelOf(f);
+    const videoNote = f.kind === "video_url" ? "YouTube or Google Drive" : undefined;
+    const fullNote = [note, videoNote].filter(Boolean).join(", ") || undefined;
+
+    if (info.multiline) {
+      return (
+        <label key={f.id} className="block sm:col-span-2">
+          <span className="mb-1.5 block text-sm font-medium text-foreground">
+            {label}
+            {fullNote && <em className="ml-1.5 font-normal text-muted-foreground">({fullNote})</em>}
+          </span>
+          <textarea
+            rows={f.kind === "description" ? 5 : 4}
+            required={required}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={info.placeholder}
+            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-[color:var(--teal)]"
+          />
+          {hint && <span className="mt-1 block text-xs text-muted-foreground">{hint}</span>}
+        </label>
+      );
+    }
+    return (
+      <div key={f.id} className={f.kind === "title" ? "sm:col-span-2" : undefined}>
+        <Field
+          label={label}
+          note={fullNote}
+          hint={hint}
+          type={f.kind === "submitter_email" ? "email" : info.isLink ? "url" : "text"}
+          required={required}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={info.placeholder}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {askEntryType && (
+        <fieldset>
+          <legend className="mb-1.5 block text-sm font-medium text-foreground">Entering as</legend>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                {
+                  value: "team",
+                  label: "A team",
+                  hint: "You're entering with others",
+                  icon: Users,
+                },
+                {
+                  value: "individual",
+                  label: "Just me",
+                  hint: "You're entering on your own",
+                  icon: User,
+                },
+              ] as const
+            ).map((o) => {
+              const selected = entryAs === o.value;
+              return (
+                <label
+                  key={o.value}
+                  className="flex cursor-pointer items-start gap-3 rounded-md border bg-background p-3"
+                  style={{
+                    borderColor: selected ? "var(--teal)" : "var(--border)",
+                    boxShadow: selected ? "inset 0 0 0 1px var(--teal)" : undefined,
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="entry-as"
+                    value={o.value}
+                    checked={selected}
+                    onChange={() => setEntryAs(o.value)}
+                    required
+                    className="sr-only"
+                  />
+                  <o.icon
+                    className="mt-0.5 h-5 w-5 shrink-0"
+                    style={{ color: selected ? "var(--teal)" : undefined }}
+                    strokeWidth={2}
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-foreground">{o.label}</span>
+                    <span className="block text-xs text-muted-foreground">{o.hint}</span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
+      {!entry && !askEntryType && config.entrants !== "either" && (
+        <p className="text-sm text-muted-foreground">
+          {config.entrants === "each_member"
+            ? "Every member of your team fills in this form for themselves."
+            : config.entrants === "team"
+              ? "This hackathon is for teams. One person submits for the whole team."
+              : "This hackathon is for individual entries."}
+        </p>
+      )}
+      {organiser && (
+        <p className="text-xs text-muted-foreground">
+          Every field is optional for organisers; you can fill in the rest later by editing the
+          entry.
+        </p>
+      )}
+      {!organiser && shown.some((f) => FIELD_KINDS[f.kind].isLink) && (
+        <p className="text-xs text-muted-foreground">
+          Make sure every link is public or shared, so judges can open it.
+        </p>
       )}
 
-      <div>
-        <h3 className="text-sm font-semibold text-foreground">Project links</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {linksRequired
-            ? "All four links are required. Make sure each one is public or shared so judges can open it."
-            : "Optional. Add any links the team has shared; you can fill in the rest later by editing the entry."}
-        </p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Video demo link"
-          note="YouTube or Google Drive"
-          type="url"
-          required={linksRequired}
-          value={form.video_url}
-          onChange={set("video_url")}
-          placeholder="https://youtu.be/... or https://drive.google.com/..."
-          hint="On Google Drive, set sharing to “Anyone with the link” so judges can watch it."
-        />
-        <Field
-          label="Pitch deck link"
-          type="url"
-          required={linksRequired}
-          value={form.deck_url}
-          onChange={set("deck_url")}
-          placeholder="https://canva.com/..."
-        />
-        <Field
-          label="Live prototype link"
-          type="url"
-          required={linksRequired}
-          value={form.demo_url}
-          onChange={set("demo_url")}
-          placeholder="https://your-app.lovable.app"
-        />
-        <Field
-          label="GitHub repository link"
-          type="url"
-          required={linksRequired}
-          value={form.repo_url}
-          onChange={set("repo_url")}
-          placeholder="https://github.com/..."
-        />
-      </div>
+      <div className="grid gap-4 sm:grid-cols-2">{shown.map(renderField)}</div>
 
       {entry && (
         <div className="rounded-md border border-border p-4">
@@ -441,15 +487,17 @@ export function EntryForm({
                 ))}
               </select>
             </label>
-            <div className="sm:col-span-2">
-              <Field
-                label="Concept note link"
-                type="url"
-                value={extras.concept_note_url}
-                onChange={(e) => setExtras({ ...extras, concept_note_url: e.target.value })}
-                placeholder="https://docs.google.com/..."
-              />
-            </div>
+            {!has("concept_note_url") && (
+              <div className="sm:col-span-2">
+                <Field
+                  label="Concept note link"
+                  type="url"
+                  value={form.concept_note_url}
+                  onChange={(e) => setText("concept_note_url", e.target.value)}
+                  placeholder="https://docs.google.com/..."
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -460,7 +508,7 @@ export function EntryForm({
         </p>
       )}
       <Button type="submit" variant="primary" tone="teal" disabled={pending}>
-        {pending ? (entry ? "Saving…" : "Sending…") : entry ? "Save entry" : "Submit project"}
+        {pending ? (entry ? "Saving…" : "Sending…") : entry ? "Save entry" : "Submit"}
       </Button>
     </form>
   );
