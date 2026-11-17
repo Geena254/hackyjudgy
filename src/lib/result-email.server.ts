@@ -34,7 +34,7 @@ export type ResultEmail = {
 };
 
 export function resultEmailSubject(eventName: string) {
-  return `Your ${eventName} results`;
+  return `🎉 Your ${eventName} results are here!`;
 }
 
 export function resultEmailHtml(e: ResultEmail) {
@@ -61,10 +61,10 @@ export function resultEmailHtml(e: ResultEmail) {
     <img src="${esc(e.logoUrl)}" width="120" alt="Power Learn Project" style="display:block;border:0;outline:none;width:120px;height:auto;">
   </td></tr>
   <tr><td align="center" style="padding:24px 28px 0;">
-    <h1 style="margin:0;font-family:${font};font-size:22px;line-height:1.35;font-weight:700;color:${MAROON};">Your ${event} results are ready</h1>
+    <h1 style="margin:0;font-family:${font};font-size:22px;line-height:1.35;font-weight:700;color:${MAROON};">🎉 Your ${event} results are ready</h1>
   </td></tr>
   <tr><td align="center" style="padding:10px 28px 0;font-size:14px;line-height:1.5;color:#333333;">
-    Thank you for taking part
+    Congratulations for taking part 🙌
   </td></tr>
   <tr><td style="padding:26px 28px 0;font-size:14px;line-height:1.6;color:#111111;">
     <p style="margin:0 0 14px;">Dear <strong>${name}</strong>,</p>
@@ -73,14 +73,15 @@ export function resultEmailHtml(e: ResultEmail) {
   <tr><td style="padding:24px 28px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BLUSH};border:1px solid ${MAROON};border-radius:8px;">
       <tr><td align="center" style="padding:26px 16px;">
-        <p style="margin:0 0 16px;font-family:${font};font-size:15px;font-weight:700;color:${MAROON};">Your results report</p>
-        <a href="${link}" target="_blank" style="display:inline-block;background:${MAROON};color:#ffffff;font-family:${font};font-size:14px;font-weight:700;text-decoration:none;padding:12px 24px;border-radius:4px;">Download your PDF report</a>
+        <p style="margin:0 0 16px;font-family:${font};font-size:15px;font-weight:700;color:${MAROON};">🏆Your results report</p>
+        <a href="${link}" target="_blank" style="display:inline-block;background:${MAROON};color:#ffffff;font-family:${font};font-size:14px;font-weight:700;text-decoration:none;padding:12px 24px;border-radius:4px;">📄 Download your PDF report</a>
       </td></tr>
     </table>
   </td></tr>
   <tr><td style="padding:24px 28px 32px;font-size:14px;line-height:1.6;color:#111111;">
-    <p style="margin:0 0 14px;">If you have questions, reply to this email or reach out to <a href="mailto:${contact}" style="color:#1a56db;">${contact}</a>. We're glad you took part.</p>
-    <p style="margin:0;">Power Regards, Power Learn Project Team.</p>
+    <p style="margin:0 0 14px;">If you have questions, reach out to <a href="mailto:${contact}" style="color:#1a56db;">${contact}</a>.<br/>
+    We look forward to seeing what you will build next! 🥳</p>
+    <p style="margin:0;">Power Regards,<br>Power Learn Project Team</p>
   </td></tr>
 </table>
 </td></tr>
@@ -91,16 +92,18 @@ export function resultEmailHtml(e: ResultEmail) {
 
 export function resultEmailText(e: ResultEmail) {
   return [
-    `Your ${e.eventName} results are ready`,
+    `🎉 Your ${e.eventName} results are ready`,
     "",
     `Dear ${e.greetingName},`,
     "",
     `Judging for ${e.eventName} is complete. Your results report for ${e.projectTitle} is attached to this email as a PDF, and you can download it at any time here:`,
     e.downloadUrl,
     "",
-    `If you have questions, reply to this email or reach out to ${e.contact}. We're glad you took part.`,
+    `If you have questions, reach out to ${e.contact}.`,
+    "We look forward to seeing what you will build next! 🥳",
     "",
-    "Power Regards, Power Learn Project Team.",
+    "Power Regards,",
+    "Power Learn Project Team",
   ].join("\n");
 }
 
@@ -130,15 +133,15 @@ export async function sendWithSendGrid(msg: {
       ],
       ...(msg.attachment
         ? {
-            attachments: [
-              {
-                content: msg.attachment.base64,
-                filename: msg.attachment.filename,
-                type: msg.attachment.type,
-                disposition: "attachment",
-              },
-            ],
-          }
+          attachments: [
+            {
+              content: msg.attachment.base64,
+              filename: msg.attachment.filename,
+              type: msg.attachment.type,
+              disposition: "attachment",
+            },
+          ],
+        }
         : {}),
     }),
   });
