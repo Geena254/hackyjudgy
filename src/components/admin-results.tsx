@@ -27,6 +27,7 @@ import {
   type SubmissionRow,
 } from "@/lib/hackathon";
 import { TIE_BREAKERS, judgingRubric, rankStandings } from "@/lib/results";
+import { EmailResultsPanel, useResultEmails } from "@/components/email-results";
 
 type Judge = { id: string; name: string; email: string };
 
@@ -111,6 +112,7 @@ export function AdminResults({
   const { data: panelReviews = [] } = useAllReviews();
   const { data: assignments = [] } = useAssignments(event?.id);
   const { data: aiReviews = [] } = useAiReviews(event?.id);
+  const { data: emailed } = useResultEmails(event?.id);
   const panel = useMemo(() => panelFor(assignments), [assignments]);
   const [open, setOpen] = useState<string | null>(null);
 
@@ -309,6 +311,9 @@ export function AdminResults({
                         >
                           <FileText className="h-3.5 w-3.5" strokeWidth={2} /> PDF
                         </Link>
+                        {emailed?.has(st.submission.id) && (
+                          <div className="mt-1 text-[11px] text-muted-foreground">Emailed</div>
+                        )}
                       </td>
                     </tr>
                     {isOpen && (
@@ -344,6 +349,20 @@ export function AdminResults({
           </p>
         )}
       </Card>
+
+      {event && standings.length > 0 && (
+        <EmailResultsPanel
+          event={event}
+          rounds={rounds}
+          criteria={criteria}
+          rubric={rubric}
+          subs={subs}
+          standings={standings}
+          judges={resultJudges}
+          scores={resultScores}
+          reviews={reviews}
+        />
+      )}
 
       <Card className="p-5">
         <h2 className="text-lg font-semibold text-foreground">Scores by judge</h2>

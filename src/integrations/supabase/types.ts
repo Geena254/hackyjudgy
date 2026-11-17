@@ -355,6 +355,45 @@ export type Database = {
         }
         Relationships: []
       }
+      result_emails: {
+        Row: {
+          event_id: string
+          failures: string[]
+          file_name: string
+          file_path: string
+          id: string
+          recipients: string[]
+          sent_at: string
+          sent_by: string | null
+          submission_id: string
+          token: string
+        }
+        Insert: {
+          event_id: string
+          failures?: string[]
+          file_name: string
+          file_path: string
+          id?: string
+          recipients?: string[]
+          sent_at?: string
+          sent_by?: string | null
+          submission_id: string
+          token: string
+        }
+        Update: {
+          event_id?: string
+          failures?: string[]
+          file_name?: string
+          file_path?: string
+          id?: string
+          recipients?: string[]
+          sent_at?: string
+          sent_by?: string | null
+          submission_id?: string
+          token?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           completed: boolean
