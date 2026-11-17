@@ -17,13 +17,12 @@ import {
   aiJudgeMarks,
   AI_JUDGE,
   criteriaForSubmission,
-  scoreMap,
-  weightedPercent,
   type CriterionRow,
   type ReviewRow,
   type ScoreRow,
 } from "@/lib/hackathon";
 import { judgingRubric, rankStandings, type RankedStanding } from "@/lib/results";
+import { band, fmt, judgePanel } from "@/lib/team-report";
 
 export const Route = createFileRoute("/_authenticated/team-report")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -35,20 +34,6 @@ export const Route = createFileRoute("/_authenticated/team-report")({
 
 type Judge = { id: string; name: string; email: string };
 
-const fmt = (n: number | null | undefined, digits = 1) =>
-  n === null || n === undefined ? " - " : n.toFixed(digits).replace(/\.0$/, "");
-
-/** Rubric band for an average score out of 5. */
-function band(avg: number | null, max: number) {
-  if (avg === null) return " - ";
-  const v = (avg / max) * 5;
-  if (v >= 4.5) return "Excellent";
-  if (v >= 3.5) return "Good";
-  if (v >= 2.5) return "Adequate";
-  if (v >= 1.5) return "Weak";
-  return "Missing";
-}
-
 function TeamReports() {
   const { id } = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -58,8 +43,8 @@ function TeamReports() {
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
-  const { data: panelScores = [] } = useAllScores();
-  const { data: panelReviews = [] } = useAllReviews();
+  const { data: panelScores = [] } = useAllScores(event?.id);
+  const { data: panelReviews = [] } = useAllReviews(event?.id);
   const { data: roster = [] } = useJudges(event?.id);
   const { data: aiReviews = [] } = useAiReviews(event?.id);
 
@@ -193,18 +178,7 @@ function TeamReport({
 }) {
   const s = st.submission;
   const crit = criteriaFor(s);
-  const panel = judges
-    .map((j, i) => {
-      const values = scoreMap(scores, s.id, j.id);
-      const feedback = reviews.find((r) => r.submission_id === s.id && r.judge_id === j.id)?.feedback?.trim() ?? "";
-      return {
-        label: showNames ? j.name : `Judge ${i + 1}`,
-        values,
-        percent: weightedPercent(crit, values),
-        feedback,
-      };
-    })
-    .filter((p) => p.percent !== null || p.feedback);
+  const panel = judgePanel({ submissionId: s.id, criteria: crit, judges, scores, reviews, showNames });
 
   return (
     <article

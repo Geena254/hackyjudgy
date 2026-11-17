@@ -288,7 +288,7 @@ function PanelActivity({ event }: { event: EventRow }) {
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
-  const { data: scores = [] } = useAllScores();
+  const { data: scores = [] } = useAllScores(event?.id);
   const { data: judges = [], isLoading } = useJudges(event?.id);
   const { data: assignments = [] } = useAssignments(event?.id);
   const panel = useMemo(() => panelFor(assignments), [assignments]);

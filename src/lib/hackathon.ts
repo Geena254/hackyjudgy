@@ -170,18 +170,57 @@ export function useSubmissions(eventId: string | undefined) {
   });
 }
 
+// Supabase returns at most this many rows per request, whatever the query asks for.
+const PAGE_ROWS = 1000;
+
+/**
+ * Every row of a query, fetched page by page. A single request silently stops
+ * at 1,000 rows, which a busy hackathon's scores pass quickly. `page` must
+ * order its rows so pages don't overlap.
+ */
+async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: unknown[] | null; error: unknown }>,
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += PAGE_ROWS) {
+    const { data, error } = await page(from, from + PAGE_ROWS - 1);
+    if (error) throw error;
+    rows.push(...((data ?? []) as T[]));
+    if (!data || data.length < PAGE_ROWS) return rows;
+  }
+}
+
+const SCORE_COLUMNS = "id, submission_id, criterion_id, judge_id, value";
+const REVIEW_COLUMNS = "id, submission_id, judge_id, feedback, private_notes, completed, updated_at";
+
+const toScore = (r: ScoreRow): ScoreRow => ({
+  id: r.id,
+  submission_id: r.submission_id,
+  criterion_id: r.criterion_id,
+  judge_id: r.judge_id,
+  value: Number(r.value),
+});
+
+const toReview = (r: ReviewRow): ReviewRow => ({
+  id: r.id,
+  submission_id: r.submission_id,
+  judge_id: r.judge_id,
+  feedback: r.feedback,
+  private_notes: r.private_notes,
+  completed: r.completed,
+  updated_at: r.updated_at,
+});
+
 export function useMyScores(judgeId: string | undefined) {
   return useQuery({
     queryKey: ["scores", "mine", judgeId],
     enabled: !!judgeId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("scores")
-        .select("id, submission_id, criterion_id, judge_id, value")
-        .eq("judge_id", judgeId!);
-      if (error) throw error;
-      return (data ?? []) as ScoreRow[];
-    },
+    queryFn: async () =>
+      (
+        await fetchAllRows<ScoreRow>((from, to) =>
+          supabase.from("scores").select(SCORE_COLUMNS).eq("judge_id", judgeId!).order("id").range(from, to),
+        )
+      ).map(toScore),
   });
 }
 
@@ -189,28 +228,35 @@ export function useMyReviews(judgeId: string | undefined) {
   return useQuery({
     queryKey: ["reviews", "mine", judgeId],
     enabled: !!judgeId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("id, submission_id, judge_id, feedback, private_notes, completed, updated_at")
-        .eq("judge_id", judgeId!);
-      if (error) throw error;
-      return (data ?? []) as ReviewRow[];
-    },
+    queryFn: async () =>
+      (
+        await fetchAllRows<ReviewRow>((from, to) =>
+          supabase.from("reviews").select(REVIEW_COLUMNS).eq("judge_id", judgeId!).order("id").range(from, to),
+        )
+      ).map(toReview),
   });
 }
 
-/** Admin-only: every judge's scores (RLS allows admins to read all). */
-export function useAllScores() {
+/**
+ * Organisers: every panel judge's scores for one hackathon, all of them (RLS
+ * lets organisers read the scores of the hackathons they manage). Approved AI
+ * scores are separate: add them with aiJudgeMarks.
+ */
+export function useAllScores(eventId: string | undefined) {
   return useQuery({
-    queryKey: ["scores", "all"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("scores")
-        .select("id, submission_id, criterion_id, judge_id, value");
-      if (error) throw error;
-      return (data ?? []) as ScoreRow[];
-    },
+    queryKey: ["scores", "event", eventId],
+    enabled: !!eventId,
+    queryFn: async () =>
+      (
+        await fetchAllRows<ScoreRow>((from, to) =>
+          supabase
+            .from("scores")
+            .select(`${SCORE_COLUMNS}, submissions!inner(event_id)`)
+            .eq("submissions.event_id", eventId!)
+            .order("id")
+            .range(from, to),
+        )
+      ).map(toScore),
   });
 }
 
@@ -374,16 +420,22 @@ export const useShareOut = () => useShareOutMutation("share_out_entries");
 export const useUndoShareOut = () => useShareOutMutation("undo_share_out");
 
 /** Admin-only: every judge's review progress. */
-export function useAllReviews() {
+/** Organisers: every panel judge's review for one hackathon, all of them. */
+export function useAllReviews(eventId: string | undefined) {
   return useQuery({
-    queryKey: ["reviews", "all"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("id, submission_id, judge_id, feedback, private_notes, completed, updated_at");
-      if (error) throw error;
-      return (data ?? []) as ReviewRow[];
-    },
+    queryKey: ["reviews", "event", eventId],
+    enabled: !!eventId,
+    queryFn: async () =>
+      (
+        await fetchAllRows<ReviewRow>((from, to) =>
+          supabase
+            .from("reviews")
+            .select(`${REVIEW_COLUMNS}, submissions!inner(event_id)`)
+            .eq("submissions.event_id", eventId!)
+            .order("id")
+            .range(from, to),
+        )
+      ).map(toReview),
   });
 }
 

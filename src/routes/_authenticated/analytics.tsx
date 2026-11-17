@@ -15,10 +15,14 @@ import {
   useAssignments,
   panelFor,
   criteriaForSubmission,
-  weightedPercent,
   scoreMap,
   formatDate,
+  useAiReviews,
+  aiJudgeMarks,
+  AI_JUDGE,
 } from "@/lib/hackathon";
+import { rankStandings } from "@/lib/results";
+import { fmt } from "@/lib/team-report";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
@@ -79,8 +83,8 @@ function AnalyticsPage() {
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: submissions = [] } = useSubmissions(event?.id);
-  const { data: scores = [] } = useAllScores();
-  const { data: reviews = [] } = useAllReviews();
+  const { data: scores = [] } = useAllScores(event?.id);
+  const { data: reviews = [] } = useAllReviews(event?.id);
   const { data: judges = [] } = useJudges(event?.id);
   const { data: assignments = [] } = useAssignments(event?.id);
   const panel = useMemo(() => panelFor(assignments), [assignments]);
@@ -159,25 +163,19 @@ function AnalyticsPage() {
     [judges, reviews, scores, submissions, subIds, done, panel],
   );
 
-  const leaderboard = useMemo(() => {
-    const rows = submissions.map((s) => {
-      const crit = criteriaForSubmission(s, rounds, criteria);
-      const judgeIds = Array.from(
-        new Set(scores.filter((x) => x.submission_id === s.id).map((x) => x.judge_id)),
-      );
-      const perJudge = judgeIds
-        .map((jid) => weightedPercent(crit, scoreMap(scores, s.id, jid)))
-        .filter((v): v is number => v !== null);
-      const percent =
-        perJudge.length === 0
-          ? null
-          : Math.round(perJudge.reduce((a, b) => a + b, 0) / perJudge.length);
-      return { submission: s, percent, judgeCount: perJudge.length };
-    });
-    return [...rows]
-      .sort((a, b) => (b.percent ?? -1) - (a.percent ?? -1))
-      .map((r, i) => ({ ...r, rank: r.percent === null ? null : i + 1 }));
-  }, [submissions, rounds, criteria, scores]);
+  // Same standings as the Results page: the current panel plus approved AI
+  // results (when the judging mode uses AI), weighted, with the rubric tie-breakers.
+  const { data: aiReviews = [] } = useAiReviews(event?.id);
+  const ai = useMemo(() => aiJudgeMarks(aiReviews, event), [aiReviews, event]);
+  const leaderboard = useMemo(
+    () =>
+      rankStandings(submissions, criteria, rounds, [...scores, ...ai.scores], [
+        ...judges.map((j) => j.id),
+        ...(ai.active ? [AI_JUDGE.id] : []),
+      ]),
+    [submissions, criteria, rounds, scores, judges, ai],
+  );
+  const score = (n: number | null) => (n === null ? " - " : `${fmt(n)} / 100`);
 
   if (ready && !isAdmin) {
     return (
@@ -237,8 +235,8 @@ function AnalyticsPage() {
         <Stat
           icon={<Award className="h-5 w-5" style={{ color: "var(--teal)" }} strokeWidth={2} />}
           label="Top weighted score"
-          value={leaderboard[0]?.percent === null || !leaderboard[0] ? " - " : `${leaderboard[0].percent}%`}
-          hint={leaderboard[0]?.submission.title ?? undefined}
+          value={score(leaderboard[0]?.weightedTotal ?? null)}
+          hint={leaderboard[0]?.weightedTotal == null ? undefined : leaderboard[0].submission.title}
         />
       </div>
 
@@ -319,6 +317,7 @@ function AnalyticsPage() {
           <h2 className="text-lg font-bold text-foreground">Weighted standings</h2>
           <span className="text-xs text-muted-foreground">
             Each criterion counts for its own weight, not a plain sum.
+            {ai.active ? " Approved AI results count as one more judge." : ""}
           </span>
         </div>
         <div className="mt-4 space-y-3">
@@ -332,6 +331,7 @@ function AnalyticsPage() {
                   <Pill tone={row.rank === null ? "gray" : "magenta"}>
                     {row.rank === null ? "Unscored" : `#${row.rank}`}
                   </Pill>
+                  {row.tied && <Pill tone="warning">Tie</Pill>}
                   <span className="truncate font-semibold text-foreground">
                     {row.submission.title}
                   </span>
@@ -342,7 +342,7 @@ function AnalyticsPage() {
                 </div>
               </div>
               <div className="text-xl font-bold text-foreground">
-                {row.percent === null ? " - " : `${row.percent}%`}
+                {score(row.weightedTotal)}
               </div>
             </div>
           ))}

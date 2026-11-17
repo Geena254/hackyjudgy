@@ -85,7 +85,7 @@ function AiGrading() {
   const queryClient = useQueryClient();
   const grade = useServerFn(gradeSubmissionWithAi);
 
-  const { data: scores = [] } = useAllScores();
+  const { data: scores = [] } = useAllScores(eventId);
   const { data: judges = [] } = useJudges(eventId);
 
   const byEntry = useMemo(() => new Map(aiReviews.map((r) => [r.submission_id, r])), [aiReviews]);
