@@ -109,7 +109,7 @@ export function AdminResults({
   scores: ScoreRow[];
   judges: Judge[];
 }) {
-  const { data: panelReviews = [] } = useAllReviews();
+  const { data: panelReviews = [] } = useAllReviews(event?.id);
   const { data: assignments = [] } = useAssignments(event?.id);
   const { data: aiReviews = [] } = useAiReviews(event?.id);
   const { data: emailed } = useResultEmails(event?.id);

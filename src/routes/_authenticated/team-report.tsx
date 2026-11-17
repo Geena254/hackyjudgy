@@ -43,8 +43,8 @@ function TeamReports() {
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
-  const { data: panelScores = [] } = useAllScores();
-  const { data: panelReviews = [] } = useAllReviews();
+  const { data: panelScores = [] } = useAllScores(event?.id);
+  const { data: panelReviews = [] } = useAllReviews(event?.id);
   const { data: roster = [] } = useJudges(event?.id);
   const { data: aiReviews = [] } = useAiReviews(event?.id);
 

@@ -238,7 +238,7 @@ function Dashboard() {
   const { data: rounds = [] } = useRounds(event?.id);
   const { data: criteria = [] } = useCriteria(rounds.map((r) => r.id));
   const { data: subs = [] } = useSubmissions(event?.id);
-  const { data: scores = [] } = useAllScores();
+  const { data: scores = [] } = useAllScores(event?.id);
   const { data: judges = [] } = useJudges(event?.id);
   // Once entries are shared out, each entry only expects the judge it was given to.
   const { data: assignments = [] } = useAssignments(event?.id);
