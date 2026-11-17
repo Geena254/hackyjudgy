@@ -71,7 +71,7 @@ export const sendTeamResults = createServerFn({ method: "POST" })
     const cfg = mail.emailConfig();
     if (!cfg.apiKey || !cfg.from) {
       throw new Error(
-        "Email is not set up: SENDGRID_API_KEY and SMTP_FROM are needed on the server.",
+        "Email is not set up: add SENDGRID_API_KEY and SMTP_FROM to the hosting environment variables (Vercel), then redeploy.",
       );
     }
 
